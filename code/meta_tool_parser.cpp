@@ -1,16 +1,17 @@
+#if 0
 internal void
-ParseFunction(Token returnType, Token name)
+ParseFunction(token ReturnType, token Name)
 {
-    RequireToken(tokenizer, Token_OpenParen);
+    RequireToken(Tokenizer, Token_OpenParen);
 }
 
 internal void
-ParseTopLevelDecl(ASTFile* file, Tokenizer* tokenizer)
+ParseTopLevelDecl(ast_file* File, tokenizer* Tokenizer)
 {
-    Token declSpecifier = GetToken(); // TODO(yuval): @Incomplete what about pointers
-    Token name = RequireToken(tokenizer, Token_Identifier);
+    token DeclSpecifier = GetToken(); // TODO(yuval): @Incomplete what about pointers
+    token Name = RequireToken(Tokenizer, Token_Identifier);
     
-    switch (declSpecifier.type)
+    switch (DeclSpecifier.Type)
     {
         case Token_Struct:
         {
@@ -39,11 +40,8 @@ ParseTopLevelDecl(ASTFile* file, Tokenizer* tokenizer)
             ParseFunction();
         }
     }
-    
-    
 }
 
-#if 0
 case Token_Void:
 {
     
@@ -68,10 +66,10 @@ case Token_Float:
 case Token_Double:
 {
 } break;
-#endif
 
 ASTFile
-ParseFile(Tokenizer* tokenizer)
+ParseFile(tokenizer* Tokenizer)
 {
     
 }
+#endif

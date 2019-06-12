@@ -5,6 +5,7 @@
 
 #include <stdio.h> // TODO(yuval): Remove
 
+#if 0
 global_variable HANDLE globalDefaultProcessHeap;
 global_variable HANDLE globalOutputFileHandle;
 //global_variable char* globalFilesDirname;
@@ -342,4 +343,11 @@ main(s32 argCount, char** args)
     }
     
     return 0;
+}
+
+#endif
+
+int
+main(int argc, const char* argv[])
+{
 }

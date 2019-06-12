@@ -1,4 +1,4 @@
-#if !defined(WIN32METATOOL_H)
+#if !defined(WIN32_META_TOOL_H)
 
-#define WIN32METATOOL_H
+#define WIN32_META_TOOL_H
 #endif

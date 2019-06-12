@@ -1,19 +1,52 @@
-#if !defined(METATOOLTYPES_H)
+#if !defined(META_TOOL_TYPES_H)
 
+//////////////////////////////
+//        Compilers         //
+//////////////////////////////
+#if !defined(COMPILER_MSVC)
+#define COMPILER_MSVC 0
+#endif
+
+#if !defined(COMPILER_LLVM)
+#define COMPILER_LLVM 0
+#endif
+
+#if !COMPILER_MSVC && !COMPILER_LLVM
+#if defined(_MSC_VER)
+#undef COMPILER_MSVC
+#define COMPILER_MSVC 1
+#else
+// TODO(yuval, eran): Support More Compilers!
+#undef COMPILER_LLVM
+#define COMPILER_LLVM 1
+#endif
+#endif
+
+#if COMPILER_MSVC
+#include <intrin.h>
+#elif COMPILER_LLVM
+#include <x86intrin.h>
+#else
+#error Optimizations are not available for this compiler yet!!!
+#endif
+
+
+//////////////////////////////
+//          Types           //
+//////////////////////////////
 #include <stdint.h>
+#include <stddef.h>
 
 #define internal static
 #define global_variable static
 #define local_persist static
 
-#define Pi32 3.14159265359
-
-// TODO(yuval): Create META_TOOL_SLOW build option and check for it
-#define Assert(expression) if (!(expression)) { *(int*)0 = 0; }
+#define Pi32 3.14159265359f
 
 // NOTE(yuval): To be used only in the same function
-// where the array was defined!
-#define ArrayCount(array) (sizeof(array) / sizeof((array)[0]))
+// where the array was defined or with arrays that are defined
+// within structs
+#define ArrayCount(Array) (sizeof(Array) / sizeof((Array)[0]))
 
 typedef int8_t s8;
 typedef int16_t s16;
@@ -34,38 +67,30 @@ typedef uintptr_t umm;
 
 typedef size_t memory_index;
 
-struct String
+struct string
 {
-    char* data;
-    umm count;
-    memory_index memorySize;
+    char* Data;
+    umm Count;
+    memory_index MemorySize;
 };
 
 inline u32
-SafeTruncateToU32(u64 value)
+StringLength(const char* String)
 {
-    Assert(value <= 0xFFFFFFFF);
-    u32 result = (u32)value;
-    return result;
-}
-
-inline u32
-StringLength(const char* string)
-{
-    u32 count = 0;
+    u32 Count = 0;
     
-    if (string)
+    if (String)
     {
-        while(*string++)
+        while(*String++)
         {
-            ++count;
+            ++Count;
         }
     }
     
-    return count;
+    return Count;
 }
 
-#define GAMETYPES_H
+#define META_TOOL_TYPES_H
 #endif
 
 

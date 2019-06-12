@@ -1,20 +1,6 @@
 #if !defined(META_TOOL_TOKENIZER_H)
 
-struct Tokenizer
-{
-    String filename;
-    
-    s32 columnNumber;
-    s32 lineNumber;
-    
-    String input;
-    String inputFileData;
-    char at[2];
-    
-    b32 error;
-};
-
-enum TokenType
+enum token_type
 {
     Token_Unknown = 0,
     
@@ -82,7 +68,6 @@ enum TokenType
     Token_StringLiteral,
     Token_CharConstant,
     Token_BoolConstant,
-    Token_Identifier,
     Token_Number,
     
     Token_Void,
@@ -134,38 +119,42 @@ enum TokenType
     Token_PP_Error,
     Token_PP_Using,
     
+    Token_Identifier,
+    
     Token_Spacing,
     Token_EndOfLine,
     
     Token_EndOfStream
 };
 
-struct Token
+struct token
 {
-    String filename;
+    string FileName;
     
-    s32 columnNumber;
-    s32 lineNumber;
+    s32 ColumnNumber;
+    s32 LineNumber;
     
-    TokenType type;
-    String text;
-    String fileData;
+    token_type Type;
+    string Text;
+    string FileData;
     
-    f32 f32;
-    s32 s32;
+    f32 F32;
+    s32 S32;
 };
 
-b32
-TokenEquals(Token token, const char* match);
-
-Token
-RequireToken(Tokenizer* tokenizer, TokenType desiredType);
-
-Token
-GetToken(Tokenizer* tokenizer);
-
-Tokenizer
-Tokenize(String filename, String input);
+struct tokenizer
+{
+    string FileName;
+    
+    s32 ColumnNumber;
+    s32 LineNumber;
+    
+    string Input;
+    string InputFileData;
+    char At[2];
+    
+    b32 Error;
+};
 
 #define META_TOOL_TOKENIZER_H
 #endif

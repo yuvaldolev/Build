@@ -1,504 +1,656 @@
-#if !defined(METATOOLSHARED_H)
+#if !defined(META_TOOL_SHARED_H)
 
 #include <stdarg.h>
 
-#define ReadVarArgUnsignedInteger(argList, length) \
-((length) == 8) ? va_arg(argList, u64) : (u64)va_arg(argList, u32)
+#define ConstZ(Z) {(char*)(Z), sizeof(Z) - 1, sizeof(Z)}
+#define BundleZ(Z) BundleString(const_cast<char*>(Z), sizeof(Z) - 1, sizeof(Z))
 
-#define ReadVarArgSignedInteger(argList, length) \
-((length) == 8) ? va_arg(argList, s64) : (s64)va_arg(argList, s32)
+#define CopyArray(Dest, Source, Count) Copy(Dest, Source, \
+sizeof(*Source) * Count)
 
-#define ReadVarArgFloat(argList, length) va_arg(argList, f64)
+#define ReadVarArgUnsignedInteger(Length, ArgList) (Length == 8) ? \
+va_arg(ArgList, u64) : va_arg(ArgList, u32)
 
-struct FormatDest
+#define ReadVarArgSignedInteger(Length, ArgList) (Length == 8) ? \
+va_arg(ArgList, s64) : va_arg(ArgList, s32)
+
+#define ReadVarArgFloat(Length, ArgList) va_arg(ArgList, f64)
+
+struct format_dest
 {
-    char* at;
-    umm size;
+    char* At;
+    umm Size;
 };
 
-internal void*
-Copy(void* destInit, const void* sourceInit, memory_index size)
-{
-    void* result = 0;
-    
-    if (sourceInit && destInit)
-    {
-        u8* source = (u8*)sourceInit;
-        u8* dest = (u8*)destInit;
-        
-        while (size--) { *dest++ = *source++; };
-        
-        result = destInit;
-    }
-    
-    return result;
-}
-
-internal char*
-CopyZ(void* dest, const char* source, umm count)
-{
-    char* destInit = (char*)Copy(dest, source, count * sizeof(char));
-    return destInit;
-}
-
-internal char*
-CopyZ(void* dest, const char* source)
-{
-    return CopyZ(dest, source, StringLength(source));
-}
-
-internal String
-MakeString(const char* z, void* memory,
-           umm count, memory_index memorySize)
-{
-    // NOTE(yuval): z is REQUIRED to be null terminated!
-    String str = { };
-    
-    if (memory)
-    {
-        Assert(count * sizeof(char) <= memorySize);
-        
-        str.data = CopyZ(memory, z, count);
-        str.count = count;
-        str.memorySize = memorySize;
-    }
-    
-    return str;
-}
-
-internal String
-MakeString(const char* z, void* memory, memory_index memorySize)
-{
-    // NOTE(yuval): z is REQUIRED to be null terminated!
-    return MakeString(z, memory, StringLength(z), memorySize);
-}
-
-internal String
-WrapZ(char* z)
-{
-    u32 zLength = StringLength(z);
-    String str = { z, zLength, zLength * sizeof(char)};
-    return str;
-}
+global_variable char GlobalDecChars[] = "0123456789";
+global_variable char GlobalLowerHexChars[] = "0123456789abcdef";
+global_variable char GlobalUpperHexChars[] = "0123456789ABCDEF";
 
 internal void
-AppendZ(String* dest, const char* source, umm count)
+ZeroSize(void* Ptr, memory_index Size)
 {
-    if (dest && source)
+    u8* Byte = (u8*)Ptr;
+    
+    while (Size--)
     {
-        if (((dest->count + count) * sizeof(char)) <= dest->memorySize)
+        *Byte++ = 0;
+    }
+}
+
+internal void*
+Copy(void* DestInit, const void* SourceInit, memory_index Size)
+{
+    void* Result = 0;
+    
+    if (DestInit && SourceInit)
+    {
+        const u8* Source = (const u8*)SourceInit;
+        u8* Dest = (u8*)DestInit;
+        
+        while (Size--)
         {
-            char* destAt = dest->data + dest->count;
-            CopyZ(destAt, source, count);
-            dest->count += count;
+            *Dest++ = *Source++;
+        }
+        
+        Result = DestInit;
+    }
+    
+    return Result;
+}
+
+internal char*
+CopyZ(void* Dest, const char* Z, umm Count)
+{
+    char* DestInit = (char*)Copy(Dest, Z, Count * sizeof(char));
+    return DestInit;
+}
+
+internal char*
+CopyZ(void* Dest, const char* Z)
+{
+    char* Result = CopyZ(Dest, Z, StringLength(Z));
+    return Result;
+}
+
+internal string
+MakeString(const char* Z, void* Memory, umm Count, memory_index MemorySize)
+{
+    // NOTE(yuval): Z is REQUIRED to be null terminated!
+    string Str = { };
+    
+    if (Memory && Z)
+    {
+        Assert(Count * sizeof(char) <= MemorySize);
+        
+        Str.Data = CopyZ(Memory, Z, Count);
+        Str.Count = Count;
+        Str.MemorySize = MemorySize;
+    }
+    
+    return Str;
+}
+
+internal string
+MakeString(const char* Z, void* Memory, memory_index MemorySize)
+{
+    // NOTE(yuval): Z is REQUIRED to be null terminated!
+    return MakeString(Z, Memory, StringLength(Z), MemorySize);
+}
+
+
+internal void
+AppendZ(string* Dest, const char* Z, umm Count)
+{
+    if (Dest && Z)
+    {
+        if (((Dest->Count + Count) * sizeof(char)) <= Dest->MemorySize)
+        {
+            char* DestAt = Dest->Data + Dest->Count;
+            CopyZ(DestAt, Z, Count);
+            Dest->Count += Count;
         }
     }
 }
 
 internal void
-AppendZ(String* dest, const char* source)
+AppendZ(string* Dest, const char* Z)
 {
-    AppendZ(dest, source, StringLength(source));
+    AppendZ(Dest, Z, StringLength(Z));
 }
 
 internal void
-AppendString(String* dest, const String* source)
+AppendString(string* Dest, const string* Source)
 {
-    AppendZ(dest, source->data, source->count);
+    AppendZ(Dest, Source->Data, Source->Count);
 }
 
 internal void
-AdvanceString(String* value, umm count)
+AdvanceString(string* Value, umm Count)
 {
-    if (value->count >= count)
+    if (Value->Count >= Count)
     {
-        value->data += count;
-        value->count -= count;
-        value->memorySize -= (count * sizeof(char));
+        Value->Data += Count;
+        Value->Count -= Count;
+        Value->MemorySize -= (Count * sizeof(char));
     }
     else
     {
-        value->data += value->count;
-        value->count = 0;
-        value->memorySize = 0;
+        Value->Data += Value->Count;
+        Value->Count = 0;
+        Value->MemorySize = 0;
+    }
+}
+
+internal string
+WrapZ(char* Z)
+{
+    u32 ZLength = StringLength(Z);
+    string Str = { Z, ZLength, ZLength * sizeof(char) };
+    return Str;
+}
+
+internal string
+BundleString(char* Z, umm Count, memory_index MemorySize)
+{
+    string Result;
+    
+    Result.Data = Z;
+    Result.Count = Count;
+    Result.MemorySize = MemorySize;
+    
+    return Result;
+}
+
+internal void
+CatStrings(char* Dest, memory_index DestCount,
+           const char* SourceA, memory_index SourceACount,
+           const char* SourceB, memory_index SourceBCount)
+{
+    Assert(DestCount > SourceACount + SourceBCount);
+    char* DestAt = Dest;
+    
+    // TODO(yuval & eran): @Copy-and-paste
+    // TODO(yuval & eran): @Incomplete use string struct
+    for (u32 Index = 0; Index < SourceACount; ++Index)
+    {
+        *DestAt++ = SourceA[Index];
+    }
+    
+    for (u32 Index = 0; Index < SourceBCount; ++Index)
+    {
+        *DestAt++ = SourceB[Index];
+    }
+    
+    *DestAt = 0;
+}
+
+internal char
+ToLowercase(char Value)
+{
+    char Result = Value;
+    
+    if ((Result >= 'A') && (Result <= 'Z'))
+    {
+        Result += 'a' - 'A';
+    }
+    
+    return Result;
+}
+
+internal void
+ToLowercase(char* Value)
+{
+    while (*Value)
+    {
+        *Value++ = ToLowercase(*Value);
+    }
+}
+
+internal char
+ToUppercase(char Value)
+{
+    char Result = Value;
+    
+    if ((Result >= 'a') && (Result <= 'z'))
+    {
+        Result -= 'a' - 'A';
+    }
+    
+    return Result;
+}
+
+internal void
+ToUppercase(char* Value)
+{
+    while (*Value)
+    {
+        *Value++ = ToUppercase(*Value);
     }
 }
 
 internal b32
-IsSpacing(char c)
+IsSpacing(char C)
 {
-    b32 result = ((c == ' ') ||
-                  (c == '\t') ||
-                  (c == '\v') ||
-                  (c == '\f'));
+    b32 Result = ((C == ' ') ||
+                  (C == '\t') ||
+                  (C == '\v') ||
+                  (C == '\f'));
     
-    return result;
+    return Result;
 }
 
 internal b32
-IsEndOfLine(char c)
+IsEndOfLine(char C)
 {
-    b32 result = ((c == '\n') ||
-                  (c == '\r'));
+    b32 Result = ((C == '\n') ||
+                  (C == '\r'));
     
-    return result;
+    return Result;
 }
 
 internal b32
-IsWhitespace(char c)
+IsWhitespace(char C)
 {
-    b32 result = (IsSpacing(c) || IsEndOfLine(c));
-    return result;
+    b32 Result = (IsSpacing(C) || IsEndOfLine(C));
+    return Result;
 }
 
 internal b32
-IsAlpha(char c)
+IsAlpha(char C)
 {
-    b32 result = (((c >= 'a') && (c <= 'z')) ||
-                  ((c >= 'A') && (c <= 'Z')));
+    b32 Result = (((C >= 'a') && (C <= 'z')) ||
+                  ((C >= 'A') && (C <= 'Z')));
     
-    return result;
+    return Result;
 }
 
 internal b32
-IsNumber(char c)
+IsNumber(char C)
 {
-    b32 result = ((c >= '0') && (c <= '9'));
-    return result;
+    b32 Result = ((C >= '0') && (C <= '9'));
+    return Result;
 }
 
-
 internal b32
-StringsAreEqual(const char* a, const char* b)
+StringsAreEqual(const char* A, const char* B)
 {
-    b32 result = (a == b);
+    b32 Result = (A == B);
     
-    if (a && b)
+    if (A && B)
     {
-        if (!result)
+        if (!Result)
         {
-            while (*a && *b && (*a == *b))
+            while (*A && *B && (*A == *B))
             {
-                ++a;
-                ++b;
+                ++A;
+                ++B;
             }
             
-            result = ((*a == 0) && (*b == 0));
+            Result = ((*A == 0) && (*B == 0));
         }
     }
     
-    return result;
+    return Result;
 }
 
 internal b32
-StringsAreEqual(const char* a, umm aLength, const char* b)
+StringsAreEqual(const char* A, umm ALength, const char* B)
 {
-    b32 result = false;
+    b32 Result = false;
     
-    if (b)
+    if (B)
     {
-        const char* at = b;
+        const char* At = B;
         
-        for (umm index = 0; index < aLength; ++index, ++at)
+        for (umm Index = 0; Index < ALength; ++Index, ++At)
         {
-            if ((*at == 0) || (a[index] != *at))
+            if ((*At == 0) || (A[Index] != *At))
             {
                 return false;
             }
         }
         
-        result = (*at == 0);
+        Result = (*At == 0);
     }
     else
     {
-        result = (aLength == 0);
+        Result = (ALength == 0);
     }
     
-    return result;
+    return Result;
 }
 
 internal b32
-StringsAreEqual(const char* a, umm aLength,
-                const char* b, umm bLength)
+StringsAreEqual(const char* A, umm ALength,
+                const char* B, umm BLength)
 {
-    b32 result = (aLength == bLength);
+    b32 Result = (ALength == BLength);
     
-    if (result)
+    if (Result)
     {
-        for (umm index = 0; index < aLength; ++index)
+        For (Index, Range(ALength))
         {
-            if (a[index] != b[index])
+            if (A[Index] != B[Index])
             {
-                result = false;
+                Result = false;
                 break;
             }
         }
     }
     
-    return result;
+    return Result;
 }
 
 internal b32
-StringsAreEqual(String a, const char* b, umm length)
+StringsAreEqual(string A, const char* B, umm Length)
 {
-    b32 result = false;
+    b32 Result = false;
     
-    if (length <= a.count)
+    if (Length <= A.Count)
     {
-        result = StringsAreEqual(a.data, length, b);
+        Result = StringsAreEqual(A.Data, Length, B);
     }
     
-    return result;
+    return Result;
 }
 
 internal b32
-StringsAreEqual(String a, const char* b)
+StringsAreEqual(string A, const char* B)
 {
-    return StringsAreEqual(a.data, a.count, b);
+    b32 Result = StringsAreEqual(A.Data, A.Count, B);
+    return Result;
 }
 
 internal b32
-StringsAreEqual(String a, String b)
+StringsAreEqual(string A, string B)
 {
-    return StringsAreEqual(a.data, a.count, b.data, b.count);
+    b32 Result = StringsAreEqual(A.Data, A.Count, B.Data, B.Count);
+    return Result;
 }
 
 internal b32
-IsH(const char* fileExtention)
+IsH(const char* Extention)
 {
-    return StringsAreEqual(fileExtention, "h") ||
-        StringsAreEqual(fileExtention, "hpp") ||
-        StringsAreEqual(fileExtention, "hin");
+    b32 Result = (StringsAreEqual(Extention, "h") ||
+                  StringsAreEqual(Extention, "hpp") ||
+                  StringsAreEqual(Extention, "hin"));
+    
+    return Result;
 }
 
 internal b32
-IsCPP(const char* fileExtention)
+IsCPP(const char* Extention)
 {
-    return StringsAreEqual(fileExtention, "c") ||
-        StringsAreEqual(fileExtention, "cpp") ||
-        StringsAreEqual(fileExtention, "cin");
+    b32 Result = (StringsAreEqual(Extention, "c") ||
+                  StringsAreEqual(Extention, "cpp") ||
+                  StringsAreEqual(Extention, "cin"));
+    
+    return Result;
+}
+
+internal b32
+IsObjectiveC(const char* Extention)
+{
+    b32 Result = (StringsAreEqual(Extention, "m") ||
+                  StringsAreEqual(Extention, "mm"));
+    
+    return Result;
+}
+
+internal b32
+IsCode(const char* Extention)
+{
+    b32 Result = (IsH(Extention) || IsCPP(Extention) || IsObjectiveC(Extention));
+    return Result;
 }
 
 internal const char*
-FileExtention(const char* fileName)
+FileExtention(const char* FileName)
 {
-    const char* fileExtention = 0;
+    const char* Extention = 0;
     
-    if (fileName)
+    if (FileName)
     {
-        const char* fileNameAt = fileName;
+        const char* FileNameAt = FileName;
         
-        while (*fileNameAt)
+        while (*FileNameAt)
         {
-            if (*fileNameAt == '.' && *(fileNameAt + 1))
+            if (*FileNameAt == '.' && *(FileNameAt + 1))
             {
-                fileExtention = fileNameAt + 1;
+                Extention = FileNameAt + 1;
                 break;
             }
             
-            ++fileNameAt;
+            ++FileNameAt;
         }
     }
     
-    return fileExtention;
+    return Extention;
 }
 
 internal b32
 IsCodeFile(const char* filename)
 {
-    const char* fileExtention = FileExtention(filename);
-    return IsH(fileExtention) || IsCPP(fileExtention);
-}
-
-internal s32
-S32FromZInternal(const char **atInit)
-{
-    s32 result = 0;
-    
-    const char *at = *atInit;
-    while((*at >= '0') &&
-          (*at <= '9'))
-    {
-        result *= 10;
-        result += (*at - '0');
-        ++at;
-    }
-    
-    *atInit = at;
-    
-    return result;
-}
-
-internal s32
-S32FromZ(const char *at)
-{
-    const char *ignored = at;
-    s32 result = S32FromZInternal(&ignored);
-    return result;
+    const char* Extention = FileExtention(filename);
+    b32 Result = IsCode(Extention);
+    return Result;
 }
 
 internal void
-OutChar(FormatDest* dest, char value)
+OutChar(format_dest* Dest, char Value)
 {
-    if(dest->size)
+    if (Dest->Size)
     {
-        --dest->size;
-        *dest->at++ = value;
+        --Dest->Size;
+        *Dest->At++ = Value;
     }
 }
 
 internal void
-OutChars(FormatDest* dest, const char* value)
+OutChars(format_dest* Dest, const char* Value)
 {
-    // NOTE(yuval): Make this faster
-    while (*value)
+    // TODO(yuval & eran): Speed this up
+    while (*Value)
     {
-        OutChar(dest, *value++);
+        OutChar(Dest, *Value++);
     }
 }
 
-char decChars[] = "0123456789";
-char lowerHexChars[] = "0123456789abcdef";
-char upperHexChars[] = "0123456789ABCDEF";
+internal void
+OutString(format_dest* Dest, string Value)
+{
+    while (Value.Count--)
+    {
+        OutChar(Dest, *Value.Data++);
+    }
+}
 
 internal void
-U64ToASCII(FormatDest* dest, u64 value, u32 base, const char* digits)
+OutCharsLowercase(format_dest* Dest, const char* Value)
 {
-    Assert(base != 0);
+    while (*Value)
+    {
+        OutChar(Dest, ToLowercase(*Value++));
+    }
+}
+
+
+internal void
+OutCharsUppercase(format_dest* Dest, const char* Value)
+{
+    while (*Value)
+    {
+        OutChar(Dest, ToUppercase(*Value++));
+    }
+}
+
+internal void
+U64ToASCII(format_dest* Dest, u64 Value, u32 Base, const char* Digits)
+{
+    Assert(Base != 0);
     
-    char *start = dest->at;
+    char* Start = Dest->At;
     
     do
     {
-        u64 digitIndex = (value % base);
-        char digit = digits[digitIndex];
-        OutChar(dest, digit);
-        
-        value /= base;
-        
-    } while(value != 0);
+        u64 DigitIndex = Value % Base;
+        char Digit = Digits[DigitIndex];
+        OutChar(Dest, Digit);
+        Value /= Base;
+    }
+    while (Value != 0);
     
-    char *end = dest->at;
+    char* End = Dest->At;
     
-    while (start < end)
+    while (Start < End)
     {
-        --end;
-        char temp = *end;
-        *end = *start;
-        *start = temp;
-        ++start;
+        --End;
+        
+        // TODO(yuval, eran): Metaprogramming SWAP
+        char Temp = *End;
+        *End = *Start;
+        *Start = Temp;
+        ++Start;
     }
 }
 
 internal void
-F64ToASCII(FormatDest* dest, f64 value, u32 precision)
+F64ToASCII(format_dest* Dest, f64 Value, u32 Precision)
 {
-    if(value < 0)
+    if (Value < 0)
     {
-        OutChar(dest, '-');
-        value = -value;
+        OutChar(Dest, '-');
+        Value = -Value;
     }
     
-    u64 integerPart = (u64)value;
-    value -= (f64)integerPart;
-    U64ToASCII(dest, integerPart, 10, decChars);
+    u64 IntegerPart = (u64)Value;
+    U64ToASCII(Dest, IntegerPart, 10, GlobalDecChars);
     
-    OutChar(dest, '.');
+    Value -= IntegerPart;
     
-    // TODO(yuval): Note that this is NOT an accurate way to do this!
-    for(u32 precisionIndex = 0;
-        precisionIndex < precision;
-        ++precisionIndex)
+    OutChar(Dest, '.');
+    
+    // TODO(yuval & eran): Round to the precision
+    for (u32 PrecisionIndex = 0;
+         PrecisionIndex < Precision;
+         PrecisionIndex++)
     {
-        value *= 10.0f;
-        u32 integer = (u32)value;
-        value -= (f32)integer;
-        OutChar(dest, decChars[integer]);
+        Value *= 10.0;
+        
+        u32 Integer = (u32)Value;
+        OutChar(Dest, GlobalDecChars[Integer]);
+        
+        Value -= Integer;
     }
+}
+
+internal s32
+S32FromZInternal(const char** AtInit)
+{
+    s32 Result = 0;
+    const char* At = *AtInit;
+    
+    while ((*At >= '0') && (*At <= '9'))
+    {
+        Result *= 10;
+        Result += *At - '0';
+        ++At;
+    }
+    
+    *AtInit = At;
+    return Result;
+}
+
+internal s32
+S32FromZ(const char* At)
+{
+    const char* Ignored = At;
+    s32 Result = S32FromZInternal(&Ignored);
+    return Result;
 }
 
 // NOTE(yuval): Size returned __DOES NOT__ include the null terminator.
 internal umm
-FormatStringList(char* destInit, umm destSize, const char* format, va_list argList)
+FormatStringList(char* DestInit, umm DestSize,
+                 const char* Format, va_list ArgList)
 {
-    FormatDest dest = { destInit, destSize };
+    format_dest Dest = {DestInit, DestSize};
     
-    if (dest.size)
+    if(Dest.Size)
     {
-        const char *at = format;
-        
-        while (at[0])
+        const char *At = Format;
+        while(At[0])
         {
-            if (*at == '%')
+            if(*At == '%')
             {
-                ++at;
+                ++At;
                 
-                b32 forceSign = false;
-                b32 padWithZeros = false;
-                b32 leftJustify = false;
-                b32 postiveSignIsBlank = false;
-                b32 annotateIfNotZero = false;
+                b32 ForceSign = false;
+                b32 PadWithZeros = false;
+                b32 LeftJustify = false;
+                b32 PostiveSignIsBlank = false;
+                b32 AnnotateIfNotZero = false;
+                
+                b32 Parsing = true;
                 
                 //
-                // NOTE(yuval): Handle the flags
+                // NOTE(casey): Handle the flags
                 //
-                b32 parsing = true;
-                while (parsing)
+                Parsing = true;
+                while(Parsing)
                 {
-                    switch (*at)
+                    switch(*At)
                     {
-                        case '+': { forceSign = true; } break;
-                        case '0': { padWithZeros = true; } break;
-                        case '-': { leftJustify = true; } break;
-                        case ' ': { postiveSignIsBlank = true; } break;
-                        case '#': { annotateIfNotZero = true; } break;
-                        default: { parsing = false; } break;
+                        case '+': {ForceSign = true;} break;
+                        case '0': {PadWithZeros = true;} break;
+                        case '-': {LeftJustify = true;} break;
+                        case ' ': {PostiveSignIsBlank = true;} break;
+                        case '#': {AnnotateIfNotZero = true;} break;
+                        default: {Parsing = false;} break;
                     }
                     
-                    if(parsing)
+                    if(Parsing)
                     {
-                        ++at;
+                        ++At;
                     }
                 }
                 
                 //
-                // NOTE(yuval): Handle the width
+                // NOTE(casey): Handle the width
                 //
-                b32 widthSpecified = false;
-                s32 width = 0;
-                
-                if (*at == '*')
+                b32 WidthSpecified = false;
+                s32 Width = 0;
+                if(*At == '*')
                 {
-                    width = va_arg(argList, s32);
-                    widthSpecified = true;
-                    ++at;
+                    Width = va_arg(ArgList, int);
+                    WidthSpecified = true;
+                    ++At;
                 }
-                else if ((*at >= '0') && (*at <= '9'))
+                else if((*At >= '0') && (*At <= '9'))
                 {
-                    width = S32FromZInternal(&at);
-                    widthSpecified = true;
+                    Width = S32FromZInternal(&At);
+                    WidthSpecified = true;
                 }
                 
                 //
-                // NOTE(yuval): Handle the precision
+                // NOTE(casey): Handle the precision
                 //
-                b32 precisionSpecified = false;
-                s32 precision = 0;
-                
-                if (*at == '.')
+                b32 PrecisionSpecified = false;
+                u32 Precision = 0;
+                if(*At == '.')
                 {
-                    ++at;
+                    ++At;
                     
-                    if(*at == '*')
+                    if(*At == '*')
                     {
-                        precision = va_arg(argList, s32);
-                        precisionSpecified = true;
-                        ++at;
+                        Precision = va_arg(ArgList, int);
+                        PrecisionSpecified = true;
+                        ++At;
                     }
-                    else if((*at >= '0') && (*at <= '9'))
+                    else if((*At >= '0') && (*At <= '9'))
                     {
-                        precision = S32FromZInternal(&at);
-                        precisionSpecified = true;
+                        Precision = S32FromZInternal(&At);
+                        PrecisionSpecified = true;
                     }
                     else
                     {
@@ -506,131 +658,126 @@ FormatStringList(char* destInit, umm destSize, const char* format, va_list argLi
                     }
                 }
                 
-                // TODO(yuval): Right now our routine doesn't allow non-specified
+                // TODO(casey): Right now our routine doesn't allow non-specified
                 // precisions, so we just set non-specified precisions to a specified value
-                if (!precisionSpecified)
+                if(!PrecisionSpecified)
                 {
-                    precision = 6;
+                    Precision = 6;
                 }
                 
                 //
-                // NOTE(yuval): Handle the length
+                // NOTE(casey): Handle the length
                 //
-                u32 integerLength = 4;
-                u32 floatLength = 8;
-                // TODO(yuval): Actually set different values here!
-                if ((at[0] == 'h') && (at[1] == 'h'))
+                u32 IntegerLength = 4;
+                u32 FloatLength = 8;
+                // TODO(casey): Actually set different values here!
+                if((At[0] == 'h') && (At[1] == 'h'))
                 {
-                    at += 2;
+                    At += 2;
                 }
-                else if ((at[0] == 'l') && (at[1] == 'l'))
+                else if((At[0] == 'l') && (At[1] == 'l'))
                 {
-                    at += 2;
+                    At += 2;
                 }
-                else if (*at == 'h')
+                else if(*At == 'h')
                 {
-                    ++at;
+                    ++At;
                 }
-                else if (*at == 'l')
+                else if(*At == 'l')
                 {
-                    integerLength = 8;
-                    ++at;
+                    IntegerLength = 8;
+                    ++At;
                 }
-                else if (*at == 'j')
+                else if(*At == 'j')
                 {
-                    ++at;
+                    ++At;
                 }
-                else if (*at == 'z')
+                else if(*At == 'z')
                 {
-                    ++at;
+                    ++At;
                 }
-                else if (*at == 't')
+                else if(*At == 't')
                 {
-                    ++at;
+                    ++At;
                 }
-                else if (*at == 'L')
+                else if(*At == 'L')
                 {
-                    ++at;
+                    ++At;
                 }
                 
-                char tempBuffer[64];
-                char* temp = tempBuffer;
-                FormatDest tempDest = { temp, ArrayCount(tempBuffer) };
-                const char* prefix = "";
-                b32 isFloat = false;
+                char TempBuffer[64];
+                char *Temp = TempBuffer;
+                format_dest TempDest = {Temp, ArrayCount(TempBuffer)};
+                const char *Prefix = "";
+                b32 IsFloat = false;
                 
-                switch (*at)
+                switch(*At)
                 {
                     case 'd':
                     case 'i':
                     {
-                        s64 value = ReadVarArgSignedInteger(argList, integerLength);
-                        b32 wasNegative = (value < 0);
-                        
-                        if (wasNegative)
+                        s64 Value = ReadVarArgSignedInteger(IntegerLength, ArgList);
+                        b32 WasNegative = (Value < 0);
+                        if(WasNegative)
                         {
-                            value = -value;
+                            Value = -Value;
                         }
+                        U64ToASCII(&TempDest, (u64)Value, 10, GlobalDecChars);
                         
-                        U64ToASCII(&tempDest, (u64)value, 10, decChars);
-                        
-                        // TODO(yuval): Make this a common routine once floating
+                        // TODO(casey): Make this a common routine once floating
                         // point is available.
-                        if (wasNegative)
+                        if(WasNegative)
                         {
-                            prefix = "-";
+                            Prefix = "-";
                         }
-                        else if (forceSign)
+                        else if(ForceSign)
                         {
-                            Assert(!postiveSignIsBlank); // NOTE(yuval): Not a problem here, but probably shouldn't be specified?
-                            prefix = "+";
+                            Assert(!PostiveSignIsBlank); // NOTE(casey): Not a problem here, but probably shouldn't be specified?
+                            Prefix = "+";
                         }
-                        else if (postiveSignIsBlank)
+                        else if(PostiveSignIsBlank)
                         {
-                            prefix = " ";
+                            Prefix = " ";
                         }
                     } break;
                     
                     case 'u':
                     {
-                        u64 value = ReadVarArgUnsignedInteger(argList, integerLength);
-                        U64ToASCII(&tempDest, value, 10, decChars);
+                        u64 Value = ReadVarArgUnsignedInteger(IntegerLength, ArgList);
+                        U64ToASCII(&TempDest, Value, 10, GlobalDecChars);
                     } break;
                     
                     case 'o':
                     {
-                        u64 value = ReadVarArgUnsignedInteger(argList, integerLength);
-                        U64ToASCII(&tempDest, value, 8, decChars);
-                        
-                        if (annotateIfNotZero && (value != 0))
+                        u64 Value = ReadVarArgUnsignedInteger(IntegerLength, ArgList);
+                        U64ToASCII(&TempDest, Value, 8, GlobalDecChars);
+                        if(AnnotateIfNotZero && (Value != 0))
                         {
-                            prefix = "0";
+                            Prefix = "0";
                         }
                     } break;
                     
                     case 'x':
                     {
-                        u64 value = ReadVarArgUnsignedInteger(argList, integerLength);
-                        U64ToASCII(&tempDest, value, 16, lowerHexChars);
-                        
-                        if (annotateIfNotZero && (value != 0))
+                        u64 Value = ReadVarArgUnsignedInteger(IntegerLength, ArgList);
+                        U64ToASCII(&TempDest, Value, 16, GlobalLowerHexChars);
+                        if(AnnotateIfNotZero && (Value != 0))
                         {
-                            prefix = "0x";
+                            Prefix = "0x";
                         }
                     } break;
                     
                     case 'X':
                     {
-                        u64 value = ReadVarArgUnsignedInteger(argList, integerLength);
-                        U64ToASCII(&tempDest, value, 16, upperHexChars);
-                        
-                        if (annotateIfNotZero && (value != 0))
+                        u64 Value = ReadVarArgUnsignedInteger(IntegerLength, ArgList);
+                        U64ToASCII(&TempDest, Value, 16, GlobalUpperHexChars);
+                        if(AnnotateIfNotZero && (Value != 0))
                         {
-                            prefix = "0X";
+                            Prefix = "0X";
                         }
                     } break;
                     
-                    // TODO(yuval): Support other kinds of floating point prints
+                    // TODO(casey): Support other kinds of floating point prints
                     // (right now we only do basic decimal output)
                     case 'f':
                     case 'F':
@@ -641,75 +788,71 @@ FormatStringList(char* destInit, umm destSize, const char* format, va_list argLi
                     case 'a':
                     case 'A':
                     {
-                        f64 value = ReadVarArgFloat(argList, floatLength);
-                        F64ToASCII(&tempDest, value, precision);
-                        isFloat = true;
+                        f64 Value = ReadVarArgFloat(FloatLength, ArgList);
+                        F64ToASCII(&TempDest, Value, Precision);
+                        IsFloat = true;
                     } break;
                     
                     case 'c':
                     {
-                        int value = va_arg(argList, int);
-                        OutChar(&tempDest, (char)value);
+                        int Value = va_arg(ArgList, int);
+                        OutChar(&TempDest, (char)Value);
                     } break;
                     
                     case 's':
                     {
-                        char* string = va_arg(argList, char*);
+                        char* String = va_arg(ArgList, char*);
                         
-                        // TODO(yuval): Obey precision, width, etc.
+                        // TODO(casey): Obey precision, width, etc.
                         
-                        temp = string;
-                        
-                        if (precisionSpecified)
+                        Temp = String;
+                        if(PrecisionSpecified)
                         {
-                            tempDest.size = 0;
-                            for (char* scan = string;
-                                 *scan && (tempDest.size < precision);
-                                 ++scan)
+                            TempDest.Size = 0;
+                            for(char* Scan = String;
+                                *Scan && (TempDest.Size < Precision);
+                                ++Scan)
                             {
-                                ++tempDest.size;
+                                ++TempDest.Size;
                             }
                         }
                         else
                         {
-                            tempDest.size = StringLength(string);
+                            TempDest.Size = StringLength(String);
                         }
-                        
-                        tempDest.at = string + tempDest.size;
+                        TempDest.At = String + TempDest.Size;
                     } break;
                     
                     case 'S':
                     {
-                        String string = va_arg(argList, String);
+                        string String = va_arg(ArgList, string);
                         
-                        // TODO(yuval): Obey precision, width, etc.
+                        // TODO(casey): Obey precision, width, etc.
                         
-                        temp = string.data;
-                        tempDest.size = string.count;
-                        
-                        if (precisionSpecified && (tempDest.size > precision))
+                        Temp = (char*)String.Data;
+                        TempDest.Size = String.Count;
+                        if(PrecisionSpecified && (TempDest.Size > Precision))
                         {
-                            tempDest.size = precision;
+                            TempDest.Size = Precision;
                         }
-                        
-                        tempDest.at = temp + tempDest.size;
+                        TempDest.At = Temp + TempDest.Size;
                     } break;
                     
                     case 'p':
                     {
-                        void* value = va_arg(argList, void*);
-                        U64ToASCII(&tempDest, *(umm*)&value, 16, lowerHexChars);
+                        void *Value = va_arg(ArgList, void *);
+                        U64ToASCII(&TempDest, *(umm *)&Value, 16, GlobalLowerHexChars);
                     } break;
                     
                     case 'n':
                     {
-                        int* tabDest = va_arg(argList, int*);
-                        *tabDest = (int)(dest.at - destInit);
+                        int *TabDest = va_arg(ArgList, int *);
+                        *TabDest = (int)(Dest.At - DestInit);
                     } break;
                     
                     case '%':
                     {
-                        OutChar(&dest, '%');
+                        OutChar(&Dest, '%');
                     } break;
                     
                     default:
@@ -718,113 +861,109 @@ FormatStringList(char* destInit, umm destSize, const char* format, va_list argLi
                     } break;
                 }
                 
-                if (tempDest.at - temp)
+                if(TempDest.At - Temp)
                 {
-                    smm usePrecision = precision;
-                    
-                    if (isFloat || !precisionSpecified)
+                    smm UsePrecision = Precision;
+                    if(IsFloat || !PrecisionSpecified)
                     {
-                        usePrecision = (tempDest.at - temp);
+                        UsePrecision = (TempDest.At - Temp);
                     }
                     
-                    smm prefixLength = StringLength(prefix);
-                    smm useWidth = width;
-                    smm computedWidth = usePrecision + prefixLength;
-                    
-                    if (useWidth < computedWidth)
+                    smm PrefixLength = StringLength(Prefix);
+                    smm UseWidth = Width;
+                    smm ComputedWidth = UsePrecision + PrefixLength;
+                    if(UseWidth < ComputedWidth)
                     {
-                        useWidth = computedWidth;
+                        UseWidth = ComputedWidth;
                     }
                     
-                    if (padWithZeros)
+                    if(PadWithZeros)
                     {
-                        Assert(!leftJustify); // NOTE(yuval): Not a problem, but no way to do it?
-                        leftJustify = false;
+                        Assert(!LeftJustify); // NOTE(casey): Not a problem, but no way to do it?
+                        LeftJustify = false;
                     }
                     
-                    if (!leftJustify)
+                    if(!LeftJustify)
                     {
-                        while (useWidth > (usePrecision + prefixLength))
+                        while(UseWidth > (UsePrecision + PrefixLength))
                         {
-                            OutChar(&dest, padWithZeros ? '0' : ' ');
-                            --useWidth;
+                            OutChar(&Dest, PadWithZeros ? '0' : ' ');
+                            --UseWidth;
                         }
                     }
                     
-                    for (const char* pre = prefix;
-                         *pre && useWidth;
-                         ++pre)
+                    for(const char *Pre = Prefix;
+                        *Pre && UseWidth;
+                        ++Pre)
                     {
-                        OutChar(&dest, *pre);
-                        --useWidth;
+                        OutChar(&Dest, *Pre);
+                        --UseWidth;
                     }
                     
-                    if (usePrecision > useWidth)
+                    if(UsePrecision > UseWidth)
                     {
-                        usePrecision = useWidth;
+                        UsePrecision = UseWidth;
+                    }
+                    while(UsePrecision > (TempDest.At - Temp))
+                    {
+                        OutChar(&Dest, '0');
+                        --UsePrecision;
+                        --UseWidth;
+                    }
+                    while(UsePrecision && (TempDest.At != Temp))
+                    {
+                        OutChar(&Dest, *Temp++);
+                        --UsePrecision;
+                        --UseWidth;
                     }
                     
-                    while (usePrecision > (tempDest.at - temp))
+                    if(LeftJustify)
                     {
-                        OutChar(&dest, '0');
-                        --usePrecision;
-                        --useWidth;
-                    }
-                    
-                    while (usePrecision && (tempDest.at != temp))
-                    {
-                        OutChar(&dest, *temp++);
-                        --usePrecision;
-                        --useWidth;
-                    }
-                    
-                    if (leftJustify)
-                    {
-                        while (useWidth)
+                        while(UseWidth)
                         {
-                            OutChar(&dest, ' ');
-                            --useWidth;
+                            OutChar(&Dest, ' ');
+                            --UseWidth;
                         }
                     }
                 }
                 
-                if(*at)
+                if(*At)
                 {
-                    ++at;
+                    ++At;
                 }
             }
             else
             {
-                OutChar(&dest, *at++);
+                OutChar(&Dest, *At++);
             }
         }
         
-        if (dest.size)
+        if(Dest.Size)
         {
-            dest.at[0] = 0;
+            Dest.At[0] = 0;
         }
         else
         {
-            dest.at[-1] = 0;
+            Dest.At[-1] = 0;
         }
     }
     
-    umm result = dest.at - destInit;
-    return result;
+    umm Result = Dest.At - DestInit;
+    return(Result);
 }
 
-// TODO(yuval): Eventually, make this return a string struct
+// TODO(casey): Eventually, make this return a string struct
 internal umm
-FormatString(char* dest, umm destSize, char* format, ...)
+FormatString(char *Dest, umm DestSize, const char *Format, ...)
 {
-    va_list argList;
+    va_list ArgList;
     
-    va_start(argList, format);
-    umm result = FormatStringList(dest, destSize, format, argList);
-    va_end(argList);
+    va_start(ArgList, Format);
+    umm Result = FormatStringList(Dest, DestSize, Format, ArgList);
+    va_end(ArgList);
     
-    return result;
+    return(Result);
 }
 
-#define METATOOLSHARED_H
+#define META_TOOL_SHARED_H
 #endif

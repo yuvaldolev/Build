@@ -1,570 +1,569 @@
 // TODO(yuval): Maybe @Add a better data structure for faster lookup
-struct KeywordNameAndType
+struct keyword_name_and_type
 {
-    const char* name;
-    TokenType type;
+    const char* Name;
+    token_type Type;
 };
 
-global_variable KeywordNameAndType globalKeywords[] = {
-    { "true", Token_BoolConstant },
-    { "false", Token_BoolConstant },
+global_variable keyword_name_and_type GlobalKeywords[] = {
+    {"true", Token_BoolConstant},
+    {"false", Token_BoolConstant},
     
-    { "void", Token_Void },
-    { "bool", Token_Bool },
-    { "char", Toekn_Char },
-    { "int", Token_Int },
-    { "float", Token_Float },
-    { "double", Token_Double },
+    {"void", Token_Void},
+    {"bool", Token_Bool},
+    {"char", Toekn_Char},
+    {"int", Token_Int},
+    {"float", Token_Float},
+    {"double", Token_Double},
     
-    { "long", Token_Long },
-    { "short", Token_Short },
-    { "unsigned", Token_Unsigned },
-    { "const", Token_Const },
+    {"long", Token_Long},
+    {"short", Token_Short},
+    {"unsigned", Token_Unsigned},
+    {"const", Token_Const},
     // TODO(yuval): Maybe @Add a "volatile" keyword
     
-    { "if", Token_If },
-    { "switch", Token_Switch },
-    { "for", Token_For },
-    { "while", Token_While },
-    { "do", Token_Do },
-    { "else", Token_Else },
-    { "case", Token_Case },
-    { "default", Token_Default },
-    { "break", Token_Break },
-    { "continue", Token_Continue },
-    { "return", Token_Return },
-    { "goto", Token_Goto },
+    {"if", Token_If},
+    {"switch", Token_Switch},
+    {"for", Token_For},
+    {"while", Token_While},
+    {"do", Token_Do},
+    {"else", Token_Else},
+    {"case", Token_Case},
+    {"default", Token_Default},
+    {"break", Token_Break},
+    {"continue", Token_Continue},
+    {"return", Token_Return},
+    {"goto", Token_Goto},
     
-    { "struct", Token_Struct },
-    { "enum", Token_Enum },
-    { "union", Token_Union },
-    { "typedef", Token_Typedef },
+    {"struct", Token_Struct},
+    {"enum", Token_Enum},
+    {"union", Token_Union},
+    {"typedef", Token_Typedef},
     
-    { "static", Token_Static },
-    { "inline", Token_Inline },
-    { "extern", Token_Extern },
+    {"static", Token_Static},
+    {"inline", Token_Inline},
+    {"extern", Token_Extern},
     // TODO(yuval): Maybe @Add an "export" keyword
     
-    { "include", Token_PP_Include },
-    { "INCLUDE", Token_PP_Include },
-    { "define", Token_PP_Define },
-    { "DEFINE", Token_PP_Define },
-    { "if", Token_PP_If },
-    { "IF", Token_PP_If },
-    { "elif", Token_PP_Elif },
-    { "ELIF", Token_PP_Elif },
-    { "else", Token_PP_Else },
-    { "ELSE", Token_PP_Else },
-    { "ifdef", Token_PP_Ifdef },
-    { "IFDEF", Token_PP_Ifdef },
-    { "ifndef", Token_PP_Ifndef },
-    { "IFNDEF", Token_PP_Ifndef },
-    { "endif", Token_PP_Endif },
-    { "ENDIF", Token_PP_Endif },
-    { "import", Token_PP_Import },
-    { "IMPORT", Token_PP_Import },
-    { "pragma", Token_PP_Pragma },
-    { "PRAGMA", Token_PP_Pragma },
-    { "undef", Token_PP_Undef },
-    { "UNDEF", Token_PP_Undef },
-    { "error", Token_PP_Error },
-    { "ERROR", Token_PP_Error },
-    { "using", Token_PP_Using },
-    { "USING", Token_PP_Using }
+    {"include", Token_PP_Include},
+    {"INCLUDE", Token_PP_Include},
+    {"define", Token_PP_Define},
+    {"DEFINE", Token_PP_Define},
+    {"if", Token_PP_If},
+    {"IF", Token_PP_If},
+    {"elif", Token_PP_Elif},
+    {"ELIF", Token_PP_Elif},
+    {"else", Token_PP_Else},
+    {"ELSE", Token_PP_Else},
+    {"ifdef", Token_PP_Ifdef},
+    {"IFDEF", Token_PP_Ifdef},
+    {"ifndef", Token_PP_Ifndef},
+    {"IFNDEF", Token_PP_Ifndef},
+    {"endif", Token_PP_Endif},
+    {"ENDIF", Token_PP_Endif},
+    {"import", Token_PP_Import},
+    {"IMPORT", Token_PP_Import},
+    {"pragma", Token_PP_Pragma},
+    {"PRAGMA", Token_PP_Pragma},
+    {"undef", Token_PP_Undef},
+    {"UNDEF", Token_PP_Undef},
+    {"error", Token_PP_Error},
+    {"ERROR", Token_PP_Error},
+    {"using", Token_PP_Using},
+    {"USING", Token_PP_Using}
     // TODO(yuval): Maybe @Add support for LINE, FILE, etc. preprocessor tokens
     
     // TODO(yuval): @Add C++ support (class, new, delete, try, catch...)
 };
 
-b32
-TokenEquals(Token token, const char* match)
+internal b32
+TokenEquals(token Token, const char* Match)
 {
-    b32 result = StringsAreEqual(token.text, match);
-    return result;
+    b32 Result = StringsAreEqual(Token.Text, Match);
+    return Result;
 }
 
 internal void
-Refill(Tokenizer* tokenizer)
+Refill(tokenizer* Tokenizer)
 {
-    if (tokenizer->input.count == 0)
+    if (Tokenizer->Input.Count == 0)
     {
-        tokenizer->at[0] = 0;
-        tokenizer->at[1] = 0;
+        Tokenizer->At[0] = 0;
+        Tokenizer->At[1] = 0;
     }
-    else if (tokenizer->input.count == 1)
+    else if (Tokenizer->Input.Count == 1)
     {
-        tokenizer->at[0] = tokenizer->input.data[0];
-        tokenizer->at[1] = 0;
+        Tokenizer->At[0] = Tokenizer->Input.Data[0];
+        Tokenizer->At[1] = 0;
     }
     else
     {
-        tokenizer->at[0] = tokenizer->input.data[0];
-        tokenizer->at[1] = tokenizer->input.data[1];
+        Tokenizer->At[0] = Tokenizer->Input.Data[0];
+        Tokenizer->At[1] = Tokenizer->Input.Data[1];
     }
 }
 
 internal void
-AdvanceChars(Tokenizer* tokenizer, u32 count)
+AdvanceChars(tokenizer* Tokenizer, u32 Count)
 {
-    tokenizer->columnNumber += count;
-    AdvanceString(&tokenizer->input, count);
-    Refill(tokenizer);
+    Tokenizer->ColumnNumber += Count;
+    AdvanceString(&Tokenizer->Input, Count);
+    Refill(Tokenizer);
 }
 
 internal void
-GetLiteral(Token* token, Tokenizer* tokenizer, char enclosing)
+GetLiteral(token* Token, tokenizer* Tokenizer, char Enclosing)
 {
-    while (tokenizer->at[0] &&
-           tokenizer->at[0] != enclosing)
+    while (Tokenizer->At[0] &&
+           Tokenizer->At[0] != Enclosing)
     {
-        if ((tokenizer->at[0] == '\\') &&
-            tokenizer->at[1])
+        if ((Tokenizer->At[0] == '\\') &&
+            Tokenizer->At[1])
         {
-            AdvanceChars(tokenizer, 1);
+            AdvanceChars(Tokenizer, 1);
         }
         
-        AdvanceChars(tokenizer, 1);
+        AdvanceChars(Tokenizer, 1);
     }
     
-    if (tokenizer->at[0] == enclosing)
+    if (Tokenizer->At[0] == Enclosing)
     {
-        AdvanceChars(tokenizer, 1);
+        AdvanceChars(Tokenizer, 1);
     }
     else
     {
-        BadToken(token, "unclosed literal");
+        BadToken(Token, "unclosed literal");
     }
 }
 
-internal Token
-GetTokenRaw(Tokenizer* tokenizer)
+internal token
+GetTokenRaw(tokenizer* Tokenizer)
 {
-    Token token = { };
-    token.filename = tokenizer->filename;
-    token.columnNumber = tokenizer->columnNumber;
-    token.lineNumber = tokenizer->lineNumber;
-    token.text = tokenizer->input;
-    token.fileData = tokenizer->inputFileData;
+    token Token = {};
+    Token.FileName = Tokenizer->FileName;
+    Token.ColumnNumber = Tokenizer->ColumnNumber;
+    Token.LineNumber = Tokenizer->LineNumber;
+    Token.Text = Tokenizer->Input;
+    Token.FileData = Tokenizer->InputFileData;
     
-    if (IsAlpha(tokenizer->at[0]))
+    if (IsAlpha(Tokenizer->At[0]))
     {
-        b32 isKeyword = false;
+        b32 IsKeyword = false;
         
-        ArrayForeachRef(KeywordNameAndType* keyword, globalKeywords)
+        For(GlobalKeywords)
         {
-            if (StringsAreEqual(tokenizer->input, keyword->name,
-                                StringLength(keyword->name)))
+            if (StringsAreEqual(Tokenizer->Input, It->Name,
+                                StringLength(It->Name)))
             {
                 // TODO(yuval): @Copy-and-paste - StringLength is called twice
-                AdvanceChars(tokenizer, StringLength(keyword->name));
-                token.type = keyword->type;
-                isKeyword = true;
+                AdvanceChars(Tokenizer, StringLength(It->Name));
+                Token.Type = It->Type;
+                IsKeyword = true;
             }
         }
         
-        if (!isKeyword)
+        if (!IsKeyword)
         {
-            token.type = Token_Identifier;
+            Token.Type = Token_Identifier;
             
-            AdvanceChars(tokenizer, 1);
+            AdvanceChars(Tokenizer, 1);
             
-            while (IsAlpha(tokenizer->at[0]) ||
-                   IsNumber(tokenizer->at[0]) ||
-                   (tokenizer->at[0] == '_'))
+            while (IsAlpha(Tokenizer->At[0]) ||
+                   IsNumber(Tokenizer->At[0]) ||
+                   (Tokenizer->At[0] == '_'))
             {
-                AdvanceChars(tokenizer, 1);
+                AdvanceChars(Tokenizer, 1);
             }
         }
     }
     else
     {
+        char C = Tokenizer->At[0];
+        AdvanceChars(Tokenizer, 1);
         
-        char c = tokenizer->at[0];
-        AdvanceChars(tokenizer, 1);
-        
-        switch (c)
+        switch (C)
         {
-            case '\0': { token.type = Token_EndOfStream; } break;
+            case '\0': { Token.Type = Token_EndOfStream; } break;
             
-            case '?': { token.type = Token_Ternary; } break;
-            case '[': { token.type = Token_OpenBracket; } break;
-            case ']': { token.type = Token_CloseBracket; } break;
-            case '(': { token.type = Token_OpenParen; } break;
-            case ')': { token.type = Token_CloseParen; } break;
-            case '{': { token.type = Token_OpenBrace; } break;
-            case '}': { token.type = Token_CloseBrace; } break;
-            case '.': { token.type = Token_Period; } break;
-            case '~': { token.type = Token_Tilde; } break;
-            case ';': { token.type = Token_Semi; } break;
-            case ',': { token.type = Token_Comma; } break;
+            case '?': { Token.Type = Token_Ternary; } break;
+            case '[': { Token.Type = Token_OpenBracket; } break;
+            case ']': { Token.Type = Token_CloseBracket; } break;
+            case '(': { Token.Type = Token_OpenParen; } break;
+            case ')': { Token.Type = Token_CloseParen; } break;
+            case '{': { Token.Type = Token_OpenBrace; } break;
+            case '}': { Token.Type = Token_CloseBrace; } break;
+            case '.': { Token.Type = Token_Period; } break;
+            case '~': { Token.Type = Token_Tilde; } break;
+            case ';': { Token.Type = Token_Semi; } break;
+            case ',': { Token.Type = Token_Comma; } break;
             
             case '&':
             {
-                if (tokenizer->at[0] == '&')
+                if (Tokenizer->At[0] == '&')
                 {
-                    token.type = Token_AmpAmp;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_AmpAmp;
+                    AdvanceChars(Tokenizer, 1);
                 }
-                else if (tokenizer->at[0] == '=')
+                else if (Tokenizer->At[0] == '=')
                 {
-                    token.type = Token_AmpEqual;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_AmpEqual;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Amp;
+                    Token.Type = Token_Amp;
                 }
             } break;
             
             case '*':
             {
-                if (tokenizer->at[0] == '=')
+                if (Tokenizer->At[0] == '=')
                 {
-                    token.type = Token_StarEqual;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_StarEqual;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Star;
+                    Token.Type = Token_Star;
                 }
             } break;
             
             case '+':
             {
-                if (tokenizer->at[0] == '+')
+                if (Tokenizer->At[0] == '+')
                 {
-                    token.type = Token_PlusPlus;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_PlusPlus;
+                    AdvanceChars(Tokenizer, 1);
                 }
-                else if (tokenizer->at[0] == '=')
+                else if (Tokenizer->At[0] == '=')
                 {
-                    token.type = Token_PlusEqual;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_PlusEqual;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Plus;
+                    Token.Type = Token_Plus;
                 }
             } break;
             
             case '-':
             {
-                if (tokenizer->at[0] == '-')
+                if (Tokenizer->At[0] == '-')
                 {
-                    token.type = Token_MinusMinus;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_MinusMinus;
+                    AdvanceChars(Tokenizer, 1);
                 }
-                else if (tokenizer->at[0] == '=')
+                else if (Tokenizer->At[0] == '=')
                 {
-                    token.type = Token_MinusEqual;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_MinusEqual;
+                    AdvanceChars(Tokenizer, 1);
                 }
-                else if (tokenizer->at[0] == '>')
+                else if (Tokenizer->At[0] == '>')
                 {
-                    token.type = Token_Arrow;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_Arrow;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Minus;
+                    Token.Type = Token_Minus;
                 }
             } break;
             
             case '!':
             {
-                if (tokenizer->at[0] == '=')
+                if (Tokenizer->At[0] == '=')
                 {
-                    token.type = Token_NotEqual;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_NotEqual;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Not;
+                    Token.Type = Token_Not;
                 }
             } break;
             
             case '%':
             {
-                if (tokenizer->at[0] == '=')
+                if (Tokenizer->At[0] == '=')
                 {
-                    token.type = Token_PercentEqual;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_PercentEqual;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Percent;
+                    Token.Type = Token_Percent;
                 }
             } break;
             
             case '<':
             {
-                if (tokenizer->at[0] == '=')
+                if (Tokenizer->At[0] == '=')
                 {
-                    token.type = Token_LessEqual;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_LessEqual;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Less;
+                    Token.Type = Token_Less;
                 }
             } break;
             
             case '>':
             {
-                if (tokenizer->at[0] == '=')
+                if (Tokenizer->At[0] == '=')
                 {
-                    token.type = Token_GreaterEqual;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_GreaterEqual;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Greater;
+                    Token.Type = Token_Greater;
                 }
             } break;
             
             case '^':
             {
-                if (tokenizer->at[0] == '^')
+                if (Tokenizer->At[0] == '^')
                 {
-                    token.type = Token_CaretCaret;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_CaretCaret;
+                    AdvanceChars(Tokenizer, 1);
                 }
-                else if (tokenizer->at[0] == '=')
+                else if (Tokenizer->At[0] == '=')
                 {
-                    token.type = Token_CaretEqual;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_CaretEqual;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Caret;
+                    Token.Type = Token_Caret;
                 }
             } break;
             
             case '|':
             {
-                if (tokenizer->at[0] == '|')
+                if (Tokenizer->At[0] == '|')
                 {
-                    token.type = Token_PipePipe;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_PipePipe;
+                    AdvanceChars(Tokenizer, 1);
                 }
-                else if (tokenizer->at[0] == '=')
+                else if (Tokenizer->At[0] == '=')
                 {
-                    token.type = Token_PipeEqual;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_PipeEqual;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Pipe;
+                    Token.Type = Token_Pipe;
                 }
             } break;
             
             case ':':
             {
-                if (tokenizer->at[0] == ':')
+                if (Tokenizer->At[0] == ':')
                 {
-                    token.type = Token_ColonColon;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_ColonColon;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Colon;
+                    Token.Type = Token_Colon;
                 }
             } break;
             
             case '=':
             {
-                if (tokenizer->at[0] == '=')
+                if (Tokenizer->At[0] == '=')
                 {
-                    token.type = Token_EqualEqual;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_EqualEqual;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Equal;
+                    Token.Type = Token_Equal;
                 }
             } break;
             
             case '#':
             {
-                if (tokenizer->at[0] == '#')
+                if (Tokenizer->At[0] == '#')
                 {
-                    token.type = Token_HashHash;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_HashHash;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Hash;
+                    Token.Type = Token_Hash;
                 }
             } break;
             
             case '/':
             {
-                if (tokenizer->at[0] == '/')
+                if (Tokenizer->At[0] == '/')
                 {
-                    token.type = Token_Comment;
-                    AdvanceChars(tokenizer, 2);
+                    Token.Type = Token_Comment;
+                    AdvanceChars(Tokenizer, 2);
                     
-                    while (tokenizer->at[0] && !IsEndOfLine(tokenizer->at[0]))
+                    while (Tokenizer->At[0] && !IsEndOfLine(Tokenizer->At[0]))
                     {
-                        AdvanceChars(tokenizer, 1);
+                        AdvanceChars(Tokenizer, 1);
                     }
                 }
-                else if (tokenizer->at[0] == '*')
+                else if (Tokenizer->At[0] == '*')
                 {
-                    token.type = Token_Comment;
-                    AdvanceChars(tokenizer, 2);
+                    Token.Type = Token_Comment;
+                    AdvanceChars(Tokenizer, 2);
                     
-                    while (tokenizer->at[0] &&
-                           !((tokenizer->at[0] == '*') && (tokenizer->at[1])))
+                    while (Tokenizer->At[0] &&
+                           !((Tokenizer->At[0] == '*') && (Tokenizer->At[1])))
                     {
-                        if (((tokenizer->at[0] == '\r') && (tokenizer->at[1] == '\n')) ||
-                            ((tokenizer->at[0] == '\n') && (tokenizer->at[1] == '\r')))
+                        if (((Tokenizer->At[0] == '\r') && (Tokenizer->At[1] == '\n')) ||
+                            ((Tokenizer->At[0] == '\n') && (Tokenizer->At[1] == '\r')))
                         {
-                            AdvanceChars(tokenizer, 1);
+                            AdvanceChars(Tokenizer, 1);
                         }
                         
-                        if (IsEndOfLine(tokenizer->at[0]))
+                        if (IsEndOfLine(Tokenizer->At[0]))
                         {
-                            ++tokenizer->lineNumber;
+                            ++Tokenizer->LineNumber;
                         }
                         
-                        AdvanceChars(tokenizer, 1);
+                        AdvanceChars(Tokenizer, 1);
                     }
                 }
-                else if (tokenizer->at[0] == '=')
+                else if (Tokenizer->At[0] == '=')
                 {
-                    token.type = Token_SlashEqual;
-                    AdvanceChars(tokenizer, 1);
+                    Token.Type = Token_SlashEqual;
+                    AdvanceChars(Tokenizer, 1);
                 }
                 else
                 {
-                    token.type = Token_Slash;
+                    Token.Type = Token_Slash;
                 }
             } break;
             
             case '"':
             {
-                token.type = Token_StringLiteral;
-                GetLiteral(&token, tokenizer, '"');
+                Token.Type = Token_StringLiteral;
+                GetLiteral(&Token, Tokenizer, '"');
             } break;
             
             case '\'':
             {
-                token.type = Token_CharConstant;
-                GetLiteral(&token, tokenizer, '\'');
+                Token.Type = Token_CharConstant;
+                GetLiteral(&Token, Tokenizer, '\'');
             } break;
             
             default:
             {
-                if (IsSpacing(c))
+                if (IsSpacing(C))
                 {
-                    token.type = Token_Spacing;
+                    Token.Type = Token_Spacing;
                     
-                    while (IsSpacing(tokenizer->at[0]))
+                    while (IsSpacing(Tokenizer->At[0]))
                     {
-                        AdvanceChars(tokenizer, 1);
+                        AdvanceChars(Tokenizer, 1);
                     }
                 }
-                else if (IsEndOfLine(c))
+                else if (IsEndOfLine(C))
                 {
-                    token.type = Token_EndOfLine;
+                    Token.Type = Token_EndOfLine;
                     
-                    if (((c == '\r') && (tokenizer->at[0] == '\n')) ||
-                        ((c == '\n') && (tokenizer->at[0] == '\r')))
+                    if (((C == '\r') && (Tokenizer->At[0] == '\n')) ||
+                        ((C == '\n') && (Tokenizer->At[0] == '\r')))
                     {
-                        AdvanceChars(tokenizer, 1);
+                        AdvanceChars(Tokenizer, 1);
                     }
                     
-                    tokenizer->columnNumber = 1;
-                    ++tokenizer->lineNumber;
+                    Tokenizer->ColumnNumber = 1;
+                    ++Tokenizer->LineNumber;
                 }
-                else if (IsNumber(c))
+                else if (IsNumber(C))
                 {
-                    f32 number = (f32)(c - '0');
+                    f32 Number = (f32)(C - '0');
                     
-                    while (IsNumber(tokenizer->at[0]))
+                    while (IsNumber(Tokenizer->At[0]))
                     {
-                        f32 digit = (f32)(tokenizer->at[0] - '0');
-                        number = 10.0f * number + digit;
-                        AdvanceChars(tokenizer, 1);
+                        f32 Digit = (f32)(Tokenizer->At[0] - '0');
+                        Number = 10.0f * Number + Digit;
+                        AdvanceChars(Tokenizer, 1);
                     }
                     
-                    if (tokenizer->at[0] == '.')
+                    if (Tokenizer->At[0] == '.')
                     {
-                        f32 coefficient = 0.1f;
+                        f32 Coefficient = 0.1f;
                         
-                        while (IsNumber(tokenizer->at[0]))
+                        while (IsNumber(Tokenizer->At[0]))
                         {
-                            f32 digit = (f32)(tokenizer->at[0] - '0');
-                            number += digit * coefficient;
-                            coefficient *= 0.1f;
-                            AdvanceChars(tokenizer, 1);
+                            f32 Digit = (f32)(Tokenizer->At[0] - '0');
+                            Number += Digit * Coefficient;
+                            Coefficient *= 0.1f;
+                            AdvanceChars(Tokenizer, 1);
                         }
                     }
                     
-                    token.type = Token_Number;
-                    token.f32 = number;
-                    token.s32 = RoundReal32ToInt32(number);
+                    Token.Type = Token_Number;
+                    Token.F32 = Number;
+                    Token.S32 = RoundF32ToS32(Number);
                 }
                 else
                 {
-                    token.type = Token_Unknown;
+                    Token.Type = Token_Unknown;
                 }
             } break;
         }
     }
     
-    token.text.count = (tokenizer->input.data - token.text.data);
+    Token.Text.Count = (Tokenizer->Input.Data - Token.Text.Data);
     
-    return token;
+    return Token;
 }
 
-Token
-GetToken(Tokenizer* tokenizer)
+internal token
+GetToken(tokenizer* Tokenizer)
 {
-    Token token = { };
+    token Token = {};
     
     while (true)
     {
-        token = GetTokenRaw(tokenizer);
+        Token = GetTokenRaw(Tokenizer);
         
-        if ((token.type == Token_Spacing) ||
-            (token.type == Token_EndOfLine) ||
-            (token.type == Token_Comment))
+        if ((Token.Type == Token_Spacing) ||
+            (Token.Type == Token_EndOfLine) ||
+            (Token.Type == Token_Comment))
         {
             // NOTE(yuval): These tokens are ignored
         }
         else
         {
-            if (token.type == Token_StringLiteral)
+            if (Token.Type == Token_StringLiteral)
             {
-                if (token.text.count &&
-                    (token.text.data[0] == '"'))
+                if (Token.Text.Count &&
+                    (Token.Text.Data[0] == '"'))
                 {
-                    ++token.text.data;
-                    --token.text.count;
+                    ++Token.Text.Data;
+                    --Token.Text.Count;
                 }
                 
-                if (token.text.count &&
-                    token.text.data[token.text.count - 1] == '"')
+                if (Token.Text.Count &&
+                    Token.Text.Data[Token.Text.Count - 1] == '"')
                 {
-                    --token.text.count;
+                    --Token.Text.Count;
                 }
             }
             
-            if (token.type == Token_CharConstant)
+            if (Token.Type == Token_CharConstant)
             {
-                if (token.text.count &&
-                    (token.text.data[0] == '\''))
+                if (Token.Text.Count &&
+                    (Token.Text.Data[0] == '\''))
                 {
-                    ++token.text.data;
-                    --token.text.count;
+                    ++Token.Text.Data;
+                    --Token.Text.Count;
                 }
                 
-                if (token.text.count &&
-                    token.text.data[token.text.count - 1] == '\'')
+                if (Token.Text.Count &&
+                    Token.Text.Data[Token.Text.Count - 1] == '\'')
                 {
-                    --token.text.count;
+                    --Token.Text.Count;
                 }
             }
             
@@ -572,32 +571,56 @@ GetToken(Tokenizer* tokenizer)
         }
     }
     
-    return token;
+    return Token;
 }
 
-Token
-RequireToken(Tokenizer* tokenizer, TokenType desiredType)
+internal token
+PeekToken(tokenizer* Tokenizer)
 {
-    Token token = GetToken(tokenizer);
+    tokenizer Temp = *Tokenizer;
+    token Result = GetToken(&Temp);
+    return Result;
+}
+
+internal token
+RequireToken(tokenizer* Tokenizer, token_type DesiredType)
+{
+    token Token = GetToken(Tokenizer);
     
-    if (token.type != desiredType)
+    if (Token.Type != DesiredType)
     {
-        // TODO(yuval): @Replace with desired token name
-        BadToken(&token, "Unexpected token type");
+        // TODO(yuval): @Add the problematic token type and the desired type
+        BadToken(&Token, "Unexpected token type");
     }
+    
+    return Token;
 }
 
-Tokenizer
-Tokenize(String filename, String input)
+internal b32
+OptionalToken(tokenizer* Tokenizer, token_type DesiredType)
 {
-    Tokenizer result = { };
+    token Token = PeekToken(Tokenizer);
+    b32 Result = (Token.Type == DesiredType);
     
-    result.filename = filename;
-    result.columnNumber = 1;
-    result.lineNumber = 1;
-    result.input = input;
-    result.inputFileData = input;
-    Refill(&result);
+    if (Result)
+    {
+        GetToken(Tokenizer);
+    }
     
-    return result;
+    return Result;
+}
+
+internal tokenizer
+Tokenize(string FileName, string Input)
+{
+    tokenizer Result = { };
+    
+    Result.FileName = FileName;
+    Result.ColumnNumber = 1;
+    Result.LineNumber = 1;
+    Result.Input = Input;
+    Result.InputFileData = Input;
+    Refill(&Result);
+    
+    return Result;
 }

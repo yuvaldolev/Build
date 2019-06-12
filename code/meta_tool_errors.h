@@ -1,84 +1,84 @@
-#if !defined(METATOOLERRORS_H)
+#if !defined(META_TOOL_ERRORS_H)
 
 #include <stdio.h>
 #include <stdlib.h>
 
 internal void
-PrintErrorMessage(const char* type, const char* message,
-                  const String* fileData, String filepath,
-                  s32 line, s32 column)
+PrintErrorMessage(const char* Type, const char* Message,
+                  const string* FileData, string FilePath,
+                  s32 Line, s32 Column)
 {
-    const char* dataAt = fileData->data;
+    const char* DataAt = FileData->Data;
     
     // NOTE(yuval): Getting to the line that contains the error
-    for (s32 lineNumber = 1; lineNumber < line; ++lineNumber)
+    For (LineNumber, Range(1, Line))
     {
-        while (*dataAt && (*dataAt++ != '\n'));
+        while (*DataAt && (*DataAt++ != '\n'));
     }
     
     // NOTE(yuval): Ignoring all spacing in the beginning of the line
-    s32 firstCharIndex = 0;
-    while (IsSpacing(*dataAt))
+    s32 FirstCharIndex = 0;
+    while (IsSpacing(*DataAt))
     {
-        ++firstCharIndex;
-        ++dataAt;
+        ++FirstCharIndex;
+        ++DataAt;
     }
     
-    u32 lineLen = 0;
-    const char* lineAt = dataAt;
-    
     // NOTE(yuval): Error line length calculation
-    while (*lineAt && (*lineAt != '\n'))
+    u32 LineLen = 0;
+    const char* LineAt = DataAt;
+    
+    while (*LineAt && (*LineAt != '\n'))
     {
-        ++lineLen;
-        ++lineAt;
+        ++LineLen;
+        ++LineAt;
     }
     
     // NOTE(yuval): Error location data
-    fprintf(stderr, "\n%.*s:%d:%d: %s: %s\n",
-            (s32)filepath.count, filepath.data,
-            line, column, type, message);
+    fprintf(stderr, "%.*s:%d:%d: %s: %s\n",
+            (s32)FilePath.Count, FilePath.Data,
+            Line, Column, Type, Message);
     
     // NOTE(yuval): Error line
-    fprintf(stderr, "    %.*s\n    ", lineLen, dataAt);
+    fprintf(stderr, "    %.*s\n    ", LineLen, DataAt);
     
     // NOTE(yuval): Error char
-    for (s32 charIndex = firstCharIndex; charIndex < column - 1; ++charIndex)
+    For (CharIndex, Range(FirstCharIndex, Column - 1))
     {
-        fprintf(stderr, ((dataAt[charIndex] == '\t') ? "    " : " "));
+        fprintf(stderr, ((DataAt[CharIndex] == '\t') ? "    " : " "));
     }
     
     fprintf(stderr, "^\n\n");
 }
 
 internal void
-PrintWarning(const char* message, const String* fileData, String filepath, s32 line, s32 column)
+ReportWarning(const char* Message, const string* FileData, string FilePath, s32 Line, s32 Column)
 {
-    PrintErrorMessage("warning", message, fileData, filepath, line, column);
+    PrintErrorMessage("warning", Message, FileData, FilePath, Line, Column);
 }
 
 internal void
-PrintError(const char* message, const String* fileData, String filepath, s32 line, s32 column)
+ReportError(const char* Message, const string* FileData, string FilePath, s32 Line, s32 Column)
 {
-    PrintErrorMessage("error", message, fileData, filepath, line, column);
+    PrintErrorMessage("error", Message, FileData, FilePath, Line, Column);
     exit(1);
 }
 
 internal void
-WarnToken(Token* token, const char* message)
+WarnToken(token* Token, const char* Message)
 {
-    PrintWarning(message, &token->fileData,
-                 token->filename, token->lineNumber,
-                 token->columnNumber);
+    ReportWarning(Message, &Token->FileData,
+                  Token->FileName, Token->LineNumber,
+                  Token->ColumnNumber);
 }
 
 internal void
-BadToken(Token* token, const char* message)
+BadToken(token* Token, const char* Message)
 {
-    PrintError(message, &token->fileData,
-               token->filename, token->lineNumber,
-               token->columnNumber);
+    ReportError(Message, &Token->FileData,
+                Token->FileName, Token->LineNumber,
+                Token->ColumnNumber);
 }
 
-#define METATOOLERRORS_H
+#define META_TOOL_ERRORS_H
 #endif

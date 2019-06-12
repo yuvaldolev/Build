@@ -1,8 +1,9 @@
 #include "meta_tool.h"
 
 #include "meta_tool_tokenizer.cpp"
-#include "meta_tool_ast.cpp"
+//#include "meta_tool_ast.cpp"
 
+#if 0
 struct FunctionVariable
 {
     String type;
@@ -182,21 +183,59 @@ FunctionMeta(Tokenizer* tokenizer)
         }
     }
 }
+#endif
 
-void
-MetaToolProcessFile(String filename, String file)
+internal string
+ReadEntireFileIntoMemory(string FileName)
 {
-    if (file.data)
+    string Result = {};
+    FILE* File = fopen(FileName.Data, "r");
+    
+    if (File)
     {
-        printf("Processing: %.*s\n", (s32)filename.count, filename.data);
+        fseek(File, 0, SEEK_END);
         
-        Tokenizer tokenizer = Tokenize(filename, file);
-        //ConstructAST(&tokenizer);
+        // NOTE(yuval): ftell returnes the position indicator in bytes
+        Result.Count = ftell(File);
+        Result.MemorySize = Result.Count;
         
-        bool parsing = true;
-        while (parsing)
+        fseek(File, 0, SEEK_SET);
+        
+        Result.Data = (char*)malloc(Result.MemorySize);
+        fread(Result.Data, Result.MemorySize, 1, File);
+        
+        fclose(File);
+    }
+    
+    return Result;
+}
+
+internal void
+MetaToolProcessFile(string FileName)
+{
+    printf("Processing: %.*s\n", (s32)FileName.Count, FileName.Data);
+    
+    string FileContents = ReadEntireFileIntoMemory(FileName);
+    
+    tokenizer Tokenizer = Tokenize(FileName, FileContents);
+    //ConstructAST(&tokenizer);
+    
+    b32 parsing = true;
+    while (parsing)
+    {
+        token Token = GetToken(&Tokenizer);
+        
+        switch (Token.Type)
         {
-            parsing = ParseTopLevelDecls();
+            case Token_EndOfStream:
+            {
+                parsing = false;
+            } break;
+            
+            default:
+            {
+                printf("%d: %.*s\n", Token.Type, (s32)Token.Text.Count, Token.Text.Data);
+            } break;
         }
     }
 }
