@@ -14,6 +14,7 @@ main(int Argc, const char* Argv[])
 {
     @autoreleasepool
     {
+        //printf("Test1: {A:%d  B:%d  C:%d  D:%d}", Test1.A, Test1.B, Test1.C, Test1.D);
         char FileName[] = "test.c";
         MetaToolProcessFile(BundleZ("test.cpp"));
     }

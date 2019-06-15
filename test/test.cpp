@@ -1,10 +1,7 @@
-int main()
+struct Test
 {
-	int i = 0;
-	const char* s = "hello";
-	
-	int a = i;
-	++a;
-	
-	return 0;
-}	
+    int a;
+    int b;
+}
+
+Test t;

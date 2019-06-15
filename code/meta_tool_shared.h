@@ -206,6 +206,17 @@ ToLowercase(char* Value)
     }
 }
 
+internal void
+ToLowercase(string Value)
+{
+    string At = Value;
+    
+    For (Index, Range(At.Count))
+    {
+        *At.Data++ = ToLowercase(*At.Data);
+    }
+}
+
 internal char
 ToUppercase(char Value)
 {

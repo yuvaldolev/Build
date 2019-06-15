@@ -4,11 +4,10 @@
 #include <stdlib.h>
 
 internal void
-PrintErrorMessage(const char* Type, const char* Message,
-                  const string* FileData, string FilePath,
-                  s32 Line, s32 Column)
+PrintReport(string Type, string FileData, string FilePath,
+            s32 Line, s32 Column, const char* Format, va_list ArgList)
 {
-    const char* DataAt = FileData->Data;
+    const char* DataAt = FileData.Data;
     
     // NOTE(yuval): Getting to the line that contains the error
     For (LineNumber, Range(1, Line))
@@ -34,10 +33,13 @@ PrintErrorMessage(const char* Type, const char* Message,
         ++LineAt;
     }
     
+    char Message[4096] = {};
+    FormatStringList(Message, sizeof(Message), Format, ArgList);
+    
     // NOTE(yuval): Error location data
-    fprintf(stderr, "%.*s:%d:%d: %s: %s\n",
+    fprintf(stderr, "%.*s:%d:%d: %.*s: %s\n",
             (s32)FilePath.Count, FilePath.Data,
-            Line, Column, Type, Message);
+            Line, Column, (s32)Type.Count, Type.Data, Message);
     
     // NOTE(yuval): Error line
     fprintf(stderr, "    %.*s\n    ", LineLen, DataAt);
@@ -52,32 +54,69 @@ PrintErrorMessage(const char* Type, const char* Message,
 }
 
 internal void
-ReportWarning(const char* Message, const string* FileData, string FilePath, s32 Line, s32 Column)
+ReportWarningList(string FileData, string FilePath,
+                  s32 Line, s32 Column,
+                  const char* Format, va_list ArgList)
 {
-    PrintErrorMessage("warning", Message, FileData, FilePath, Line, Column);
+    PrintReport(BundleZ("warning"), FileData, FilePath, Line, Column, Format, ArgList);
 }
 
 internal void
-ReportError(const char* Message, const string* FileData, string FilePath, s32 Line, s32 Column)
+ReportWarning(string FileData, string FilePath,
+              s32 Line, s32 Column,
+              const char* Format, ...)
 {
-    PrintErrorMessage("error", Message, FileData, FilePath, Line, Column);
+    va_list ArgList;
+    
+    va_start(ArgList, Format);
+    ReportWarningList(FileData, FilePath, Line, Column, Format, ArgList);
+    va_end(ArgList);
+}
+
+internal void
+ReportErrorList(string FileData, string FilePath,
+                s32 Line, s32 Column,
+                const char* Format, va_list ArgList)
+{
+    PrintReport(BundleZ("error"), FileData, FilePath, Line, Column, Format, ArgList);
+}
+
+internal void
+ReportError(string FileData, string FilePath,
+            s32 Line, s32 Column,
+            const char* Format, ...)
+{
+    va_list ArgList;
+    
+    va_start(ArgList, Format);
+    ReportErrorList(FileData, FilePath, Line, Column, Format, ArgList);
+    va_end(ArgList);
+    
     exit(1);
 }
 
 internal void
-WarnToken(token* Token, const char* Message)
+WarnToken(token* Token, const char* Format, ...)
 {
-    ReportWarning(Message, &Token->FileData,
-                  Token->FileName, Token->LineNumber,
-                  Token->ColumnNumber);
+    va_list ArgList;
+    
+    va_start(ArgList, Format);
+    ReportWarningList(Token->FileData, Token->FileName,
+                      Token->LineNumber, Token->ColumnNumber,
+                      Format, ArgList);
+    va_end(ArgList);
 }
 
 internal void
-BadToken(token* Token, const char* Message)
+BadToken(token* Token, const char* Format, ...)
 {
-    ReportError(Message, &Token->FileData,
-                Token->FileName, Token->LineNumber,
-                Token->ColumnNumber);
+    va_list ArgList;
+    
+    va_start(ArgList, Format);
+    ReportErrorList(Token->FileData, Token->FileName,
+                    Token->LineNumber, Token->ColumnNumber,
+                    Format, ArgList);
+    va_end(ArgList);
 }
 
 #define META_TOOL_ERRORS_H

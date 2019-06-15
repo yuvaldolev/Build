@@ -1,7 +1,7 @@
 #include "meta_tool.h"
 
 #include "meta_tool_tokenizer.cpp"
-//#include "meta_tool_ast.cpp"
+#include "meta_tool_parser.cpp"
 
 #if 0
 struct FunctionVariable
@@ -217,6 +217,7 @@ MetaToolProcessFile(string FileName)
     
     string FileContents = ReadEntireFileIntoMemory(FileName);
     
+#if 0
     tokenizer Tokenizer = Tokenize(FileName, FileContents);
     //ConstructAST(&tokenizer);
     
@@ -238,4 +239,7 @@ MetaToolProcessFile(string FileName)
             } break;
         }
     }
+#endif
+    
+    ParseFile(FileName, FileContents);
 }

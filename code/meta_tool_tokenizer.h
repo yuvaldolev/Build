@@ -1,138 +1,133 @@
 #if !defined(META_TOOL_TOKENIZER_H)
 
+// TODO(yuval): Maybe create a macro for keyword tokens.
+// The macro should be named KeywordTokens and have
+// many calls to a KeywordToken macro that will define each keyword.
+// The KeywordToken maco will be defined before the token_type enum,
+// and then undefined after it end. It will also be defined differently
+// Before keywords array, and undefined after it.
+
+#define TokenTypes \
+TokenType(Unknown) \
+TokenType(Ternary) \
+TokenType(OpenBracket) \
+TokenType(CloseBracket) \
+TokenType(OpenParen) \
+TokenType(CloseParen) \
+TokenType(OpenBrace) \
+TokenType(CloseBrace) \
+TokenType(Period) \
+TokenType(Tilde) \
+TokenType(Semi) \
+TokenType(Comma) \
+TokenType(Amp) \
+TokenType(AmpAmp) \
+TokenType(AmpEqual) \
+TokenType(Star) \
+TokenType(StarEqual) \
+TokenType(Plus) \
+TokenType(PlusPlus) \
+TokenType(PlusEqual) \
+TokenType(Minus) \
+TokenType(MinusMinus) \
+TokenType(MinusEqual) \
+TokenType(Arrow) \
+TokenType(Not) \
+TokenType(NotEqual) \
+TokenType(Percent) \
+TokenType(PercentEqual) \
+TokenType(Less) \
+TokenType(LessEqual) \
+TokenType(Greater) \
+TokenType(GreaterEqual) \
+TokenType(Caret) \
+TokenType(CaretCaret) \
+TokenType(CaretEqual) \
+TokenType(Pipe) \
+TokenType(PipePipe) \
+TokenType(PipeEqual) \
+TokenType(Colon) \
+TokenType(ColonColon) \
+TokenType(Equal) \
+TokenType(EqualEqual) \
+TokenType(Hash) \
+TokenType(HashHash) \
+TokenType(Slash) \
+TokenType(SlashEqual) \
+TokenType(Comment) \
+TokenType(StringLiteral) \
+TokenType(CharConstant) \
+TokenType(Number) \
+TokenType(Identifier) \
+TokenType(Spacing) \
+TokenType(EndOfLine) \
+TokenType(EndOfStream)
+
+// TODO(yuval): Maybe add an "export" keyword
+
+#define KeywordTokenTypes \
+KeywordTokenType(BoolConstant, "true") \
+KeywordTokenType(Void, "void") \
+KeywordTokenType(Bool, "bool") \
+KeywordTokenType(Char, "char") \
+KeywordTokenType(Int, "int") \
+KeywordTokenType(Float, "float") \
+KeywordTokenType(Double, "double") \
+KeywordTokenType(Long, "long") \
+KeywordTokenType(Short, "short") \
+KeywordTokenType(Unsigned, "unsigned") \
+KeywordTokenType(Const, "const") \
+KeywordTokenType(Volatile, "volatile") \
+KeywordTokenType(If, "if") \
+KeywordTokenType(Switch, "switch") \
+KeywordTokenType(For, "for") \
+KeywordTokenType(While, "while") \
+KeywordTokenType(Do, "do") \
+KeywordTokenType(Else, "else") \
+KeywordTokenType(Case, "case") \
+KeywordTokenType(Default, "default") \
+KeywordTokenType(Break, "break") \
+KeywordTokenType(Continue, "continue") \
+KeywordTokenType(Return, "return") \
+KeywordTokenType(Goto, "goto") \
+KeywordTokenType(Struct, "struct") \
+KeywordTokenType(Enum, "enum") \
+KeywordTokenType(Union, "union") \
+KeywordTokenType(Typedef, "typedef") \
+KeywordTokenType(Static, "static") \
+KeywordTokenType(Inline, "inline") \
+KeywordTokenType(Extern, "extern") \
+KeywordTokenType(PP_Include, "include") \
+KeywordTokenType(PP_Define, "define") \
+KeywordTokenType(PP_If, "if") \
+KeywordTokenType(PP_Elif, "elif") \
+KeywordTokenType(PP_Else, "else") \
+KeywordTokenType(PP_Ifdef, "ifdef") \
+KeywordTokenType(PP_Ifndef, "ifndef") \
+KeywordTokenType(PP_Endif, "endif") \
+KeywordTokenType(PP_Import, "import") \
+KeywordTokenType(PP_Pragma, "pragma") \
+KeywordTokenType(PP_Undef, "undef") \
+KeywordTokenType(PP_Error, "error") \
+KeywordTokenType(PP_Using, "using")
+
 enum token_type
 {
-    Token_Unknown = 0,
+#define TokenType(Type) MetaJoin2(Token_, Type),
+    TokenTypes
+#undef TokenType
     
-    Token_Ternary,
-    Token_OpenBracket,
-    Token_CloseBracket,
-    Token_OpenParen,
-    Token_CloseParen,
-    Token_OpenBrace,
-    Token_CloseBrace,
-    Token_Period,
-    Token_Tilde,
-    Token_Semi,
-    Token_Comma,
-    
-    Token_Amp,
-    Token_AmpAmp,
-    Token_AmpEqual,
-    
-    Token_Star,
-    Token_StarEqual,
-    
-    Token_Plus,
-    Token_PlusPlus,
-    Token_PlusEqual,
-    
-    Token_Minus,
-    Token_MinusMinus,
-    Token_MinusEqual,
-    Token_Arrow,
-    
-    Token_Not,
-    Token_NotEqual,
-    
-    Token_Percent,
-    Token_PercentEqual,
-    
-    Token_Less,
-    Token_LessEqual,
-    
-    Token_Greater,
-    Token_GreaterEqual,
-    
-    Token_Caret,
-    Token_CaretCaret,
-    Token_CaretEqual,
-    
-    Token_Pipe,
-    Token_PipePipe,
-    Token_PipeEqual,
-    
-    Token_Colon,
-    Token_ColonColon,
-    
-    Token_Equal,
-    Token_EqualEqual,
-    
-    Token_Hash,
-    Token_HashHash,
-    
-    Token_Slash,
-    Token_SlashEqual,
-    Token_Comment,
-    
-    Token_StringLiteral,
-    Token_CharConstant,
-    Token_BoolConstant,
-    Token_Number,
-    
-    Token_Void,
-    Token_Bool,
-    Toekn_Char,
-    Token_Int,
-    Token_Float,
-    Token_Double,
-    
-    Token_Long,
-    Token_Short,
-    Token_Unsigned,
-    Token_Const,
-    // TODO(yuval): Maybe @Add a "volatile" keyword
-    
-    Token_If,
-    Token_Switch,
-    Token_For,
-    Token_While,
-    Token_Do,
-    Token_Else,
-    Token_Case,
-    Token_Default,
-    Token_Break,
-    Token_Continue,
-    Token_Return,
-    Token_Goto,
-    
-    Token_Struct,
-    Token_Enum,
-    Token_Union,
-    Token_Typedef,
-    
-    Token_Static,
-    Token_Inline,
-    Token_Extern,
-    
-    Token_PP_Include,
-    Token_PP_Define,
-    Token_PP_If,
-    Token_PP_Elif,
-    Token_PP_Else,
-    Token_PP_Ifdef,
-    Token_PP_Ifndef,
-    Token_PP_Endif,
-    Token_PP_Import,
-    Token_PP_Pragma,
-    Token_PP_Undef,
-    Token_PP_Error,
-    Token_PP_Using,
-    
-    Token_Identifier,
-    
-    Token_Spacing,
-    Token_EndOfLine,
-    
-    Token_EndOfStream
+#define KeywordTokenType(Type, ...) MetaJoin2(Token_, Type),
+        KeywordTokenTypes
+#undef KeywordTokenType
 };
 
 struct token
 {
     string FileName;
     
-    s32 ColumnNumber;
     s32 LineNumber;
+    s32 ColumnNumber;
     
     token_type Type;
     string Text;
@@ -146,8 +141,8 @@ struct tokenizer
 {
     string FileName;
     
-    s32 ColumnNumber;
     s32 LineNumber;
+    s32 ColumnNumber;
     
     string Input;
     string InputFileData;

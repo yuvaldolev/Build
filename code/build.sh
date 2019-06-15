@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CommonFlags="-DDEBUG -g -Weverything -Wall -Werror -fdiagnostics-absolute-paths -std=c++11 -fno-rtti -fno-exceptions"
-CommonFlags+=" -Wno-unsequenced -Wno-comment -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-switch -Wno-old-style-cast -Wno-zero-as-null-pointer-constant -Wno-string-conversion  -Wno-newline-eof -Wno-c++98-compat-pedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-unused-parameter -Wno-padded -Wno-missing-prototypes -Wno-cast-align -Wno-sign-conversion -Wno-switch-enum -Wno-double-promotion -Wno-gnu-zero-variadic-macro-arguments -Wno-missing-noreturn"
+CommonFlags+=" -Wno-unsequenced -Wno-comment -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-switch -Wno-old-style-cast -Wno-zero-as-null-pointer-constant -Wno-string-conversion  -Wno-newline-eof -Wno-c++98-compat-pedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-unused-parameter -Wno-padded -Wno-missing-prototypes -Wno-cast-align -Wno-sign-conversion -Wno-switch-enum -Wno-double-promotion -Wno-gnu-zero-variadic-macro-arguments -Wno-missing-noreturn -Wno-class-varargs"
 CommonFlags+=" -DMETA_TOOL_INTERNAL=1 -DMETA_TOOL_SLOW=1"
 
 # NOTE(yuval): Setup compiler
@@ -29,7 +29,7 @@ $CXX $CommonFlags -Wno-deprecated-declarations ../code/mac_meta_tool.mm -o mac_m
 popd > /dev/null
 
 # Tests
-RunTests=1
+RunTests=0
 if [ $RunTests -eq 1 ]
 then
 pushd "../test" > /dev/null

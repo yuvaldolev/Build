@@ -1,138 +1,249 @@
 #if !defined(META_TOOL_AST_H)
 
+struct ast;
+struct ast_file;
+
 // TODO(yuval): @Replace all of fixed size arrays with resizable arrays
 
-struct ast_block;
-struct ast_statement;
+///////////////////////////////
+//        Expressions        //
+///////////////////////////////
+enum ast_expression_type
+{
+    AstExpr_Operator,
+    AstExpr_DeclRef,
+    AstExpr_Binary,
+    AstExpr_Cast,
+    AstExpr_Constant
+};
+
+enum ast_operator
+{
+    AstOp_None,
+    
+    AstOp_Amp,
+    AstOp_AmpAmp,
+    AstOp_AmpEqual,
+    
+    AstOp_Star,
+    AstOp_StarEqual,
+    
+    AstOp_Plus,
+    AstOp_PlusPlus,
+    AstOp_PlusEqual,
+    
+    AstOp_Minus,
+    AstOp_MinusMinus,
+    AstOp_MinusEqual,
+    AstOp_Arrow,
+    
+    AstOp_Not,
+    AstOp_NotEqual,
+    
+    AstOp_Percent,
+    AstOp_PercentEqual,
+    
+    AstOp_Less,
+    AstOp_LessEqual,
+    
+    AstOp_Greater,
+    AstOp_GreaterEqual,
+    
+    AstOp_Caret,
+    AstOp_CaretCaret,
+    AstOp_CaretEqual,
+    
+    AstOp_Pipe,
+    AstOp_PipePipe,
+    AstOp_PipeEqual,
+    
+    AstOp_Colon,
+    AstOp_ColonColon,
+    
+    AstOp_Equal,
+    AstOp_EqualEqual,
+    
+    AstOp_Hash,
+    AstOp_HashHash
+};
+
+struct ast_constant
+{
+    union
+    {
+        u64 IntConst;
+        f64 FloatConst;
+        string StringLiteral;
+        char CharConstant;
+        b32 BoolConstant;
+    };
+};
+
+struct ast_cast
+{
+    ast* CastedExpr; // Expression
+    ast* CastType; // Expression
+};
+
+struct ast_decl_ref
+{
+    ast* DeclRef; // Declaration
+};
 
 struct ast_expression
 {
+    ast_expression_type Type;
     
+    union
+    {
+        ast_operator Operator;
+        ast_decl_ref DeclRef;
+        ast_cast Cast;
+        ast_constant Const;
+    };
 };
 
-struct ast_if
+//////////////////////////////
+//        Statements        //
+//////////////////////////////
+enum ast_statement_type
 {
-    ast_expression* Condition;
-    ast_statement* Then;
-    ast_statement* Else;
-};
-
-struct ast_case
-{
-    ast_expression* Value; // TODO(yuvak): Should this be a statement???
-    ast_statement* Body;
-};
-
-struct ast_switch
-{
-    ast_expression* Condition;
-    ast_case* FirstCase;
-};
-
-struct ast_for
-{
-    ast_statement* Init;
-    ast_expression* Condition;
-    ast_expression* Inc;
+    AstStmt_Decl,
+    AstStmt_Assignment,
+    AstStmt_If,
+    AstStmt_Switch,
+    AstStmt_For,
+    AstStmt_While
 };
 
 struct ast_while
 {
-    ast_expression* Condition;
-    ast_statement* Body;
+    ast* Condition; // Expression
+    ast* Body; // Statement
+};
+
+struct ast_for
+{
+    ast* Init; // Statement
+    ast* Condition; // Expression
+    ast* Inc; // Expression
+};
+
+struct ast_case
+{
+    ast* Value; // Expression
+    ast* Body; // Statement
+};
+
+struct ast_switch
+{
+    ast* Condition; // Expression
+    ast_case* FirstCase;
+};
+
+struct ast_if
+{
+    ast* Condition; // Expression
+    ast* Then; // Statement
+    ast* Else; // Statement
+};
+
+struct ast_assignment
+{
+    ast* Decl; // Declaration
+    ast* Expression; // Expression
+};
+
+struct ast_decl_statement
+{
+    ast* Decl; // Declaration
+    ast* Expression; // Expression
 };
 
 struct ast_statement
 {
-    // TODO(yuval): Handle expression statements (like variable referencing)
-    // Maybe create a DeclRefExpr struct?
+    ast_statement_type Type;
+    ast* MyScope; // Block
     
-    ast_block* MyParentScope;
-    ast_block* MyScope;
-    
-    ast_statement* Left;
-    ast_statement* Right;
-    
-    // NOTE(yuval): Declaration Statement
-    struct ast_declaration* decl;
-    
-    // NOTE(yuval): If Statement
-    ast_if* IfStmt;
-    
-    // NOTE(yuval): Switch Statement
-    ast_switch* SwitchStmt;
-    
-    // NOTE(yuval): For Statement
-    ast_for* ForStmt;
-    
-    // NOTE(yuval): While Statement
-    ast_while* WhileStmt;
+    union
+    {
+        ast_decl_statement DeclStmt;
+        ast_assignment Assignment;
+        ast_if If;
+        ast_switch Switch;
+        ast_for ForStmt;
+        ast_while While;
+    };
 };
 
-struct ast_tag
+//////////////////////////////////
+//       Type Definitions       //
+//////////////////////////////////
+enum ast_type_definition_type
 {
-};
-
-struct ast_identifier
-{
-    
-};
-
-struct ast_declaration
-{
-    ast_identifier* Identifier;
-    ast_block* MyParentScope;
-    ast_block* MyScope;
-    struct ast_type_definition* MyType;
-    
-    // NOTE(yuval): Tags
-    ast_tag MyTags[16];
-    
-    // NOTE(yuval): Functions
-    struct ast_function* Function;
-    
-    // NOTE(yuval): Variables
-    ast_expression Expression;
+    AstTypeDef_Pointer,
+    AstTypeDef_Struct,
+    AstTypeDef_Enum,
+    AstTypeDef_Union,
 };
 
 struct ast_union
 {
-    ast_block* Scope;
-    
     // NOTE(yuval): Declarations
-    ast_declaration Declarations[512];
+    ast* Decls[512]; // Declaration
+    u32 DeclIndex;
 };
 
 struct ast_enum
 {
-    ast_block* Scope;
-    
     // NOTE(yuval): Declarations
-    ast_declaration Declarations[512];
+    ast* Decls[512]; // Declaration
+    u32 DeclIndex;
 };
 
 struct ast_struct
 {
-    ast_block* Scope;
-    
     // NOTE(yuval): Members
-    ast_declaration Members[512];
+    ast* Members[512]; // Declaration
+    u32 MemberIndex;
 };
 
+// TODO(yuval): Maybe get rid of ast_type_definition and have just an ast* instead
 struct ast_type_definition
 {
-    // NOTE(yuval): Struct
-    ast_struct* StructDesc;
-    
-    // NOTE(yuval): Enum
-    ast_enum* EnumDecs;
-    
-    // NOTE(yuval): Union
-    ast_union* UnionDesc;
+    ast_type_definition_type Type;
+    ast* MyScope; // Block
     
     // NOTE(yuval): Pointer
-    ast_type_definition* PointerTo;
+    ast* PointerTo; // Type Definitino
     s32 PointerLevel;
+    
+    union
+    {
+        ast_struct Struct;
+        ast_enum Enum;
+        ast_union Union;
+    };
+};
+
+////////////////////////////////
+//        Declarations        //
+////////////////////////////////
+enum ast_declaration_type
+{
+    AstDecl_Type,
+    AstDecl_Func,
+    AstDecl_Var
+};
+
+struct ast_tag
+{
+    string Tag;
+};
+
+struct ast_identifier
+{
+    string MyName;
 };
 
 struct ast_function
@@ -140,26 +251,85 @@ struct ast_function
     // NOTE(yuval): If the function is both declared and defined
     b32 IsFunctionDefinition;
     
-    ast_type_definition* ReturnType;
-    ast_declaration Params[512];
-    ast_statement* MyBody;
+    ast* ReturnType; // Type Definition
+    ast* Params[512]; // Declaration
+    ast* MyBody; // Statement
 };
 
+struct ast_declaration
+{
+    ast_declaration_type Type;
+    
+    ast_identifier* Identifier;
+    ast* MyScope; // Block
+    
+    // NOTE(yuval): Tags
+    ast_tag* MyTags[16];
+    
+    union
+    {
+        ast* TypeDef;
+        ast_function Func;
+    };
+};
+
+///////////////////////////////
+//           Block           //
+///////////////////////////////
 struct ast_block
 {
-    struct ast_file* MyFile;
-    ast_block* Parent;
-    ast_declaration* BelongsToDecl;
+    ast* Parent; // Block
+    ast* OwningDecl; // Declaration
     
-    ast_declaration Decls[512];
+    ast* Decls[512]; // Declaration
+    u32 DeclIndex;
     
     // TODO(yuval): @Add array for child blocks
 };
 
+/////////////////////////////
+//           AST           //
+/////////////////////////////
+enum ast_type
+{
+    Ast_Block,
+    Ast_Declaration,
+    Ast_TypeDefinition,
+    Ast_Statement,
+    Ast_Expression
+};
+
+struct ast
+{
+    ast_type MyType;
+    
+    ast_file* MyFile;
+    s32 MyLine;
+    s32 MyColumn;
+    
+    ast* Left;
+    ast* Right;
+    
+    union
+    {
+        ast_block Block;
+        ast_declaration Decl;
+        ast_type_definition TypeDef;
+        ast_statement Stmt;
+        ast_expression Expr;
+    };
+};
+
+/////////////////////////////
+//        AST File         //
+/////////////////////////////
 struct ast_file
 {
     string FileName;
-    ast_block* GlobalScope;
+    ast GlobalScope; // Block
+    
+    tokenizer Tokenizer;
+    token Token;
 };
 
 #define META_TOOL_AST_H

@@ -1,80 +1,39 @@
 // TODO(yuval): Maybe @Add a better data structure for faster lookup
-struct keyword_name_and_type
+struct token_name_and_type
 {
     const char* Name;
     token_type Type;
 };
 
-global_variable keyword_name_and_type GlobalKeywords[] = {
-    {"true", Token_BoolConstant},
-    {"false", Token_BoolConstant},
+// TODO(yuval): Separate the keyword array into two arrays: One for the "regular" keywords
+// and one for the preprocessor keywords. This must be done to avoid duplicates like if / else.
+// TODO(yuval): Maybe @Add support for LINE, FILE, etc. preprocessor tokens
+// TODO(yuval): @Add C++ support (class, new, delete, try, catch...)
+global_variable token_name_and_type GlobalKeywords[] = {
+#define KeywordTokenType(Type, Name) {Name, MetaJoin2(Token_, Type)},
+    KeywordTokenTypes
+#undef KeywordTokenType
     
-    {"void", Token_Void},
-    {"bool", Token_Bool},
-    {"char", Toekn_Char},
-    {"int", Token_Int},
-    {"float", Token_Float},
-    {"double", Token_Double},
-    
-    {"long", Token_Long},
-    {"short", Token_Short},
-    {"unsigned", Token_Unsigned},
-    {"const", Token_Const},
-    // TODO(yuval): Maybe @Add a "volatile" keyword
-    
-    {"if", Token_If},
-    {"switch", Token_Switch},
-    {"for", Token_For},
-    {"while", Token_While},
-    {"do", Token_Do},
-    {"else", Token_Else},
-    {"case", Token_Case},
-    {"default", Token_Default},
-    {"break", Token_Break},
-    {"continue", Token_Continue},
-    {"return", Token_Return},
-    {"goto", Token_Goto},
-    
-    {"struct", Token_Struct},
-    {"enum", Token_Enum},
-    {"union", Token_Union},
-    {"typedef", Token_Typedef},
-    
-    {"static", Token_Static},
-    {"inline", Token_Inline},
-    {"extern", Token_Extern},
-    // TODO(yuval): Maybe @Add an "export" keyword
-    
-    {"include", Token_PP_Include},
-    {"INCLUDE", Token_PP_Include},
-    {"define", Token_PP_Define},
-    {"DEFINE", Token_PP_Define},
-    {"if", Token_PP_If},
-    {"IF", Token_PP_If},
-    {"elif", Token_PP_Elif},
-    {"ELIF", Token_PP_Elif},
-    {"else", Token_PP_Else},
-    {"ELSE", Token_PP_Else},
-    {"ifdef", Token_PP_Ifdef},
-    {"IFDEF", Token_PP_Ifdef},
-    {"ifndef", Token_PP_Ifndef},
-    {"IFNDEF", Token_PP_Ifndef},
-    {"endif", Token_PP_Endif},
-    {"ENDIF", Token_PP_Endif},
-    {"import", Token_PP_Import},
-    {"IMPORT", Token_PP_Import},
-    {"pragma", Token_PP_Pragma},
-    {"PRAGMA", Token_PP_Pragma},
-    {"undef", Token_PP_Undef},
-    {"UNDEF", Token_PP_Undef},
-    {"error", Token_PP_Error},
-    {"ERROR", Token_PP_Error},
-    {"using", Token_PP_Using},
-    {"USING", Token_PP_Using}
-    // TODO(yuval): Maybe @Add support for LINE, FILE, etc. preprocessor tokens
-    
-    // TODO(yuval): @Add C++ support (class, new, delete, try, catch...)
+        // NOTE(yuval): BoolConstant can be true as well as false
+    {"false", Token_BoolConstant}
 };
+
+internal string
+GetTokenTypeName(token_type Type)
+{
+    switch (Type)
+    {
+#define TokenType(Type) case MetaJoin2(Token_, Type): { return BundleZ(#Type); }
+        TokenTypes
+#undef TokenType
+        
+#define KeywordTokenType(Type, ...) case MetaJoin2(Token_, Type): { return BundleZ(#Type); }
+            KeywordTokenTypes
+#undef KeywordTokenType
+    }
+    
+    return BundleZ("Unknown");
+}
 
 internal b32
 TokenEquals(token Token, const char* Match)
@@ -141,8 +100,8 @@ GetTokenRaw(tokenizer* Tokenizer)
 {
     token Token = {};
     Token.FileName = Tokenizer->FileName;
-    Token.ColumnNumber = Tokenizer->ColumnNumber;
     Token.LineNumber = Tokenizer->LineNumber;
+    Token.ColumnNumber = Tokenizer->ColumnNumber;
     Token.Text = Tokenizer->Input;
     Token.FileData = Tokenizer->InputFileData;
     
@@ -150,8 +109,10 @@ GetTokenRaw(tokenizer* Tokenizer)
     {
         b32 IsKeyword = false;
         
-        For(GlobalKeywords)
+        For (GlobalKeywords)
         {
+            ToLowercase(Tokenizer->Input);
+            
             if (StringsAreEqual(Tokenizer->Input, It->Name,
                                 StringLength(It->Name)))
             {
@@ -590,21 +551,27 @@ RequireToken(tokenizer* Tokenizer, token_type DesiredType)
     if (Token.Type != DesiredType)
     {
         // TODO(yuval): @Add the problematic token type and the desired type
-        BadToken(&Token, "Unexpected token type");
+        BadToken(&Token, "unexpected token type: %S (expected %S)",
+                 GetTokenTypeName(Token.Type), GetTokenTypeName(DesiredType));
     }
     
     return Token;
 }
 
 internal b32
-OptionalToken(tokenizer* Tokenizer, token_type DesiredType)
+OptionalToken(tokenizer* Tokenizer, token_type DesiredType, token* OutToken = 0)
 {
     token Token = PeekToken(Tokenizer);
     b32 Result = (Token.Type == DesiredType);
     
     if (Result)
     {
-        GetToken(Tokenizer);
+        token Temp = GetToken(Tokenizer);
+        
+        if (OutToken)
+        {
+            *OutToken = Temp;
+        }
     }
     
     return Result;
@@ -616,8 +583,8 @@ Tokenize(string FileName, string Input)
     tokenizer Result = { };
     
     Result.FileName = FileName;
-    Result.ColumnNumber = 1;
     Result.LineNumber = 1;
+    Result.ColumnNumber = 1;
     Result.Input = Input;
     Result.InputFileData = Input;
     Refill(&Result);
