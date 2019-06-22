@@ -18,6 +18,13 @@ global_variable token_name_and_type GlobalKeywords[] = {
     {"false", Token_BoolConstant}
 };
 
+global_variable token_name_and_type GlobalPPKeywords[] = {
+#define PPKeywordTokenType(Type, Name) {Name, MetaJoin2(Token_, Type)},
+    PPKeywordTokenTypes
+        PPKeywordTokenTypesUpper
+#undef PPKeywordTokenType
+};
+
 internal string
 GetTokenTypeName(token_type Type)
 {
@@ -111,15 +118,14 @@ GetTokenRaw(tokenizer* Tokenizer)
         
         For (GlobalKeywords)
         {
-            ToLowercase(Tokenizer->Input);
-            
-            if (StringsAreEqual(Tokenizer->Input, It->Name,
-                                StringLength(It->Name)))
+            if (StringsAreEqual(Tokenizer->Input, It.Name,
+                                StringLength(It.Name)))
             {
                 // TODO(yuval): @Copy-and-paste - StringLength is called twice
-                AdvanceChars(Tokenizer, StringLength(It->Name));
-                Token.Type = It->Type;
+                AdvanceChars(Tokenizer, StringLength(It.Name));
+                Token.Type = It.Type;
                 IsKeyword = true;
+                break;
             }
         }
         
@@ -157,6 +163,7 @@ GetTokenRaw(tokenizer* Tokenizer)
             case '~': { Token.Type = Token_Tilde; } break;
             case ';': { Token.Type = Token_Semi; } break;
             case ',': { Token.Type = Token_Comma; } break;
+            case '@': { Token.Type = Token_At; } break;
             
             case '&':
             {
@@ -353,7 +360,25 @@ GetTokenRaw(tokenizer* Tokenizer)
                 }
                 else
                 {
-                    Token.Type = Token_Hash;
+                    b32 IsKeyword = false;
+                    
+                    For (GlobalPPKeywords)
+                    {
+                        if (StringsAreEqual(Tokenizer->Input, It.Name,
+                                            StringLength(It.Name)))
+                        {
+                            // TODO(yuval): @Copy-and-paste - StringLength is called twice
+                            AdvanceChars(Tokenizer, StringLength(It.Name));
+                            Token.Type = It.Type;
+                            IsKeyword = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!IsKeyword)
+                    {
+                        Token.Type = Token_Hash;
+                    }
                 }
             } break;
             
@@ -533,6 +558,14 @@ GetToken(tokenizer* Tokenizer)
     }
     
     return Token;
+}
+
+internal b32
+GetTokenOfType(tokenizer* Tokenizer, token_type DesiredType, token* OutToken)
+{
+    *OutToken = GetToken(Tokenizer);
+    b32 Result = (OutToken->Type == DesiredType);
+    return Result;
 }
 
 internal token

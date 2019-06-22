@@ -1,11 +1,16 @@
 #if !defined(META_TOOL_TOKENIZER_H)
 
-// TODO(yuval): Maybe create a macro for keyword tokens.
-// The macro should be named KeywordTokens and have
-// many calls to a KeywordToken macro that will define each keyword.
-// The KeywordToken maco will be defined before the token_type enum,
-// and then undefined after it end. It will also be defined differently
-// Before keywords array, and undefined after it.
+/* TODO(yuval): Create Default Ast Types For These Keywords:
+KeywordTokenType(Void, "void")
+KeywordTokenType(Bool, "bool")
+KeywordTokenType(Char, "char")
+KeywordTokenType(Int, "int")
+KeywordTokenType(Float, "float")
+KeywordTokenType(Double, "double")
+KeywordTokenType(Long, "long")
+KeywordTokenType(Short, "short")
+KeywordTokenType(Unsigned, "unsigned")
+*/
 
 #define TokenTypes \
 TokenType(Unknown) \
@@ -20,6 +25,7 @@ TokenType(Period) \
 TokenType(Tilde) \
 TokenType(Semi) \
 TokenType(Comma) \
+TokenType(At) \
 TokenType(Amp) \
 TokenType(AmpAmp) \
 TokenType(AmpEqual) \
@@ -67,15 +73,6 @@ TokenType(EndOfStream)
 
 #define KeywordTokenTypes \
 KeywordTokenType(BoolConstant, "true") \
-KeywordTokenType(Void, "void") \
-KeywordTokenType(Bool, "bool") \
-KeywordTokenType(Char, "char") \
-KeywordTokenType(Int, "int") \
-KeywordTokenType(Float, "float") \
-KeywordTokenType(Double, "double") \
-KeywordTokenType(Long, "long") \
-KeywordTokenType(Short, "short") \
-KeywordTokenType(Unsigned, "unsigned") \
 KeywordTokenType(Const, "const") \
 KeywordTokenType(Volatile, "volatile") \
 KeywordTokenType(If, "if") \
@@ -97,19 +94,37 @@ KeywordTokenType(Typedef, "typedef") \
 KeywordTokenType(Static, "static") \
 KeywordTokenType(Inline, "inline") \
 KeywordTokenType(Extern, "extern") \
-KeywordTokenType(PP_Include, "include") \
-KeywordTokenType(PP_Define, "define") \
-KeywordTokenType(PP_If, "if") \
-KeywordTokenType(PP_Elif, "elif") \
-KeywordTokenType(PP_Else, "else") \
-KeywordTokenType(PP_Ifdef, "ifdef") \
-KeywordTokenType(PP_Ifndef, "ifndef") \
-KeywordTokenType(PP_Endif, "endif") \
-KeywordTokenType(PP_Import, "import") \
-KeywordTokenType(PP_Pragma, "pragma") \
-KeywordTokenType(PP_Undef, "undef") \
-KeywordTokenType(PP_Error, "error") \
-KeywordTokenType(PP_Using, "using")
+
+#define PPKeywordTokenTypes \
+PPKeywordTokenType(PP_Include, "include") \
+PPKeywordTokenType(PP_Define, "define") \
+PPKeywordTokenType(PP_If, "if") \
+PPKeywordTokenType(PP_Elif, "elif") \
+PPKeywordTokenType(PP_Else, "else") \
+PPKeywordTokenType(PP_Ifdef, "ifdef") \
+PPKeywordTokenType(PP_Ifndef, "ifndef") \
+PPKeywordTokenType(PP_Endif, "endif") \
+PPKeywordTokenType(PP_Import, "import") \
+PPKeywordTokenType(PP_Pragma, "pragma") \
+PPKeywordTokenType(PP_Undef, "undef") \
+PPKeywordTokenType(PP_Error, "error") \
+PPKeywordTokenType(PP_Using, "using")
+
+#define PPKeywordTokenTypesUpper \
+PPKeywordTokenType(PP_Include, "INCLUDE") \
+PPKeywordTokenType(PP_Define, "DEFINE") \
+PPKeywordTokenType(PP_If, "IF") \
+PPKeywordTokenType(PP_Elif, "ELIF") \
+PPKeywordTokenType(PP_Else, "ELSE") \
+PPKeywordTokenType(PP_Ifdef, "IFDEF") \
+PPKeywordTokenType(PP_Ifndef, "IFNDEF") \
+PPKeywordTokenType(PP_Endif, "ENDIF") \
+PPKeywordTokenType(PP_Import, "IMPORT") \
+PPKeywordTokenType(PP_Pragma, "PRAGMA") \
+PPKeywordTokenType(PP_Undef, "UNDEF") \
+PPKeywordTokenType(PP_Error, "ERROR") \
+PPKeywordTokenType(PP_Using, "USING")
+
 
 enum token_type
 {
@@ -120,6 +135,10 @@ enum token_type
 #define KeywordTokenType(Type, ...) MetaJoin2(Token_, Type),
         KeywordTokenTypes
 #undef KeywordTokenType
+    
+#define PPKeywordTokenType(Type, ...) MetaJoin2(Token_, Type),
+        PPKeywordTokenTypes
+#undef PPKeywordTokenType
 };
 
 struct token

@@ -3,6 +3,8 @@
 #include "meta_tool_tokenizer.cpp"
 #include "meta_tool_parser.cpp"
 
+global_variable b32 MetaToolIsInitialized = false;
+
 #if 0
 struct FunctionVariable
 {
@@ -201,6 +203,7 @@ ReadEntireFileIntoMemory(string FileName)
         
         fseek(File, 0, SEEK_SET);
         
+        // TODO(yuval): Replace malloc with memory arena allocation
         Result.Data = (char*)malloc(Result.MemorySize);
         fread(Result.Data, Result.MemorySize, 1, File);
         
@@ -213,33 +216,15 @@ ReadEntireFileIntoMemory(string FileName)
 internal void
 MetaToolProcessFile(string FileName)
 {
+    if (!MetaToolIsInitialized)
+    {
+        InitDefaultTypes();
+    }
+    
     printf("Processing: %.*s\n", (s32)FileName.Count, FileName.Data);
     
     string FileContents = ReadEntireFileIntoMemory(FileName);
     
-#if 0
-    tokenizer Tokenizer = Tokenize(FileName, FileContents);
-    //ConstructAST(&tokenizer);
-    
-    b32 parsing = true;
-    while (parsing)
-    {
-        token Token = GetToken(&Tokenizer);
-        
-        switch (Token.Type)
-        {
-            case Token_EndOfStream:
-            {
-                parsing = false;
-            } break;
-            
-            default:
-            {
-                printf("%d: %.*s\n", Token.Type, (s32)Token.Text.Count, Token.Text.Data);
-            } break;
-        }
-    }
-#endif
-    
-    ParseFile(FileName, FileContents);
+    ast_file* File = ParseFile(FileName, FileContents);
+    DumpAstFile(File);
 }

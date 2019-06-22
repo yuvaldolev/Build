@@ -5,7 +5,12 @@
 ///////////////////////////////
 #define ArrayForeach_(Array) \
 for (u32 Index = 0; Index < ArrayCount(Array); ++Index) \
-if (auto It = &(Array)[Index])
+for (b32 ArgJoin_(B, __LINE__) = true; \
+ArgJoin_(B, __LINE__); \
+ArgJoin_(B, __LINE__) = false) \
+for (auto& It = (Array)[Index]; \
+ArgJoin_(B, __LINE__); \
+ArgJoin_(B, __LINE__) = false)
 
 ///////////////////////////////
 //         For Range         //
@@ -20,8 +25,7 @@ ArgJoin_(I, __LINE__) < End; \
 #define GetRange_(_1, _2, Name, ...) Name
 #define Range(...) GetRange_(__VA_ARGS__, Range2_, Range1_)(__VA_ARGS__)
 
-
-#define ClosedRange2_(Beg, End) for (auto ArgJoin_(I, __LINE__) = Beg; \
+#define ClosedRange2_(Beg, End) for (decltype(End) ArgJoin_(I, __LINE__) = Beg; \
 ArgJoin_(I, __LINE__) <= End; \
 ++ArgJoin_(I, __LINE__))
 #define ClosedRange1_(End) ClosedRange2_(0, End)
@@ -33,7 +37,7 @@ for (b32 ArgJoin_(B, __LINE__) = true; \
 ArgJoin_(B, __LINE__); \
 ArgJoin_(B, __LINE__) = false) \
 for (auto Name = ArgJoin_(I, __LINE__); \
-ArgJoin_(B, __LINE__);\
+ArgJoin_(B, __LINE__); \
 ArgJoin_(B, __LINE__) = false)
 
 ///////////////////////////////

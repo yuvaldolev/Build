@@ -79,6 +79,7 @@ ReportErrorList(string FileData, string FilePath,
                 const char* Format, va_list ArgList)
 {
     PrintReport(BundleZ("error"), FileData, FilePath, Line, Column, Format, ArgList);
+    exit(1);
 }
 
 internal void
@@ -91,8 +92,6 @@ ReportError(string FileData, string FilePath,
     va_start(ArgList, Format);
     ReportErrorList(FileData, FilePath, Line, Column, Format, ArgList);
     va_end(ArgList);
-    
-    exit(1);
 }
 
 internal void
@@ -115,6 +114,30 @@ BadToken(token* Token, const char* Format, ...)
     va_start(ArgList, Format);
     ReportErrorList(Token->FileData, Token->FileName,
                     Token->LineNumber, Token->ColumnNumber,
+                    Format, ArgList);
+    va_end(ArgList);
+}
+
+internal void
+AstWarning(ast* Ast, const char* Format, ...)
+{
+    va_list ArgList;
+    
+    va_start(ArgList, Format);
+    ReportWarningList(Ast->MyFile->FileData, Ast->MyFile->FileName,
+                      Ast->MyLine, Ast->MyColumn,
+                      Format, ArgList);
+    va_end(ArgList);
+}
+
+internal void
+AstError(ast* Ast, const char* Format, ...)
+{
+    va_list ArgList;
+    
+    va_start(ArgList, Format);
+    ReportErrorList(Ast->MyFile->FileData, Ast->MyFile->FileName,
+                    Ast->MyLine, Ast->MyColumn,
                     Format, ArgList);
     va_end(ArgList);
 }

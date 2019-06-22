@@ -1,4 +1,4 @@
-#if !defined(META_TOOL_AST_H)
+#if !defined(META_TOOL_PARSER_H)
 
 struct ast;
 struct ast_file;
@@ -113,8 +113,16 @@ enum ast_statement_type
     AstStmt_If,
     AstStmt_Switch,
     AstStmt_For,
-    AstStmt_While
+    AstStmt_While,
+    AstStmt_Break,
+    AstStmt_Continue,
+    AstStmt_Return
 };
+
+struct ast_return
+{
+    ast* Expression;
+}
 
 struct ast_while
 {
@@ -173,6 +181,7 @@ struct ast_statement
         ast_switch Switch;
         ast_for ForStmt;
         ast_while While;
+        ast_return Return;
     };
 };
 
@@ -181,6 +190,7 @@ struct ast_statement
 //////////////////////////////////
 enum ast_type_definition_type
 {
+    AstTypeDef_Default,
     AstTypeDef_Pointer,
     AstTypeDef_Struct,
     AstTypeDef_Enum,
@@ -208,18 +218,19 @@ struct ast_struct
     u32 MemberIndex;
 };
 
-// TODO(yuval): Maybe get rid of ast_type_definition and have just an ast* instead
 struct ast_type_definition
 {
     ast_type_definition_type Type;
-    ast* MyScope; // Block
+    
+    ast* MyDecl; // Declaration
     
     // NOTE(yuval): Pointer
-    ast* PointerTo; // Type Definitino
+    ast* PointerTo; // Type Definition
     s32 PointerLevel;
     
     union
     {
+        string DefaultTypeName;
         ast_struct Struct;
         ast_enum Enum;
         ast_union Union;
@@ -252,7 +263,10 @@ struct ast_function
     b32 IsFunctionDefinition;
     
     ast* ReturnType; // Type Definition
+    
     ast* Params[512]; // Declaration
+    u32 ParamIndex;
+    
     ast* MyBody; // Statement
 };
 
@@ -268,7 +282,7 @@ struct ast_declaration
     
     union
     {
-        ast* TypeDef;
+        ast* MyType; // Type Definition
         ast_function Func;
     };
 };
@@ -301,7 +315,7 @@ enum ast_type
 
 struct ast
 {
-    ast_type MyType;
+    ast_type Type;
     
     ast_file* MyFile;
     s32 MyLine;
@@ -326,11 +340,13 @@ struct ast
 struct ast_file
 {
     string FileName;
+    string FileData;
+    
     ast GlobalScope; // Block
     
     tokenizer Tokenizer;
     token Token;
 };
 
-#define META_TOOL_AST_H
+#define META_TOOL_PARSER_H
 #endif
