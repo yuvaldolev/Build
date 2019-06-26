@@ -12,6 +12,7 @@ enum ast_expression_type
 {
     AstExpr_Operator,
     AstExpr_DeclRef,
+    AstExpr_Assignment,
     AstExpr_Binary,
     AstExpr_Cast,
     AstExpr_Constant
@@ -85,6 +86,12 @@ struct ast_cast
     ast* CastType; // Expression
 };
 
+struct ast_assignment
+{
+    ast* Decl; // Declaration
+    ast* Expression; // Expression
+};
+
 struct ast_decl_ref
 {
     ast* DeclRef; // Declaration
@@ -98,6 +105,7 @@ struct ast_expression
     {
         ast_operator Operator;
         ast_decl_ref DeclRef;
+        ast_assignment Assignment;
         ast_cast Cast;
         ast_constant Const;
     };
@@ -109,11 +117,14 @@ struct ast_expression
 enum ast_statement_type
 {
     AstStmt_Decl,
-    AstStmt_Assignment,
+    AstStmt_ExprStmt,
     AstStmt_If,
     AstStmt_Switch,
+    AstStmt_Case,
+    AstStmt_Default,
     AstStmt_For,
     AstStmt_While,
+    AstStmt_DoWhile,
     AstStmt_Break,
     AstStmt_Continue,
     AstStmt_Return
@@ -122,7 +133,7 @@ enum ast_statement_type
 struct ast_return
 {
     ast* Expression;
-}
+};
 
 struct ast_while
 {
@@ -135,6 +146,13 @@ struct ast_for
     ast* Init; // Statement
     ast* Condition; // Expression
     ast* Inc; // Expression
+    
+    ast* Body;
+};
+
+struct ast_default
+{
+    ast* Body; // Statement
 };
 
 struct ast_case
@@ -146,7 +164,7 @@ struct ast_case
 struct ast_switch
 {
     ast* Condition; // Expression
-    ast_case* FirstCase;
+    ast* FirstCase; // Case
 };
 
 struct ast_if
@@ -156,10 +174,9 @@ struct ast_if
     ast* Else; // Statement
 };
 
-struct ast_assignment
+struct ast_expr_statement
 {
-    ast* Decl; // Declaration
-    ast* Expression; // Expression
+    
 };
 
 struct ast_decl_statement
@@ -177,8 +194,11 @@ struct ast_statement
     {
         ast_decl_statement DeclStmt;
         ast_assignment Assignment;
+        ast_expr_statement ExprStmt;
         ast_if If;
         ast_switch Switch;
+        ast_case Case;
+        ast_default Default;
         ast_for ForStmt;
         ast_while While;
         ast_return Return;

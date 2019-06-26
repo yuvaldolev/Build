@@ -30,7 +30,6 @@
 #error Optimizations are not available for this compiler yet!!!
 #endif
 
-
 //////////////////////////////
 //          Types           //
 //////////////////////////////
@@ -65,19 +64,10 @@ typedef double f64;
 typedef intptr_t smm;
 typedef uintptr_t umm;
 
-typedef size_t memory_index;
-
-struct string
-{
-    char* Data;
-    umm Count;
-    memory_index MemorySize;
-};
-
-inline u32
+inline size_t
 StringLength(const char* String)
 {
-    u32 Count = 0;
+     size_t Count = 0;
     
     if (String)
     {
