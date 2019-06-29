@@ -27,495 +27,563 @@ typedef uintptr_t umm_yd;
 #define YD_TYPES
 #endif
 
-#if !defined(YD_ASSERT)
-#define AssertYD(Expression) if (!(Expression)) { *(volatile int*)0 = 0; }
-#define YD_ASSERT
+#if !defined(assert_yd)
+#define assert_yd(expression) if (!(expression)) { *(volatile int*)0 = 0; }
 #endif
 
-#define Literal(String) (String), (sizeof(String) - 1)
+#define literal(str) (str), (sizeof(str) - 1)
 
-struct string
-{
-    char* Data;
-    size_t Count;
-    size_t MemorySize;
+struct String {
+    char* data;
+    size_t count;
+    size_t memory_size;
 };
 
-// TODO(yuval): Maybe create a UTF8 string struct
+// TODO(yuval): Maybe create a UTF8 String struct
 
-global_variable_yd string NullString = {};
+global_variable_yd String Nullstr = {};
 
-inline string MakeString(void* Data, size_t Count, size_t MemorySize);
-inline string MakeString(void* Data, size_t Count);
+inline String make_string(void* data, size_t count, size_t memory_size);
+inline String make_string(void* data, size_t count);
 
-#if !defined(MakeLitString)
-#define MakeLitString(String) (MakeString((char*)(String), sizeof(String) - 1, sizeof(String)))
+#if !defined(make_lit_string)
+#define make_lit_string(str) (make_string((char*)(str), sizeof(str) - 1, sizeof(str)))
 #endif
 
-#if !defined(Lit)
-#define Lit(String) MakeLitString(String)
+#if !defined(lit)
+#define lit(str) make_lit_string(str)
 #endif
 
-#if !defined(FixedWidthString)
-#define MakeFixedWidthString(String) (MakeString((char*)(String), 0, sizeof(String)))
+#if !defined(make_fixed_width_string)
+#define make_fixed_width_string(str) (make_string((char*)(str), 0, sizeof(str)))
 #endif
 
-#if !defined(ExpandString)
-#define ExpandString(String) ((String).Data), ((String).Count)
+#if !defined(expand_string)
+#define expand_string(str) ((str).data), ((str).count)
 #endif
 
-inline size_t StringLength(const char* String);
-inline string MakeStringSlowly(void* String);
-inline string Substr(string String, size_t Start);
-inline string Substr(string String, size_t Start, size_t Count);
-internal string SkipWhitespace(string String);
-internal string SkipWhitespace(string String, size_t* OutSkipCount);
-internal string ChopWhitespace(string String);
-internal string SkipChopWhitespace(string String);
-internal string SkipChopWhitespace(string String, size_t* OutSkipCount);
-inline string TailString(string String);
-internal b32_yd StringsMatch(const char* A, const char* B);
-internal b32_yd StringsMatch(string A, const char* B);
-inline b32_yd StringsMatch(const char* A, string B);
-internal b32_yd StringsMatch(string A, string B);
-internal b32_yd StringsMatchPart(const char* A, const char* B, size_t* OutCount);
-internal b32_yd StringsMatchPart(string A, const char* B, size_t* OutCount);
-internal b32_yd StringsMatchPart(const char* A, string B, size_t* OutCount);
-internal b32_yd StringsMatchPart(string A, string B, size_t* OutCount);
-inline b32_yd StringsMatchPart(const char* A, const char* B);
-inline b32_yd StringsMatchPart(string A, const char* B);
-inline b32_yd StringsMatchPart(const char* A, string B);
-inline b32_yd StringsMatchPart(string A, string B);
-internal b32_yd StringsMatchInsensitive(const char* A, const char* B);
-internal b32_yd StringsMatchInsensitive(string A, const char* B);
-inline b32_yd StringsMatchInsensitive(const char* A, string B);
-internal b32_yd StringsMatchInsensitive(string A, string B);
-internal b32_yd StringsMatchPartInsensitive(const char* A, const char* B, size_t* OutCount);
-internal b32_yd StringsMatchPartInsensitive(string A, const char* B, size_t* OutCount);
-internal b32_yd StringsMatchPartInsensitive(const char* A, string B, size_t* OutCount);
-internal b32_yd StringsMatchPartInsensitive(string A, string B, size_t* OutCount);
+inline size_t string_length(const char* str);
+inline String make_string_slowly(void* str);
+inline String substr(String str, size_t start);
+inline String substr(String str, size_t start, size_t count);
+internal_yd String skip_whitespace(String str);
+internal_yd String skip_whitespace(String str, size_t* out_skip_count);
+internal_yd String chop_whitespace(String str);
+internal_yd String skip_chop_whitespace(String str);
+internal_yd String skip_chop_whitespace(String str, size_t* out_skip_count);
+inline String tailstr(String str);
+internal_yd b32_yd strings_match(const char* a, const char* b);
+internal_yd b32_yd strings_match(String a, const char* b);
+inline b32_yd strings_match(const char* a, String b);
+internal_yd b32_yd strings_match(String a, String b);
+internal_yd b32_yd strings_match_part(const char* a, const char* b, size_t* out_count);
+internal_yd b32_yd strings_match_part(String a, const char* b, size_t* out_count);
+internal_yd b32_yd strings_match_part(const char* a, String b, size_t* out_count);
+internal_yd b32_yd strings_match_part(String a, String b, size_t* out_count);
+inline b32_yd strings_match_part(const char* a, const char* b);
+inline b32_yd strings_match_part(String a, const char* b);
+inline b32_yd strings_match_part(const char* a, String b);
+inline b32_yd strings_match_part(String a, String b);
+internal_yd b32_yd strings_match_insensitive(const char* a, const char* b);
+internal_yd b32_yd strings_match_insensitive(String a, const char* b);
+inline b32_yd strings_match_insensitive(const char* a, String b);
+internal_yd b32_yd strings_match_insensitive(String a, String b);
+internal_yd b32_yd StringsMatchPartInsensitive(const char* A, const char* B, size_t* Outcount);
+internal_yd b32_yd StringsMatchPartInsensitive(String A, const char* B, size_t* Outcount);
+internal_yd b32_yd StringsMatchPartInsensitive(const char* A, String B, size_t* Outcount);
+internal_yd b32_yd StringsMatchPartInsensitive(String A, String B, size_t* Outcount);
 inline b32_yd StringsMatchPartInsensitive(const char* A, const char* B);
-inline b32_yd StringsMatchPartInsensitive(string A, const char* B);
-inline b32_yd StringsMatchPartInsensitive(const char* A, string B);
-inline b32_yd StringsMatchPartInsensitive(string A, string B);
-internal s32_yd Compare(const char* A, const char* B);
-internal s32_yd Compare(string A, const char* B);
-inline s32_yd Compare(const char* A, string B);
-internal s32_yd Compare(string A, string B);
-internal size_t Find(const char* String, size_t Start, char Character);
-internal size_t Find(string String, size_t Start, char Character);
-internal size_t RFind(string String, size_t Start, char Character);
-internal size_t Find(const char* String, size_t Start, char* Characters);
-internal size_t Find(string String, size_t Start, char* Characters);
-internal size_t FindSubstr(const char* String, size_t Start, string Seek);
-internal size_t FindSubstr(string String, size_t Start, string Seek);
-internal size_t RFindSubstr(string String, size_t Start, string Seek);
-internal size_t FindSubstrInsensitive(const char* String, size_t Start, string Seek);
-internal size_t FindSubstrInsensitive(string String, size_t Start, string Seek);
-inline b32_yd HasSubstr(const char* String, string Seek);
-inline b32_yd HasSubstr(string String, string Seek);
-inline b32_yd HasSubstrInsensitive(const char* String, string Seek);
-inline b32_yd HasSubstrInsensitive(string String, string Seek);
-internal s32_yd CopyFastUnsafe(char* Dest, const char* Src);
-internal s32_yd CopyFastUnsafe(char* Dest, string Src);
-internal b32_yd CopyChecked(string* Dest, string Src);
-internal b32_yd CopyChecked(char* Dest, size_t DestCount, string Src);
-internal b32_yd CopyPartial(string* Dest, const char* Src);
-internal b32_yd CopyPartial(string* Dest, string Src);
-internal b32_yd CopyPartial(char* Dest, size_t DestCount, string Src);
+inline b32_yd StringsMatchPartInsensitive(String A, const char* B);
+inline b32_yd StringsMatchPartInsensitive(const char* A, String B);
+inline b32_yd StringsMatchPartInsensitive(String A, String B);
+internal_yd s32_yd Compare(const char* A, const char* B);
+internal_yd s32_yd Compare(String A, const char* B);
+inline s32_yd Compare(const char* A, String B);
+internal_yd s32_yd Compare(String A, String B);
+internal_yd size_t Find(const char* str, size_t start, char Character);
+internal_yd size_t Find(String str, size_t start, char Character);
+internal_yd size_t RFind(String str, size_t start, char Character);
+internal_yd size_t Find(const char* str, size_t start, char* Characters);
+internal_yd size_t Find(String str, size_t start, char* Characters);
+internal_yd size_t FindSubstr(const char* str, size_t start, String Seek);
+internal_yd size_t FindSubstr(String str, size_t start, String Seek);
+internal_yd size_t RFindSubstr(String str, size_t start, String Seek);
+internal_yd size_t FindSubstrInsensitive(const char* str, size_t start, String Seek);
+internal_yd size_t FindSubstrInsensitive(String str, size_t start, String Seek);
+inline b32_yd HasSubstr(const char* str, String Seek);
+inline b32_yd HasSubstr(String str, String Seek);
+inline b32_yd HasSubstrInsensitive(const char* str, String Seek);
+inline b32_yd HasSubstrInsensitive(String str, String Seek);
+internal_yd s32_yd CopyFastUnsafe(char* Dest, const char* Src);
+internal_yd s32_yd CopyFastUnsafe(char* Dest, String Src);
+internal_yd b32_yd CopyChecked(String* Dest, String Src);
+internal_yd b32_yd CopyChecked(char* Dest, size_t Destcount, String Src);
+internal_yd b32_yd CopyPartial(String* Dest, const char* Src);
+internal_yd b32_yd CopyPartial(String* Dest, String Src);
+internal_yd b32_yd CopyPartial(char* Dest, size_t Destcount, String Src);
 inline s32_yd Copy(char* Dest, const char* Src);
-inline void Copy(string* Dest, string Src);
-inline void Copy(string* Dest, const char* Src);
-internal b32_yd AppendChecked(string* Dest, string Src);
-internal b32_yd AppendPartial(string* Dest, const char* Src);
-internal b32_yd AppendPartial(string* Dest, string Src);
-internal b32_yd Append(string* Dest, char C);
-inline b32_yd Append(string* Dest, string Src);
-inline b32_yd Append(string* Dest, const char* Src);
-internal b32_yd TerminateWithNull(string* String);
-internal b32_yd AppendPadding(string* Dest, char C, size_t TargetSize);
-internal void StringInterpretEscapes(char* Dest, string Src);
-internal void ReplaceChar(string* String, char Replace, char With);
-internal void ReplaceStr(string* String, string Replace, string With);
-internal void ReplaceStr(string* String, string Replace, const char* With);
-internal void ReplaceStr(string* String, const char* Replace, string With);
-internal void ReplaceStr(string* String, const char* Replace, const char* With);
-internal b32_yd StringSetMatch(void* StringSet, size_t ItemCount, size_t Count,
-                               string String, size_t* OutMatchIndex);
-internal b32_yd StringSetMatch(string* StringSet, size_t Count, string String, size_t* OutMatchIndex);
-internal string GetFirstDoubleLine(string Source);
-internal string GetNextDoubleLine(string Source, string Line);
-internal string GetFirstWord(string Source);
-internal string GetNextWord(string Source, string PrevWord);
-// TODO(yuval): Think about string push (should require an arena)
-internal s32_yd ReverseSeekSlash(string String, s32_yd Pos);
-inline s32_yd ReverseSeekSlash(string String);
-inline string FrontOfDirectory(string Dir);
-inline string PathOfDirectory(string Dir);
-internal b32_yd SetLastFolder(string* Dir, const char* FolderName, char Slash);
-internal b32_yd SetLastFolder(string* Dir, string FolderName, char Slash);
-internal string FileExtention(string FileName);
-internal b32_yd RemoveExtention(string* FileName);
-internal b32_yd RemoveLastFolder(string* Path);
-inline b32_yd IsH(string Extention);
-inline b32_yd IsCPP(string Extention);
-inline b32_yd IsObjectiveC(string Extention);
-inline b32_yd IsCode(string Extention);
-inline b32_yd IsCodeFile(string FileName);
+inline void Copy(String* Dest, String Src);
+inline void Copy(String* Dest, const char* Src);
+internal_yd b32_yd AppendChecked(String* Dest, String Src);
+internal_yd b32_yd AppendPartial(String* Dest, const char* Src);
+internal_yd b32_yd AppendPartial(String* Dest, String Src);
+internal_yd b32_yd Append(String* Dest, char C);
+inline b32_yd Append(String* Dest, String Src);
+inline b32_yd Append(String* Dest, const char* Src);
+internal_yd b32_yd TerminateWithNull(String* str);
+internal_yd b32_yd AppendPadding(String* Dest, char C, size_t TargetSize);
+internal_yd void StringInterpretEscapes(char* Dest, String Src);
+internal_yd void ReplaceChar(String* str, char Replace, char With);
+internal_yd void ReplaceStr(String* str, String Replace, String With);
+internal_yd void ReplaceStr(String* str, String Replace, const char* With);
+internal_yd void ReplaceStr(String* str, const char* Replace, String With);
+internal_yd void ReplaceStr(String* str, const char* Replace, const char* With);
+internal_yd b32_yd StringSetMatch(void* strSet, size_t Itemcount, size_t count,
+                                  String str, size_t* OutMatchIndex);
+internal_yd b32_yd StringSetMatch(String* strSet, size_t count, String str, size_t* OutMatchIndex);
+internal_yd String GetFirstDoubleLine(String Source);
+internal_yd String GetNextDoubleLine(String Source, String Line);
+internal_yd String GetFirstWord(String Source);
+internal_yd String GetNextWord(String Source, String PrevWord);
+// TODO(yuval): Think about String push (should require an arena)
+internal_yd s32_yd ReverseSeekSlash(String str, s32_yd Pos);
+inline s32_yd ReverseSeekSlash(String str);
+inline String FrontOfDirectory(String Dir);
+inline String PathOfDirectory(String Dir);
+internal_yd b32_yd SetLastFolder(String* Dir, const char* FolderName, char Slash);
+internal_yd b32_yd SetLastFolder(String* Dir, String FolderName, char Slash);
+internal_yd String FileExtention(String FileName);
+internal_yd b32_yd RemoveExtention(String* FileName);
+internal_yd b32_yd RemoveLastFolder(String* Path);
+inline b32_yd IsH(String Extention);
+inline b32_yd IsCPP(String Extention);
+inline b32_yd IsObjectiveC(String Extention);
+inline b32_yd IsCode(String Extention);
+inline b32_yd IsCodeFile(String FileName);
 inline b32_yd IsLower(char C);
-inline b32_yd IsLower(const char* String);
-inline b32_yd IsLower(string String);
+inline b32_yd IsLower(const char* str);
+inline b32_yd IsLower(String str);
 inline b32_yd IsLowerUTF8(u8_yd C);
 inline b32_yd IsUpper(char C);
-inline b32_yd IsUpper(const char* String);
-inline b32_yd IsUpper(string String);
+inline b32_yd IsUpper(const char* str);
+inline b32_yd IsUpper(String str);
 inline b32_yd IsUpperUTF8(u8_yd C);
-inline char ToLower(char C);
-internal void ToLower(char* String);
-internal void ToLower(string* String);
-internal void ToLower(char* Dest, const char* Src);
-internal void ToLower(string* Dest, const char* Src);
-internal void ToLower(char* Dest, string Src);
-internal void ToLower(string* Dest, string Src);
+inline char to_lower(char C);
+internal_yd void ToLower(char* str);
+internal_yd void ToLower(String* str);
+internal_yd void ToLower(char* Dest, const char* Src);
+internal_yd void ToLower(String* Dest, const char* Src);
+internal_yd void ToLower(char* Dest, String Src);
+internal_yd void ToLower(String* Dest, String Src);
 inline char ToUpper(char C);
-internal void ToUpper(char* String);
-internal void ToUpper(string* String);
-internal void ToUpper(char* Dest, const char* Src);
-internal void ToUpper(string* Dest, const char* Src);
-internal void ToUpper(char* Dest, string Src);
-internal void ToUpper(string* Dest, string Src);
-internal void ToCamel(char* String);
-internal void ToCamel(string* String);
-internal void ToCamel(char* Dest, const char* Src);
-internal void ToCamel(string* Dest, const char* Src);
-internal void ToCamel(char* Dest, string Src);
-internal void ToCamel(string* Dest, string Src);
+internal_yd void ToUpper(char* str);
+internal_yd void ToUpper(String* str);
+internal_yd void ToUpper(char* Dest, const char* Src);
+internal_yd void ToUpper(String* Dest, const char* Src);
+internal_yd void ToUpper(char* Dest, String Src);
+internal_yd void ToUpper(String* Dest, String Src);
+internal_yd void ToCamel(char* str);
+internal_yd void ToCamel(String* str);
+internal_yd void ToCamel(char* Dest, const char* Src);
+internal_yd void ToCamel(String* Dest, const char* Src);
+internal_yd void ToCamel(char* Dest, String Src);
+internal_yd void ToCamel(String* Dest, String Src);
 inline b32_yd IsSpacing(char C);
-inline b32_yd IsSpacing(const char* String);
-inline b32_yd IsSpacing(string String);
+inline b32_yd IsSpacing(const char* str);
+inline b32_yd IsSpacing(String str);
 inline b32_yd IsEndOfLine(char C);
-inline b32_yd IsEndOfLine(const char* String);
-inline b32_yd IsEndOfLine(string String);
-inline b32_yd IsWhitespace(char C);
-inline b32_yd IsWhitespace(const char* String);
-inline b32_yd IsWhitespace(string String);
+inline b32_yd IsEndOfLine(const char* str);
+inline b32_yd IsEndOfLine(String str);
+inline b32_yd is_whitespace(char C);
+inline b32_yd IsWhitespace(const char* str);
+inline b32_yd IsWhitespace(String str);
 inline b32_yd IsAlpha(char C);
-inline b32_yd IsAlpha(const char* String);
-inline b32_yd IsAlpha(string String);
+inline b32_yd IsAlpha(const char* str);
+inline b32_yd IsAlpha(String str);
 inline b32_yd IsAlphaUTF8(u8_yd C);
 inline b32_yd IsAlphaTrue(char C);
-inline b32_yd IsAlphaTrue(const char* String);
-inline b32_yd IsAlphaTrue(string String);
+inline b32_yd IsAlphaTrue(const char* str);
+inline b32_yd IsAlphaTrue(String str);
 inline b32_yd IsAlphaTrueUTF8(u8_yd C);
 inline b32_yd IsNumeric(char C);
-inline b32_yd IsNumeric(const char* String);
-inline b32_yd IsNumeric(string String);
+inline b32_yd IsNumeric(const char* str);
+inline b32_yd IsNumeric(String str);
 inline b32_yd IsNumericUTF8(u8_yd C);
-internal s32_yd ToNumeric(const char* String);
-internal s32_yd ToNumeric(string String);
-internal size_t S32ToStringCount(s32_yd Value);
-internal b32_yd S32ToString(string* Dest, s32_yd Value);
-internal b32_yd AppendS32ToString(string* Dest, s32_yd Value);
-internal size_t U64ToStringCount(u64_yd Value);
-internal b32_yd U64ToString(string* Dest, u64_yd Value);
-internal b32_yd AppendU64ToString(string* Dest, u64_yd Value);
-internal size_t F32ToStringCount(f32_yd Value);
-internal b32_yd F32ToString(string* Dest, f32_yd Value);
-internal b32_yd AppendF32ToString(string* Dest, f32_yd Value);
+internal_yd s32_yd ToNumeric(const char* str);
+internal_yd s32_yd ToNumeric(String str);
+internal_yd size_t S32ToStringCount(s32_yd Value);
+internal_yd b32_yd S32ToString(String* Dest, s32_yd Value);
+internal_yd b32_yd AppendS32ToString(String* Dest, s32_yd Value);
+internal_yd size_t U64ToStringCount(u64_yd Value);
+internal_yd b32_yd U64ToString(String* Dest, u64_yd Value);
+internal_yd b32_yd AppendU64ToString(String* Dest, u64_yd Value);
+internal_yd size_t F32ToStringCount(f32_yd Value);
+internal_yd b32_yd F32ToString(String* Dest, f32_yd Value);
+internal_yd b32_yd AppendF32ToString(String* Dest, f32_yd Value);
 inline b32_yd IsAlphaNumeric(char C);
-inline b32_yd IsAlphaNumeric(const char* String);
-inline b32_yd IsAlphaNumeric(string String);
+inline b32_yd IsAlphaNumeric(const char* str);
+inline b32_yd IsAlphaNumeric(String str);
 inline b32_yd IsAlphaNumericUTF8(u8_yd C);
 inline b32_yd IsAlphaNumericTrue(char C);
-inline b32_yd IsAlphaNumericTrue(const char* String);
-inline b32_yd IsAlphaNumericTrue(string String);
+inline b32_yd IsAlphaNumericTrue(const char* str);
+inline b32_yd IsAlphaNumericTrue(String str);
 inline b32_yd IsAlphaNumericTrueUTF8(u8_yd C);
 inline b32_yd IsHex(char C);
-inline b32_yd IsHex(const char* String);
-inline b32_yd IsHex(string String);
+inline b32_yd IsHex(const char* str);
+inline b32_yd IsHex(String str);
 inline b32_yd IsHexUTF8(u8_yd C);
 inline s32_yd HexCharToS32(char C);
 inline char S32ToHexChar(s32_yd Value);
-internal u32_yd HexStringToU32(string String);
-internal b32_yd ColorToHexString(string* Dest, u32_yd Color);
-internal b32_yd HexStringToColor(u32_yd* Dest, string String);
+internal_yd u32_yd HexStringToU32(String str);
+internal_yd b32_yd ColorToHexString(String* Dest, u32_yd Color);
+internal_yd b32_yd HexStringToColor(u32_yd* Dest, String str);
 inline b32_yd IsSlash(char C);
 
 #if defined(YD_STRING_IMPLEMENTATION)
 
-inline string
-MakeString(void* Data, size_t Count, size_t MemorySize)
-{
-    string Result;
+//
+// NOTE(yuval): String Making Functions
+//
+
+inline String
+make_string(void* data, size_t count, size_t memory_size) {
+    String result;
+    result.data = (char*)data;
+    result.count = count;
+    result.memory_size = memory_size;
     
-    Result.Data = (char*)Data;
-    Result.Count = Count;
-    Result.MemorySize = MemorySize;
-    
-    return Result;
+    return result;
 }
 
-inline string
-MakeString(void* Data, size_t Count)
-{
-    string Result = MakeString(Data, Count, Count);
-    return Result;
+inline String
+make_string(void* data, size_t count) {
+    String result = make_string(data, count, count);
+    return result;
 }
 
 inline size_t
-StringLength(const char* String)
+string_length(const char* str)
 {
-    size_t Count = 0;
+    size_t count = 0;
     
-    if (String)
-    {
-        for (; String[Count]; ++Count);
+    if (str) {
+        for (; str[count]; ++count);
     }
     
-    return Count;
+    return count;
 }
 
-inline string
-MakeStringSlowly(void* String)
-{
-    string Result;
+inline String
+make_string_slowly(void* str) {
+    String result;
+    result.data = (char*)str;
+    result.count = string_length(str);
+    result.memory_size = result.count + 1;
     
-    Result.Data = (char*)String;
-    Result.Count = StringLength(String);
-    Result.MemorySize = Result.Size + 1;
-    
-    return Result;
+    return result;
 }
 
-inline string
-Substr(string String, size_t Start)
-{
-    string Result;
+//
+// NOTE(yuval): String Slicing Functions
+//
+
+inline String
+substr(String str, size_t start) {
+    String result;
+    result.data = str.data + start;
+    result.Size = str.count - start;
+    result.memory_size = 0;
     
-    Result.Data = String.Data + Start;
-    Result.Size = String.Count - Start;
-    Result.MemorySize = 0;
-    
-    return Result;
+    return result;
 }
 
-inline string
-Substr(string String, size_t Start, size_t Count)
-{
-    string Result;
-    
-    Result.Data = String.Data + Start;
-    Result.Count = Count;
-    if (Start + Count > String.Count) // TODO(yuval): Verify that this works
-    {
-        Result.Count = String.Count - Start;
+inline String
+substr(String str, size_t start, size_t count) {
+    String result;
+    result.data = str.data + start;
+    result.count = count;
+    // TODO(yuval): Verify that this works
+    if (start + count > str.count) {
+        result.count = str.count - start;
     }
-    Result.MemorySize = 0;
+    result.memory_size = 0;
     
-    return Result;
+    return result;
 }
 
-internal string
-SkipWhitespace(string String, size_t* OutSkipCount)
-{
-    size_t FirstNonWhitespaceIndex = 0;
+internal_yd String
+skip_whitespace(String str, size_t* out_skip_count) {
+    size_t skip_count = 0;
+    for (; skip_count < str.count && is_whitespace(str.data[skip_count]); ++skip_count);
     
-    for (; FirstNonWhitespaceIndex < String.Count && IsWhitespace(String.Data[FirstNonWhitespaceIndex]);
-         ++FirstNonWhitespaceIndex);
+    *out_skip_count = skip_count;
+    return substr(str, skip_count);
+}
+
+inline String
+skip_whitespace(String str) {
+    size_t ignored;
+    return skip_whitespace(str, &ignored);
+}
+
+internal_yd String
+chop_whitespace(String str) {
+    size_t chop_index = str.count;
+    for (; chop_index > 0 && is_whitespace(str.data[chop_index - 1]); --chop_index);
     
-    if (OutSkipCount)
-    {
-        *OutSkipCount = FirstNonWhitespaceIndex;
+    return substr(str, 0, ChopIndex);
+}
+
+internal_yd String
+skip_chop_whitespace(String str, size_t* out_skip_count) {
+    String result = skip_whitespace(str, out_skip_count);
+    result = chop_whitespace(result);
+    return result;
+}
+
+internal_yd String
+skip_chop_whitespace(String str) {
+    size_t ignored;
+    return skip_chop_whitespace(str, &ignored);
+}
+
+inline String
+tailstr(String str) {
+    String result;
+    result.data = str.data + str.count;
+    result.count = 0;
+    result.memory_size = str.memory_size - str.count;
+    
+    return result;
+}
+
+//
+// NOTE(yuval): String Comparison Functions
+//
+
+internal_yd b32_yd
+strings_match(const char* a, const char* b) {
+    b32_yd result = (a == b);
+    
+    if (a && b) {
+        while (*a && *b && (*a == *b)) {
+            ++a;
+            ++b;
+        }
+        
+        result = ((*a == 0) && (*b == 0));
     }
     
-    string Result = Substr(String, FirstNonWhitespaceIndex);
-    return Result;
+    return result;
 }
 
-inline string
-SkipWhitespace(string String)
-{
-    string Result = SkipWhitespace(String, 0);
-    return Result;
-}
-
-internal string
-ChopWhitespace(string String)
-{
-    size_t LastNonWhitespaceIndex = String.Size;
+internal_yd b32_yd
+strings_match(String a, const char* b) {
+    b32_yd result = false;
     
+    if (b) {
+        const char* at = b;
+        
+        for (size_t index = 0;
+             index < a.count;
+             ++index, ++at) {
+            if ((*at == 0) || (a.data[index] != *at)) {
+                return false;
+            }
+        }
+        
+        result = (*at == 0);
+    } else {
+        result = (a.count == 0);
+    }
     
+    return result;
 }
 
-internal string SkipChopWhitespace(string String);
-internal string SkipChopWhitespace(string String, size_t* OutSkipCount);
-inline string TailString(string String);
-internal b32_yd StringsMatch(const char* A, const char* B);
-internal b32_yd StringsMatch(string A, const char* B);
-inline b32_yd StringsMatch(const char* A, string B);
-internal b32_yd StringsMatch(string A, string B);
-internal b32_yd StringsMatchPart(const char* A, const char* B, size_t* OutCount);
-internal b32_yd StringsMatchPart(string A, const char* B, size_t* OutCount);
-internal b32_yd StringsMatchPart(const char* A, string B, size_t* OutCount);
-internal b32_yd StringsMatchPart(string A, string B, size_t* OutCount);
-inline b32_yd StringsMatchPart(const char* A, const char* B);
-inline b32_yd StringsMatchPart(string A, const char* B);
-inline b32_yd StringsMatchPart(const char* A, string B);
-inline b32_yd StringsMatchPart(string A, string B);
-internal b32_yd StringsMatchInsensitive(const char* A, const char* B);
-internal b32_yd StringsMatchInsensitive(string A, const char* B);
-inline b32_yd StringsMatchInsensitive(const char* A, string B);
-internal b32_yd StringsMatchInsensitive(string A, string B);
-internal b32_yd StringsMatchPartInsensitive(const char* A, const char* B, size_t* OutCount);
-internal b32_yd StringsMatchPartInsensitive(string A, const char* B, size_t* OutCount);
-internal b32_yd StringsMatchPartInsensitive(const char* A, string B, size_t* OutCount);
-internal b32_yd StringsMatchPartInsensitive(string A, string B, size_t* OutCount);
-inline b32_yd StringsMatchPartInsensitive(const char* A, const char* B);
-inline b32_yd StringsMatchPartInsensitive(string A, const char* B);
-inline b32_yd StringsMatchPartInsensitive(const char* A, string B);
-inline b32_yd StringsMatchPartInsensitive(string A, string B);
-internal s32_yd Compare(const char* A, const char* B);
-internal s32_yd Compare(string A, const char* B);
-inline s32_yd Compare(const char* A, string B);
-internal s32_yd Compare(string A, string B);
-internal size_t Find(const char* String, size_t Start, char Character);
-internal size_t Find(string String, size_t Start, char Character);
-internal size_t RFind(string String, size_t Start, char Character);
-internal size_t Find(const char* String, size_t Start, char* Characters);
-internal size_t Find(string String, size_t Start, char* Characters);
-internal size_t FindSubstr(const char* String, size_t Start, string Seek);
-internal size_t FindSubstr(string String, size_t Start, string Seek);
-internal size_t RFindSubstr(string String, size_t Start, string Seek);
-internal size_t FindSubstrInsensitive(const char* String, size_t Start, string Seek);
-internal size_t FindSubstrInsensitive(string String, size_t Start, string Seek);
-inline b32_yd HasSubstr(const char* String, string Seek);
-inline b32_yd HasSubstr(string String, string Seek);
-inline b32_yd HasSubstrInsensitive(const char* String, string Seek);
-inline b32_yd HasSubstrInsensitive(string String, string Seek);
-internal s32_yd CopyFastUnsafe(char* Dest, const char* Src);
-internal s32_yd CopyFastUnsafe(char* Dest, string Src);
-internal b32_yd CopyChecked(string* Dest, string Src);
-internal b32_yd CopyChecked(char* Dest, size_t DestCount, string Src);
-internal b32_yd CopyPartial(string* Dest, const char* Src);
-internal b32_yd CopyPartial(string* Dest, string Src);
-internal b32_yd CopyPartial(char* Dest, size_t DestCount, string Src);
-inline s32_yd Copy(char* Dest, const char* Src);
-inline void Copy(string* Dest, string Src);
-inline void Copy(string* Dest, const char* Src);
-internal b32_yd AppendChecked(string* Dest, string Src);
-internal b32_yd AppendPartial(string* Dest, const char* Src);
-internal b32_yd AppendPartial(string* Dest, string Src);
-internal b32_yd Append(string* Dest, char C);
-inline b32_yd Append(string* Dest, string Src);
-inline b32_yd Append(string* Dest, const char* Src);
-internal b32_yd TerminateWithNull(string* String);
-internal b32_yd AppendPadding(string* Dest, char C, size_t TargetSize);
-internal void StringInterpretEscapes(char* Dest, string Src);
-internal void ReplaceChar(string* String, char Replace, char With);
-internal void ReplaceStr(string* String, string Replace, string With);
-internal void ReplaceStr(string* String, string Replace, const char* With);
-internal void ReplaceStr(string* String, const char* Replace, string With);
-internal void ReplaceStr(string* String, const char* Replace, const char* With);
-internal b32_yd StringSetMatch(void* StringSet, size_t ItemCount, size_t Count,
-                               string String, size_t* OutMatchIndex);
-internal b32_yd StringSetMatch(string* StringSet, size_t Count, string String, size_t* OutMatchIndex);
-internal string GetFirstDoubleLine(string Source);
-internal string GetNextDoubleLine(string Source, string Line);
-internal string GetFirstWord(string Source);
-internal string GetNextWord(string Source, string PrevWord);
-// TODO(yuval): Think about string push (should require an arena)
-internal s32_yd ReverseSeekSlash(string String, s32_yd Pos);
-inline s32_yd ReverseSeekSlash(string String);
-inline string FrontOfDirectory(string Dir);
-inline string PathOfDirectory(string Dir);
-internal b32_yd SetLastFolder(string* Dir, const char* FolderName, char Slash);
-internal b32_yd SetLastFolder(string* Dir, string FolderName, char Slash);
-internal string FileExtention(string FileName);
-internal b32_yd RemoveExtention(string* FileName);
-internal b32_yd RemoveLastFolder(string* Path);
-inline b32_yd IsH(string Extention);
-inline b32_yd IsCPP(string Extention);
-inline b32_yd IsObjectiveC(string Extention);
-inline b32_yd IsCode(string Extention);
-inline b32_yd IsCodeFile(string FileName);
-inline b32_yd IsLower(char C);
-inline b32_yd IsLower(const char* String);
-inline b32_yd IsLower(string String);
-inline b32_yd IsLowerUTF8(u8_yd C);
-inline b32_yd IsUpper(char C);
-inline b32_yd IsUpper(const char* String);
-inline b32_yd IsUpper(string String);
-inline b32_yd IsUpperUTF8(u8_yd C);
-inline char ToLower(char C);
-internal void ToLower(char* String);
-internal void ToLower(string* String);
-internal void ToLower(char* Dest, const char* Src);
-internal void ToLower(string* Dest, const char* Src);
-internal void ToLower(char* Dest, string Src);
-internal void ToLower(string* Dest, string Src);
-inline char ToUpper(char C);
-internal void ToUpper(char* String);
-internal void ToUpper(string* String);
-internal void ToUpper(char* Dest, const char* Src);
-internal void ToUpper(string* Dest, const char* Src);
-internal void ToUpper(char* Dest, string Src);
-internal void ToUpper(string* Dest, string Src);
-internal void ToCamel(char* String);
-internal void ToCamel(string* String);
-internal void ToCamel(char* Dest, const char* Src);
-internal void ToCamel(string* Dest, const char* Src);
-internal void ToCamel(char* Dest, string Src);
-internal void ToCamel(string* Dest, string Src);
-inline b32_yd IsSpacing(char C);
-inline b32_yd IsSpacing(const char* String);
-inline b32_yd IsSpacing(string String);
-inline b32_yd IsEndOfLine(char C);
-inline b32_yd IsEndOfLine(const char* String);
-inline b32_yd IsEndOfLine(string String);
-inline b32_yd IsWhitespace(char C);
-inline b32_yd IsWhitespace(const char* String);
-inline b32_yd IsWhitespace(string String);
-inline b32_yd IsAlpha(char C);
-inline b32_yd IsAlpha(const char* String);
-inline b32_yd IsAlpha(string String);
-inline b32_yd IsAlphaUTF8(u8_yd C);
-inline b32_yd IsAlphaTrue(char C);
-inline b32_yd IsAlphaTrue(const char* String);
-inline b32_yd IsAlphaTrue(string String);
-inline b32_yd IsAlphaTrueUTF8(u8_yd C);
-inline b32_yd IsNumeric(char C);
-inline b32_yd IsNumeric(const char* String);
-inline b32_yd IsNumeric(string String);
-inline b32_yd IsNumericUTF8(u8_yd C);
-internal s32_yd ToNumeric(const char* String);
-internal s32_yd ToNumeric(string String);
-internal size_t S32ToStringCount(s32_yd Value);
-internal b32_yd S32ToString(string* Dest, s32_yd Value);
-internal b32_yd AppendS32ToString(string* Dest, s32_yd Value);
-internal size_t U64ToStringCount(u64_yd Value);
-internal b32_yd U64ToString(string* Dest, u64_yd Value);
-internal b32_yd AppendU64ToString(string* Dest, u64_yd Value);
-internal size_t F32ToStringCount(f32_yd Value);
-internal b32_yd F32ToString(string* Dest, f32_yd Value);
-internal b32_yd AppendF32ToString(string* Dest, f32_yd Value);
-inline b32_yd IsAlphaNumeric(char C);
-inline b32_yd IsAlphaNumeric(const char* String);
-inline b32_yd IsAlphaNumeric(string String);
-inline b32_yd IsAlphaNumericUTF8(u8_yd C);
-inline b32_yd IsAlphaNumericTrue(char C);
-inline b32_yd IsAlphaNumericTrue(const char* String);
-inline b32_yd IsAlphaNumericTrue(string String);
-inline b32_yd IsAlphaNumericTrueUTF8(u8_yd C);
-inline b32_yd IsHex(char C);
-inline b32_yd IsHex(const char* String);
-inline b32_yd IsHex(string String);
-inline b32_yd IsHexUTF8(u8_yd C);
-inline s32_yd HexCharToS32(char C);
-inline char S32ToHexChar(s32_yd Value);
-internal u32_yd HexStringToU32(string String);
-internal b32_yd ColorToHexString(string* Dest, u32_yd Color);
-internal b32_yd HexStringToColor(u32_yd* Dest, string String);
-inline b32_yd IsSlash(char C);
+inline b32_yd
+strings_match(const char* a, String b) {
+    return strings_match(b, a);
+}
+
+internal_yd b32_yd
+strings_match(String a, String b) {
+    b32_yd result = (a.count == b.count);
+    
+    if (result) {
+        For (index, Range(a.count)) {
+            if (a.data[index] != b.data[index]) {
+                result = false;
+                break;
+            }
+        }
+    }
+    
+    return result;
+}
+
+internal_yd b32_yd
+strings_match_part(const char* a, const char* b, size_t* out_count) {
+    b32_yd result = (*a == *b);
+    size_t match_count = 0;
+    
+    if (*a && *b) {
+        while (*b && (*a == *b)) {
+            ++a;
+            ++b;
+            ++match_count;
+        }
+        
+        result = (*b == 0);
+    }
+    
+    *out_count = match_count;
+    return result;
+}
+
+internal_yd b32_yd
+strings_match_part(String a, const char* b, size_t* out_count) {
+    b32_yd result = false;
+    size_t index = 0;
+    
+    if (b) {
+        for (; b[index]; ++index) {
+            if ((index == a.count) ||
+                (a.data[index] != b[index])) {
+                return false;
+            }
+        }
+        
+        result = true;
+    } else {
+        result = (a.count == 0);
+    }
+    
+    *out_count = index;
+    return result;
+}
+
+internal_yd b32_yd
+strings_match_part(const char* a, String b, size_t* out_count) {
+    b32_yd result = false;
+    size_t index = 0;
+    
+    if (a) {
+        for (; index < b.count; ++index) {
+            if (a[index] != b.data[index]) {
+                return false;
+            }
+        }
+        
+        result = true;
+    } else {
+        result = (b.count == 0);
+    }
+    
+    *out_count = index;
+    return result;
+}
+internal_yd b32_yd
+strings_match_part(String a, String b, size_t* out_count) {
+    b32_yd result = (a.count >= b.count);
+    size_t index = 0;
+    
+    if (result) {
+        for (; index < b.count; ++index) {
+            if (a.data[index] != b.data[index]) {
+                result = false;
+                break;
+            }
+        }
+    }
+    
+    *out_count = index;
+    return result;
+}
+
+inline b32_yd
+strings_match_part(const char* a, const char* b) {
+    size_t ignored;
+    strings_match_part(a, b, &ignored);
+}
+
+inline b32_yd
+strings_match_part(String a, const char* b) {
+    size_t ignored;
+    strings_match_part(a, b, &ignored);
+}
+
+inline b32_yd
+strings_match_part(const char* a, String b) {
+    size_t ignored;
+    strings_match_part(a, b, &ignored);
+}
+
+inline b32_yd
+strings_match_part(String a, String b) {
+    size_t ignored;
+    strings_match_part(&ignored);
+}
+
+internal_yd b32_yd
+strings_match_insensitive(const char* a, const char* b) {
+    b32_yd result = (a == b);
+    
+    if (a && b) {
+        while (*a && *b && (to_lower(*a) == to_lower(*b))) {
+            ++a;
+            ++b;
+        }
+        
+        result = ((*a == 0) && (*b == 0));
+    }
+    
+    return result;
+}
+
+internal_yd b32_yd
+strings_match_insensitive(String a, const char* b) {
+    b32_yd result = false;
+    
+    if (b) {
+        const char* at = b;
+        
+        for (size_t index = 0; index < a.count; ++index, ++at) {
+            if ((*at == 0) || (to_lower(a.data[index]) != to_lower(*at))) {
+                return false;
+            }
+        }
+        
+        result = (*at == 0);
+    } else {
+        result = (a.count == 0);
+    }
+    
+    return result;
+}
+
+inline b32_yd
+strings_match_insensitive(const char* a, String b) {
+    return strings_match_insensitive(b, a);
+}
+
+internal_yd b32_yd
+strings_match_insensitive(String a, String b)
+{
+    b32_yd result = (a.count == b.count);
+    
+    if (result) {
+        For (index, Range(a.count)) {
+            if (to_lower(a.data[index]) != to_lower(b.data[index])) {
+                result = false;
+                break;
+            }
+        }
+    }
+    
+    return result;
+}
+
+
 
 #endif
 
