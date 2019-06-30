@@ -1,4 +1,4 @@
-#if !defined(YD_STRING_H)
+#if !defined(YD_STRING)
 
 #if !defined(YD_TYPES)
 #include <stdint.h>
@@ -28,10 +28,12 @@ typedef uintptr_t umm_yd;
 #endif
 
 #if !defined(assert_yd)
-#define assert_yd(expression) if (!(expression)) { *(volatile int*)0 = 0; }
+# define assert_yd(expression) if (!(expression)) { *(volatile int*)0 = 0; }
 #endif
 
-#define literal(str) (str), (sizeof(str) - 1)
+#if !defined(literal)
+# define literal(str) (str), (sizeof(str) - 1)
+#endif
 
 struct String {
     char* data;
@@ -41,25 +43,29 @@ struct String {
 
 // TODO(yuval): Maybe create a UTF8 String struct
 
-global_variable_yd String Nullstr = {};
+#if !defined(STRING_NOT_FOUND)
+# define STRING_NOT_FOUND -1
+#endif
+
+global_variable_yd String null_str = {};
 
 inline String make_string(void* data, size_t count, size_t memory_size);
 inline String make_string(void* data, size_t count);
 
 #if !defined(make_lit_string)
-#define make_lit_string(str) (make_string((char*)(str), sizeof(str) - 1, sizeof(str)))
+# define make_lit_string(str) (make_string((char*)(str), sizeof(str) - 1, sizeof(str)))
 #endif
 
 #if !defined(lit)
-#define lit(str) make_lit_string(str)
+# define lit(str) make_lit_string(str)
 #endif
 
 #if !defined(make_fixed_width_string)
-#define make_fixed_width_string(str) (make_string((char*)(str), 0, sizeof(str)))
+# define make_fixed_width_string(str) (make_string((char*)(str), 0, sizeof(str)))
 #endif
 
 #if !defined(expand_string)
-#define expand_string(str) ((str).data), ((str).count)
+# define expand_string(str) ((str).data), ((str).count)
 #endif
 
 inline size_t string_length(const char* str);
@@ -88,28 +94,35 @@ internal_yd b32_yd strings_match_insensitive(const char* a, const char* b);
 internal_yd b32_yd strings_match_insensitive(String a, const char* b);
 inline b32_yd strings_match_insensitive(const char* a, String b);
 internal_yd b32_yd strings_match_insensitive(String a, String b);
-internal_yd b32_yd StringsMatchPartInsensitive(const char* A, const char* B, size_t* Outcount);
-internal_yd b32_yd StringsMatchPartInsensitive(String A, const char* B, size_t* Outcount);
-internal_yd b32_yd StringsMatchPartInsensitive(const char* A, String B, size_t* Outcount);
-internal_yd b32_yd StringsMatchPartInsensitive(String A, String B, size_t* Outcount);
-inline b32_yd StringsMatchPartInsensitive(const char* A, const char* B);
-inline b32_yd StringsMatchPartInsensitive(String A, const char* B);
-inline b32_yd StringsMatchPartInsensitive(const char* A, String B);
-inline b32_yd StringsMatchPartInsensitive(String A, String B);
-internal_yd s32_yd Compare(const char* A, const char* B);
-internal_yd s32_yd Compare(String A, const char* B);
-inline s32_yd Compare(const char* A, String B);
-internal_yd s32_yd Compare(String A, String B);
-internal_yd size_t Find(const char* str, size_t start, char Character);
-internal_yd size_t Find(String str, size_t start, char Character);
-internal_yd size_t RFind(String str, size_t start, char Character);
-internal_yd size_t Find(const char* str, size_t start, char* Characters);
-internal_yd size_t Find(String str, size_t start, char* Characters);
-internal_yd size_t FindSubstr(const char* str, size_t start, String Seek);
-internal_yd size_t FindSubstr(String str, size_t start, String Seek);
-internal_yd size_t RFindSubstr(String str, size_t start, String Seek);
-internal_yd size_t FindSubstrInsensitive(const char* str, size_t start, String Seek);
-internal_yd size_t FindSubstrInsensitive(String str, size_t start, String Seek);
+internal_yd b32_yd strings_match_part_insensitive(const char* a, const char* b, size_t* out_count);
+internal_yd b32_yd strings_match_part_insensitive(String a, const char* b, size_t* out_count);
+internal_yd b32_yd strings_match_part_insensitive(const char* a, String b, size_t* out_count);
+internal_yd b32_yd strings_match_part_insensitive(String a, String b, size_t* out_count);
+inline b32_yd strings_match_part_insensitive(const char* a, const char* b);
+inline b32_yd strings_match_part_insensitive(String a, const char* b);
+inline b32_yd strings_match_part_insensitive(const char* a, String b);
+inline b32_yd strings_match_part_insensitive(String a, String b);
+internal_yd s32_yd compare(const char* a, const char* b);
+internal_yd s32_yd compare(String a, const char* b);
+inline s32_yd compare(const char* a, String b);
+internal_yd s32_yd compare(String a, String b);
+internal_yd size_t find(const char* str, size_t start, char character);
+internal_yd size_t find(String str, size_t start, char character);
+internal_yd size_t find(const char* str, size_t start, const char* characters);
+internal_yd size_t find(String str, size_t start, const char* characters);
+internal_yd size_t find(const char* str, size_t start, String seek);
+internal_yd size_t find(String str, size_t start, String seek);
+internal_yd size_t rfind(String str, size_t start, char character);
+internal_yd size_t rfind(String str, size_t start, const char* characters);
+internal_yd size_t rfind(String str, size_t start, String seek);
+internal_yd size_t find_first_of(const char* str, size_t start, const char* characters);
+internal_yd size_t find_first_of(String str, size_t start, const char* characters);
+internal_yd size_t find_insensitive(const char* str, size_t start, char character);
+internal_yd size_t find_insensitive(String str, size_t start, char character);
+internal_yd size_t find_insensitive(const char* str, size_t start, const char* characters);
+internal_yd size_t find_insensitive(String str, size_t start, const char* characters);
+internal_yd size_t find_insensitive(const char* str, size_t start, String seek);
+internal_yd size_t find_insensitive(String str, size_t start, String seek);
 inline b32_yd HasSubstr(const char* str, String Seek);
 inline b32_yd HasSubstr(String str, String Seek);
 inline b32_yd HasSubstrInsensitive(const char* str, String Seek);
@@ -317,13 +330,15 @@ skip_whitespace(String str, size_t* out_skip_count) {
     for (; skip_count < str.count && is_whitespace(str.data[skip_count]); ++skip_count);
     
     *out_skip_count = skip_count;
-    return substr(str, skip_count);
+    String result = substr(str, skip_count);
+    return result;
 }
 
 inline String
 skip_whitespace(String str) {
     size_t ignored;
-    return skip_whitespace(str, &ignored);
+    String result = skip_whitespace(str, &ignored);
+    return result;
 }
 
 internal_yd String
@@ -331,7 +346,8 @@ chop_whitespace(String str) {
     size_t chop_index = str.count;
     for (; chop_index > 0 && is_whitespace(str.data[chop_index - 1]); --chop_index);
     
-    return substr(str, 0, ChopIndex);
+    String result = substr(str, 0, ChopIndex);
+    return result;
 }
 
 internal_yd String
@@ -344,7 +360,8 @@ skip_chop_whitespace(String str, size_t* out_skip_count) {
 internal_yd String
 skip_chop_whitespace(String str) {
     size_t ignored;
-    return skip_chop_whitespace(str, &ignored);
+    String result = skip_chop_whitespace(str, &ignored);
+    return result;
 }
 
 inline String
@@ -402,7 +419,8 @@ strings_match(String a, const char* b) {
 
 inline b32_yd
 strings_match(const char* a, String b) {
-    return strings_match(b, a);
+    b32_yd result = strings_match(b, a);
+    return result;
 }
 
 internal_yd b32_yd
@@ -503,25 +521,29 @@ strings_match_part(String a, String b, size_t* out_count) {
 inline b32_yd
 strings_match_part(const char* a, const char* b) {
     size_t ignored;
-    strings_match_part(a, b, &ignored);
+    b32_yd result = strings_match_part(a, b, &ignored);
+    return result;
 }
 
 inline b32_yd
 strings_match_part(String a, const char* b) {
     size_t ignored;
-    strings_match_part(a, b, &ignored);
+    b32_yd result = strings_match_part(a, b, &ignored);
+    return result;
 }
 
 inline b32_yd
 strings_match_part(const char* a, String b) {
     size_t ignored;
-    strings_match_part(a, b, &ignored);
+    b32_yd result = strings_match_part(a, b, &ignored);
+    return result;
 }
 
 inline b32_yd
 strings_match_part(String a, String b) {
     size_t ignored;
-    strings_match_part(&ignored);
+    b32_yd result = strings_match_part(a, b, &ignored);
+    return result;
 }
 
 internal_yd b32_yd
@@ -563,12 +585,12 @@ strings_match_insensitive(String a, const char* b) {
 
 inline b32_yd
 strings_match_insensitive(const char* a, String b) {
-    return strings_match_insensitive(b, a);
+    b32_yd result = strings_match_insensitive(b, a);
+    return result;
 }
 
 internal_yd b32_yd
-strings_match_insensitive(String a, String b)
-{
+strings_match_insensitive(String a, String b) {
     b32_yd result = (a.count == b.count);
     
     if (result) {
@@ -583,9 +605,580 @@ strings_match_insensitive(String a, String b)
     return result;
 }
 
+internal_yd b32_yd
+strings_match_part_insensitive(const char* a, const char* b, size_t* out_count) {
+    b32_yd result = (*a == *b);
+    size_t match_count = 0;
+    
+    if (*a && *b) {
+        while (*b && (to_lower(*a) == to_lower(*b))) {
+            ++a;
+            ++b;
+            ++match_count;
+        }
+        
+        result = (*b == 0);
+    }
+    
+    *out_count = match_count;
+    return result;
+}
 
+internal_yd b32_yd
+strings_match_part_insensitive(String a, const char* b, size_t* out_count) {
+    b32_yd result = false;
+    size_t index = 0;
+    
+    if (b) {
+        for (; b[index]; ++index) {
+            if ((index == a.count) ||
+                (to_lower(a.data[index]) != to_lower(b[index]))) {
+                return false;
+            }
+        }
+        
+        result = true;
+    } else {
+        result = (a.count == 0);
+    }
+    
+    *out_count = index;
+    return result;
+}
+internal_yd b32_yd
+strings_match_part_insensitive(const char* a, String b, size_t* out_count) {
+    b32_yd result = false;
+    size_t index = 0;
+    
+    if (a) {
+        for (; index < b.count; ++index) {
+            if (to_lower(a[index]) != to_lower(b.data[index])) {
+                return false;
+            }
+        }
+        
+        result = true;
+    } else {
+        result = (b.count == 0);
+    }
+    
+    *out_count = index;
+    return result;
+}
+
+internal_yd b32_yd
+strings_match_part_insensitive(String a, String b, size_t* out_count) {
+    b32_yd result = (a.count >= b.count);
+    size_t index = 0;
+    
+    if (result) {
+        for (; index < b.count; ++index) {
+            if (to_lower(a.data[index]) != to_lower(b.data[index])) {
+                result = false;
+                break;
+            }
+        }
+    }
+    
+    *out_count = index;
+    return result;
+}
+
+inline b32_yd
+strings_match_part_insensitive(const char* a, const char* b) {
+    size_t ignored;
+    b32_yd result = strings_match_part_insensitive(a, b, &ignored);
+    return result;
+}
+
+inline b32_yd
+strings_match_part_insensitive(String a, const char* b) {
+    size_t ignored;
+    b32_yd result = strings_match_part_insensitive(a, b, &ignored);
+    return result;
+}
+
+inline b32_yd
+strings_match_part_insensitive(const char* a, String b) {
+    size_t ignored;
+    b32_yd result = strings_match_part_insensitive(a, b, &ignored);
+    return result;
+}
+
+inline b32_yd
+strings_match_part_insensitive(String a, String b) {
+    size_t ignored;
+    b32_yd result = strings_match_part_insensitive(a, b, &ignored);
+    return result;
+}
+
+internal_yd s32_yd
+compare(const char* a, const char* b) {
+    s32_yd index = 0;
+    while (a[index] && b[index] &&
+           (a[index] != b[index])) {
+        ++index;
+    }
+    
+    s32_yd result = (a[index] > b[index]) - (a[index] < b[index]);
+    return result;
+}
+
+internal_yd s32_yd
+compare(String a, const char* b) {
+    s32_yd index = 0;
+    while ((index < a.count) && b[index] &&
+           (a.data[index] == b[index])) {
+        ++index;
+    }
+    
+    s32_yd result = 0;
+    if (index < a.count) {
+        result = (a.data[index] > b[index]) - (a.data[index] < b[index]);
+    } else {
+        if (b[index]) {
+            result = 0;
+        } else {
+            result = -1;
+        }
+    }
+    
+    return result;
+}
+
+inline s32_yd
+compare(const char* a, String b) {
+    s32_yd result = -compare(b, a);
+    return result;
+}
+
+internal_yd s32_yd
+compare(String a, String b) {
+    size_t min_count = a.count;
+    if (b.count < min_count) {
+        min_count = b.count;
+    }
+    
+    s32_yd index = 0;
+    while ((index < min_count) && (a.data[i] == b.data[i])) {
+        ++index;
+    }
+    
+    s32_yd result = 0;
+    if (index < min_count) {
+        result = (a.data[index] > b.data[index]) - (a.data[index] < b.data[index]);
+    } else {
+        result = (a.count > b.count) - (a.count < b.count);
+    }
+    
+    return result;
+}
+
+//
+// NOTE(yuval): Functions For Finding Characters And Substrings
+//
+
+internal_yd size_t
+find(const char* str, size_t start, char character) {
+    assert_yd(start >= 0);
+    
+    for (size_t index = start; str[index]; ++index) {
+        if (str[index] == character) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+find(String str, size_t start, char character) {
+    assert_yd((start >= 0) && (start < str.count));
+    
+    for (size_t index = start; index < str.count; ++index) {
+        if (str.data[index] == character) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+find(const char* str, size_t start, const char* characters) {
+    assert_yd(start >= 0);
+    
+    if (!(*characters)) {
+        return STRING_NOT_FOUND;
+    }
+    
+    for (size_t index = start; str[index]; ++index) {
+        b32_yd hit = true;
+        size_t str_index = index;
+        
+        for (const char* at = characters; *at; ++at, ++str_index) {
+            if (str[str_index] != *at) {
+                hit = false;
+                break;
+            }
+        }
+        
+        if (hit) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+find(String str, size_t start, const char* characters) {
+    assert_yd((start >= 0) && (start < str.count));
+    
+    if (!(*characters)) {
+        return STRING_NOT_FOUND;
+    }
+    
+    size_t stop_at = str.count - string_length(characters) + 1;
+    
+    for (size_t index = start; index < stop_at; ++index) {
+        b32_yd hit = true;
+        size_t str_index = index;
+        
+        for (const char* at = characters; *at; ++at, ++str_index) {
+            if (str.data[str_index] != *at) {
+                hit = false;
+                break;
+            }
+        }
+        
+        if (hit) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+find(const char* str, size_t start, String seek) {
+    assert_yd(start >= 0);
+    
+    if (seek.count == 0) {
+        return STRING_NOT_FOUND;
+    }
+    
+    for (size_t index = start; str[index]; ++index) {
+        b32_yd hit = true;
+        size_t str_index = index;
+        
+        for (size_t seek_index = 0;
+             seek_index < seek.count;
+             ++seek_index, ++str_index) {
+            if (str[str_index] != seek.data[seek_index]) {
+                hit = false;
+                break;
+            }
+        }
+        
+        if (hit) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+find(String str, size_t start, String seek) {
+    assert_yd((start >= 0) && (start < str.count));
+    
+    if (seek.count == 0) {
+        return STRING_NOT_FOUND;
+    }
+    
+    size_t stop_at = str.count - seek.count + 1;
+    
+    for (size_t index = start; index < stop_at; ++index) {
+        b32_yd hit = true;
+        size_t str_index = index;
+        
+        for (size_t seek_index = 0;
+             seek_index < seek.count;
+             ++seek_index, ++str_index) {
+            if (str.data[str_index] != seek.data[seek_index]) {
+                hit = false;
+                break;
+            }
+        }
+        
+        if (hit) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+rfind(String str, size_t start, char character) {
+    assert_yd((start >= 0) && (start < str.count));
+    
+    for (size_t index = start; index >= 0; --index) {
+        if (str.data[index] == character) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+rfind(String str, size_t start, const char* characters) {
+    assert_yd((start >= 0) && (start < str.count));
+    
+    if (!(*characters)) {
+        return STRING_NOT_FOUND;
+    }
+    
+    size_t characters_count = string_length(characters);
+    if (start + characters_count > str.count) {
+        start = str.count - characters_count;
+    }
+    
+    for (size_t index = start; index >= 0; --index) {
+        b32_yd hit = true;
+        size_t str_index = index;
+        
+        for (const char* at = characters; *at; ++at, ++str_index) {
+            if (str.data[str_index] != *at) {
+                hit = false;
+                break;
+            }
+        }
+        
+        if (hit) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+internal_yd size_t
+rfind(String str, size_t start, String seek) {
+    assert_yd((start >= 0) && (start < str.count));
+    
+    if (seek.count == 0) {
+        return STRING_NOT_FOUND;
+    }
+    
+    size_t characters_count = string_length(characters);
+    if (start + characters_count > str.count) {
+        start = str.count - characters_count;
+    }
+    
+    for (size_t index = start; index >= 0; --index) {
+        b32_yd hit = true;
+        size_t str_index = index;
+        
+        for (size_t seek_index = 0;
+             seek_index < seek.count;
+             ++seek_index, ++str_index) {
+            if (str.data[str_index] != seek.data[seek_index]) {
+                hit = false;
+                break;
+            }
+        }
+        
+        if (hit) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+find_first_of(const char* str, size_t start, const char* characters) {
+    assert_yd(start >= 0);
+    
+    if (!(*characters)) {
+        return STRING_NOT_FOUND;
+    }
+    
+    for (size_t index = start; str[index]; ++index) {
+        for (const char* at = characters; *at; ++at) {
+            if (str[index] == *at) {
+                return index;
+            }
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+find_first_of(String str, size_t start, const char* characters) {
+    assert_yd((start >= 0) && (start < str.count));
+    
+    if (!(*characters)) {
+        return STRING_NOT_FOUND;
+    }
+    
+    for (size_t index = start; index < str.count; ++index) {
+        for (const char* at = characters; *at; ++at) {
+            if (str.data[index] == *at) {
+                return index;
+            }
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+find_insensitive(const char* str, size_t start, char character) {
+    assert_yd(start >= 0);
+    
+    for (size_t index = start; str[index]; ++index) {
+        if (to_lower(str[index]) == to_lower(character)) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+find_insensitive(String str, size_t start, char character) {
+    assert_yd((start >= 0) && (start < str.count));
+    
+    for (size_t index = start; index < str.count; ++index) {
+        if (to_lower(str.data[index]) == to_lower(character)) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+find_insensitive(const char* str, size_t start, const char* characters) {
+    assert_yd(start >= 0);
+    
+    if (!(*characters)) {
+        return STRING_NOT_FOUND;
+    }
+    
+    for (size_t index = start; str[index]; ++index) {
+        b32_yd hit = true;
+        size_t str_index = index;
+        
+        for (const char* at = characters; *at; ++at, ++str_index) {
+            if (to_lower(str[str_index]) != to_lower(*at)) {
+                hit = false;
+                break;
+            }
+        }
+        
+        if (hit) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+find_insensitive(String str, size_t start, const char* characters) {
+    assert_yd((start >= 0) && (start < str.count));
+    
+    if (!(*characters)) {
+        return STRING_NOT_FOUND;
+    }
+    
+    size_t stop_at = str.count - string_length(characters) + 1;
+    
+    for (size_t index = start; index < stop_at; ++index) {
+        b32_yd hit = true;
+        size_t str_index = index;
+        
+        for (const char* at = characters; *at; ++at, ++str_index) {
+            if (to_lower(str.data[str_index]) != to_lower(*at)) {
+                hit = false;
+                break;
+            }
+        }
+        
+        if (hit) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+find_insensitive(const char* str, size_t start, String seek) {
+    assert_yd(start >= 0);
+    
+    if (seek.count == 0) {
+        return STRING_NOT_FOUND;
+    }
+    
+    for (size_t index = start; str[index]; ++index) {
+        b32_yd hit = true;
+        size_t str_index = index;
+        
+        for (size_t seek_index = 0;
+             seek_index < seek.count;
+             ++seek_index, ++str_index) {
+            if (to_lower(str[str_index]) != to_lower(seek.data[seek_index])) {
+                hit = false;
+                break;
+            }
+        }
+        
+        if (hit) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
+
+internal_yd size_t
+find_insensitive(String str, size_t start, String seek) {
+    assert_yd((start >= 0) && (start < str.count));
+    
+    if (seek.count == 0) {
+        return STRING_NOT_FOUND;
+    }
+    
+    size_t stop_at = str.count - seek.count + 1;
+    
+    for (size_t index = start; index < stop_at; ++index) {
+        b32_yd hit = true;
+        size_t str_index = index;
+        
+        for (size_t seek_index = 0;
+             seek_index < seek.count;
+             ++seek_index, ++str_index) {
+            if (to_lower(str.data[str_index]) != to_lower(seek.data[seek_index])) {
+                hit = false;
+                break;
+            }
+        }
+        
+        if (hit) {
+            return index;
+        }
+    }
+    
+    return STRING_NOT_FOUND;
+}
 
 #endif
 
-#define YD_STRING_H
+#define YD_STRING
 #endif
