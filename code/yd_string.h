@@ -123,26 +123,26 @@ internal_yd size_t find_insensitive(const char* str, size_t start, const char* c
 internal_yd size_t find_insensitive(String str, size_t start, const char* characters);
 internal_yd size_t find_insensitive(const char* str, size_t start, String seek);
 internal_yd size_t find_insensitive(String str, size_t start, String seek);
-inline b32_yd HasSubstr(const char* str, String Seek);
-inline b32_yd HasSubstr(String str, String Seek);
-inline b32_yd HasSubstrInsensitive(const char* str, String Seek);
-inline b32_yd HasSubstrInsensitive(String str, String Seek);
-internal_yd s32_yd CopyFastUnsafe(char* Dest, const char* Src);
-internal_yd s32_yd CopyFastUnsafe(char* Dest, String Src);
-internal_yd b32_yd CopyChecked(String* Dest, String Src);
-internal_yd b32_yd CopyChecked(char* Dest, size_t Destcount, String Src);
-internal_yd b32_yd CopyPartial(String* Dest, const char* Src);
-internal_yd b32_yd CopyPartial(String* Dest, String Src);
-internal_yd b32_yd CopyPartial(char* Dest, size_t Destcount, String Src);
-inline s32_yd Copy(char* Dest, const char* Src);
-inline void Copy(String* Dest, String Src);
-inline void Copy(String* Dest, const char* Src);
-internal_yd b32_yd AppendChecked(String* Dest, String Src);
-internal_yd b32_yd AppendPartial(String* Dest, const char* Src);
-internal_yd b32_yd AppendPartial(String* Dest, String Src);
-internal_yd b32_yd Append(String* Dest, char C);
-inline b32_yd Append(String* Dest, String Src);
-inline b32_yd Append(String* Dest, const char* Src);
+inline b32_yd has_substr(const char* str, String seek);
+inline b32_yd has_substr(String str, String seek);
+inline b32_yd has_substr_insensitive(const char* str, String seek);
+inline b32_yd has_substr_insensitive(String str, String seek);
+internal_yd size_t copy_fast_unsafe(char* dest, const char* src);
+internal_yd size_t copy_fast_unsafe(char* dest, String src);
+internal_yd b32_yd copy_checked(String* dest, String src);
+internal_yd b32_yd copy_checked(char* dest, size_t dest_cap, String src);
+internal_yd b32_yd copy_partial(String* dest, const char* src);
+internal_yd b32_yd copy_partial(String* dest, String src);
+internal_yd b32_yd copy_partial(char* dest, size_t dest_cap, String src);
+inline size_t copy(char* dest, const char* src);
+inline void copy(String* dest, String src);
+inline void copy(String* dest, const char* src);
+internal_yd b32_yd append_checked(String* dest, String src);
+internal_yd b32_yd append_partial(String* dest, const char* src);
+internal_yd b32_yd append_partial(String* dest, String src);
+internal_yd b32_yd append(String* dest, char c);
+inline b32_yd append(String* dest, const char* src);
+inline b32_yd append(String* dest, String src);
 internal_yd b32_yd TerminateWithNull(String* str);
 internal_yd b32_yd AppendPadding(String* Dest, char C, size_t TargetSize);
 internal_yd void StringInterpretEscapes(char* Dest, String Src);
@@ -1176,6 +1176,202 @@ find_insensitive(String str, size_t start, String seek) {
     }
     
     return STRING_NOT_FOUND;
+}
+
+inline b32_yd
+has_substr(const char* str, String seek) {
+    b32_yd result = (find(str, 0, seek) != STRING_NOT_FOUND);
+    return result;
+}
+
+inline b32_yd
+has_substr(String str, String seek) {
+    b32_yd result = (find(str, 0, seek) != STRING_NOT_FOUND);
+    return result;
+}
+
+inline b32_yd
+has_substr_insensitive(const char* str, String seek) {
+    b32_yd result = (find_insensitive(str, 0, seek) != STRING_NOT_FOUND);
+    return result;
+}
+
+inline b32_yd
+has_substr_insensitive(String str, String seek) {
+    b32_yd result = (find_insensitive(str, 0, seek) != STRING_NOT_FOUND);
+    return result;
+}
+
+//
+// NOTE(yuval): String Copy And Append Functions
+//
+
+internal_yd size_t
+copy_fast_unsafe(char* dest, const char* src) {
+    char* dest_at = dest;
+    char* src_at = src;
+    
+    while (*src_at) {
+        *dest_at++ = *src_at++;
+    }
+    
+    *dest_at = 0;
+    
+    size_t result = (dest_at - dest);
+    return result;
+}
+
+internal_yd s32_yd
+copy_fast_unsafe(char* dest, String src) {
+    for (size_t index = 0; index < src.count; ++index) {
+        dest[index] = src.data[index];
+    }
+    
+    dest[index] = 0;
+    return src.count;
+}
+
+internal_yd b32_yd
+copy_checked(String* dest, String src) {
+    if (dest->memory_size < src.count) {
+        return false;
+    }
+    
+    for (size_t index = 0; index < src.count; ++index) {
+        dest->data[index] = src.data[index];
+    }
+    
+    dest->count = src.count;
+    return true;
+}
+
+internal_yd b32_yd
+copy_checked(char* dest, size_t dest_cap, String src) {
+    if (dest_cap < src.count + 1) {
+        return false;
+    }
+    
+    for (size_t index = 0; index < src.count; ++index) {
+        dest[index] = src.data[index];
+    }
+    
+    dest[index] = 0;
+    return true;
+}
+
+internal_yd b32_yd
+copy_partial(String* dest, const char* src) {
+    b32_yd result = true;
+    
+    for (size_t index = 0; src[index]; ++index) {
+        if (index >= dest->memory_size) {
+            result = false;
+            break;
+        }
+        
+        dest->data[index] = src[index];
+    }
+    
+    dest->count = index;
+    return result;
+}
+
+internal_yd b32_yd
+copy_partial(String* dest, String src) {
+    b32_yd result = true;
+    
+    for (size_t index = 0; index < src.count; ++index) {
+        if (index >= dest->memory_size) {
+            result = false;
+            break;
+        }
+        
+        dest->data[index] = src.data[index];
+    }
+    
+    dest->count = index;
+    return result;
+}
+
+internal_yd b32_yd
+copy_partial(char* dest, size_t dest_cap, String src) {
+    b32_yd result = true;
+    
+    for (size_t index = 0; index < src.count; ++index) {
+        if (index >= dest_cap - 1) {
+            result = false;
+            break;
+        }
+        
+        dest[index] = src.data[index];
+    }
+    
+    dest[index] = 0;
+    return result;
+}
+
+inline size_t
+copy(char* dest, const char* src) {
+    size_t result = copy_fast_unsafe(dest, src);
+    return result;
+}
+
+inline void
+copy(String* dest, String src) {
+    copy_checked(dest, src);
+}
+
+inline void
+copy(String* dest, const char* src) {
+    copy_partial(dest, src);
+}
+
+internal_yd b32_yd
+append_checked(String* dest, String src) {
+    String end = tailstr(*dest);
+    b32_yd result = copy_checked(&end, src);
+    dest->count += end.count;
+    return result;
+}
+
+internal_yd b32_yd
+append_partial(String* dest, const char* src) {
+    String end = tailstr(*dest);
+    b32_yd result = copy_partial(&end, src);
+    dest->count += end.count;
+    return result;
+}
+
+internal_yd b32_yd
+append_partial(String* dest, String src) {
+    String end = tailstr(*dest);
+    b32_yd result = copy_partial(&end, src);
+    dest->count += end.count;
+    return result;
+}
+
+internal_yd b32_yd
+append(String* dest, char c) {
+    b32_yd result = false;
+    
+    if (dest->count < dest->memory_size) {
+        dest->data[dest->count++] = c;
+        result = true;
+    }
+    
+    return result;
+}
+
+inline b32_yd
+append(String* dest, const char* src) {
+    b32_yd result = append_partial(dest, src);
+    return result;
+}
+
+inline b32_yd
+append(String* dest, String src) {
+    b32_yd result = append_partial(dest, src);
+    return result;
 }
 
 #endif
