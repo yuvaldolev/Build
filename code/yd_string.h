@@ -143,8 +143,8 @@ internal_yd b32_yd append_partial(String* dest, String src);
 internal_yd b32_yd append(String* dest, char c);
 inline b32_yd append(String* dest, const char* src);
 inline b32_yd append(String* dest, String src);
-internal_yd b32_yd TerminateWithNull(String* str);
-internal_yd b32_yd AppendPadding(String* Dest, char C, size_t TargetSize);
+internal_yd b32_yd terminate_with_null(String* str);
+internal_yd b32_yd append_padding(String* dest, char c, size_t target_count);
 internal_yd void StringInterpretEscapes(char* Dest, String Src);
 internal_yd void ReplaceChar(String* str, char Replace, char With);
 internal_yd void ReplaceStr(String* str, String Replace, String With);
@@ -1371,6 +1371,32 @@ append(String* dest, const char* src) {
 inline b32_yd
 append(String* dest, String src) {
     b32_yd result = append_partial(dest, src);
+    return result;
+}
+
+internal_yd b32_yd
+terminate_with_null(String* str) {
+    b32_yd result = false;
+    
+    if (str->count < str->memory_size) {
+        str->data[str->count] = 0;
+        result = true;
+    }
+    
+    return result;
+}
+
+internal_yd b32_yd
+append_padding(String* dest, char c, size_t target_count) {
+    b32_yd result = true;
+    
+    for (size_t count = dest->count; count < target_count; ++count) {
+        if (!append(dest, c)) {
+            result = false;
+            break;
+        }
+    }
+    
     return result;
 }
 

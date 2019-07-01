@@ -34,6 +34,15 @@
 # Temp Files
 *.DS_Store
 
+# Crashpad GClient Sync Files
+crashpad/.gclient
+crashpad/.gclient_entries
+
 # Directories
 build/
 .vs/
+crashpad/buildtools/
+crashpad/crashpad/
+crashpad/meta_crashpad_db/
+
+
