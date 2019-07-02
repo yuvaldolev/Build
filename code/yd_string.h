@@ -145,26 +145,26 @@ inline b32_yd append(String* dest, const char* src);
 inline b32_yd append(String* dest, String src);
 internal_yd b32_yd terminate_with_null(String* str);
 internal_yd b32_yd append_padding(String* dest, char c, size_t target_count);
-internal_yd void StringInterpretEscapes(char* Dest, String Src);
-internal_yd void ReplaceChar(String* str, char Replace, char With);
-internal_yd void ReplaceStr(String* str, String Replace, String With);
-internal_yd void ReplaceStr(String* str, String Replace, const char* With);
-internal_yd void ReplaceStr(String* str, const char* Replace, String With);
-internal_yd void ReplaceStr(String* str, const char* Replace, const char* With);
-internal_yd b32_yd StringSetMatch(void* strSet, size_t Itemcount, size_t count,
-                                  String str, size_t* OutMatchIndex);
-internal_yd b32_yd StringSetMatch(String* strSet, size_t count, String str, size_t* OutMatchIndex);
+internal_yd void string_interpret_escapes(char* dest, String src);
+internal_yd void replace_range(String* str, size_t first, size_t one_past_last, char with);
+internal_yd void replace_range(String* str, size_t first, size_t one_past_last, const char* with);
+internal_yd void replace_range(String* str, size_t first, size_t one_past_last, String with);
+internal_yd void replace(String* str, char to_replace, char with);
+internal_yd void replace(String* str, const char* to_replace, const char* with);
+internal_yd void replace(String* str, const char* to_replace, String with);
+internal_yd void replace(String* str, String to_replace, const char* with);
+internal_yd void replace(String* str, String to_replace, String with);
+internal_yd b32_yd string_set_match(void* str_set, size_t item_size, size_t count,
+                                    String str, size_t* out_match_index);
+inline b32_yd string_set_match(String* str_set, size_t count, String str, size_t* out_match_index);
 internal_yd String GetFirstDoubleLine(String Source);
 internal_yd String GetNextDoubleLine(String Source, String Line);
-internal_yd String GetFirstWord(String Source);
-internal_yd String GetNextWord(String Source, String PrevWord);
-// TODO(yuval): Think about String push (should require an arena)
-internal_yd s32_yd ReverseSeekSlash(String str, s32_yd Pos);
-inline s32_yd ReverseSeekSlash(String str);
 inline String FrontOfDirectory(String Dir);
 inline String PathOfDirectory(String Dir);
 internal_yd b32_yd SetLastFolder(String* Dir, const char* FolderName, char Slash);
 internal_yd b32_yd SetLastFolder(String* Dir, String FolderName, char Slash);
+internal_yd String GetFirstWord(String Source);
+internal_yd String GetNextWord(String Source, String PrevWord);
 internal_yd String FileExtention(String FileName);
 internal_yd b32_yd RemoveExtention(String* FileName);
 internal_yd b32_yd RemoveLastFolder(String* Path);
@@ -173,6 +173,7 @@ inline b32_yd IsCPP(String Extention);
 inline b32_yd IsObjectiveC(String Extention);
 inline b32_yd IsCode(String Extention);
 inline b32_yd IsCodeFile(String FileName);
+// TODO(yuval): Think about String push (should require an arena)
 inline b32_yd IsLower(char C);
 inline b32_yd IsLower(const char* str);
 inline b32_yd IsLower(String str);
@@ -1398,6 +1399,164 @@ append_padding(String* dest, char c, size_t target_count) {
     }
     
     return result;
+}
+
+//
+// NOTE(yuval): Other String Editing Functions
+//
+
+internal_yd void
+string_interpret_escapes(char* dest, String src) {
+    s32_yd mode = 0;
+    size_t dest_index = 0;
+    
+    for (size_t src_index = 0; src_index < src.count; ++src_index) {
+        switch (mode) {
+            case 0: {
+                if (src.data[src_index] = '\\') {
+                    mode = 1;
+                } else {
+                    dest[dest_index++] = src.data[src_index];
+                }
+            } break;
+            
+            case 1: {
+                char c = src.data[src_index];
+                switch (c) {
+                    case '\\': { dest[dest_index++] = '\\'; } break;
+                    case 'n': { dest[dest_index++] = '\n'; } break;
+                    case 't': { dest[dest_index++] = '\t'; } break;
+                    case '"': { dest[dest_index++] = '"'; } break;
+                    case '0': { dest[dest_index++] = '\0'; } break;
+                    default: { dest[dest_index++] = '\\'; dest[dest_index++] = c; } break;
+                }
+                
+                mode = 0;
+            } break;
+        }
+    }
+    
+    dest[dest_index] = 0;
+}
+
+internal_yd void
+replace_range(String* str, size_t first, size_t one_past_last, char with) {
+    assert_yd((first >= 0) && (from < str->count));
+    assert_yd((one_past_last > 0) && (one_past_last <= str->count));
+    assert_yd(first < one_past_last);
+    
+    for (size_t index = from; index < one_past_last; ++index) {
+        str->data[index] = with;
+    }
+}
+
+internal_yd void
+replace_range(String* str, size_t first, size_t one_past_last, const char* with) {
+    String with_str = make_string_slowly(with);
+    replace_range(str, first, one_past_last, with_str);
+}
+
+
+internal_yd void
+copy_yds(void* dest_init, const void* src_init, size_t size) {
+    if (dest_init && src_init) {
+        const u8* src = (const u8*)src_init;
+        u8* dest = (u8*)dest_init;
+        
+        if (dest < src) {
+            while (size--) {
+                *dest++ = *src++;
+            }
+        } else if (dest > src) {
+            src += size - 1;
+            dest += size - 1;
+            
+            while (size--) {
+                *dest-- = *src--;
+            }
+        }
+    }
+}
+
+internal_yd void
+replace_range(String* str, size_t first, size_t one_past_last, String with) {
+    assert_yd((first >= 0) && (from < str->count));
+    assert_yd((one_past_last > 0) && (one_past_last <= str->count));
+    assert_yd(first < one_past_last);
+    
+    s64_yd shift = with.count - (one_past_last - first);
+    size_t new_count = str->count + shift;
+    
+    if (new_count <= str->memory_size) {
+        if (shift != 0) {
+            char* tail = str->data + one_past_last;
+            char* new_tail_pos = tail + shift;
+            // TODO(yuval): Verify that this has no bugs!!!!!!!!!
+            copy_yds(new_tail_pos, tail, str->count - one_past_last);
+        }
+        
+        copy_yds(str->data + first, with.data, with.count);
+        str->count += shift;
+    }
+}
+
+internal_yd void
+replace(String* str, char to_replace, char with) {
+    for (size_t index = 0; index < str->count; ++index) {
+        if (str->data[index] == to_replace) {
+            str->data[index] = with;
+        }
+    }
+}
+
+internal_yd void
+replace(String* str, const char* to_replace, const char* with) {
+    replace(str, make_string_slowly(to_replace), make_string_slowly(with));
+}
+
+internal_yd void
+replace(String* str, const char* to_replace, String with) {
+    replace(str, make_string_slowly(to_replace), with);
+}
+
+internal_yd void
+replace(String* str, String to_replace, const char* with) {
+    replace(str, to_replace, make_string_slowly(with));
+}
+
+internal_yd void
+replace(String* str, String to_replace, String with) {
+    size_t index = 0;
+    
+    for (;;) {
+        index = find(*str, index, to_replace);
+        if (index == STRING_NOT_FOUND) {
+            break;
+        }
+        
+        replace_range(str, index, index + to_replace.count, with);
+        index += with.count;
+    }
+}
+
+//
+// NOTE(yuval): File / Directory Strings Management Functions
+//
+
+internal_yd b32_yd
+string_set_match(void* str_set, size_t item_size, size_t count,
+                 String str, size_t* out_match_index) {
+    b32_yd result = false;
+    u8_yd* at = (u8_yd)str_set;
+    
+    for (size_t index = 0; index < count; ++index, at += item_size) {
+        
+    }
+}
+
+inline b32_yd
+string_set_match(String* str_set, size_t count, String str, size_t* out_match_index) {
+    
 }
 
 #endif
