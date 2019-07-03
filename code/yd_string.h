@@ -3,6 +3,8 @@
 // TODO(yuval): UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING
 // UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING
 
+// TODO(yuval): MAKE THE CODE MORE ROBUST: Check for null pointers and so on....
+
 #if !defined(YD_TYPES)
 #include <stdint.h>
 #include <stddef.h>
@@ -109,43 +111,64 @@ internal_yd s32_yd compare(const char* a, const char* b);
 internal_yd s32_yd compare(String a, const char* b);
 inline s32_yd compare(const char* a, String b);
 internal_yd s32_yd compare(String a, String b);
-internal_yd size_t find(const char* str, size_t start, char character);
-internal_yd size_t find(String str, size_t start, char character);
-internal_yd size_t find(const char* str, size_t start, const char* characters);
-internal_yd size_t find(String str, size_t start, const char* characters);
-internal_yd size_t find(const char* str, size_t start, String seek);
-internal_yd size_t find(String str, size_t start, String seek);
-internal_yd size_t rfind(String str, size_t start, char character);
-internal_yd size_t rfind(String str, size_t start, const char* characters);
-internal_yd size_t rfind(String str, size_t start, String seek);
-internal_yd size_t find_first_of(const char* str, size_t start, const char* characters);
-internal_yd size_t find_first_of(String str, size_t start, const char* characters);
-internal_yd size_t find_insensitive(const char* str, size_t start, char character);
-internal_yd size_t find_insensitive(String str, size_t start, char character);
-internal_yd size_t find_insensitive(const char* str, size_t start, const char* characters);
-internal_yd size_t find_insensitive(String str, size_t start, const char* characters);
-internal_yd size_t find_insensitive(const char* str, size_t start, String seek);
-internal_yd size_t find_insensitive(String str, size_t start, String seek);
+internal_yd size_t find(const char* str, char character, size_t start);
+internal_yd size_t find(String str, char character, size_t start);
+internal_yd size_t find(const char* str, const char* characters, size_t start);
+internal_yd size_t find(String str, const char* characters, size_t start);
+internal_yd size_t find(const char* str, String seek, size_t start);
+internal_yd size_t find(String str, String seek, size_t start);
+inline size_t find(const char* str, char character);
+inline size_t find(String str, char character);
+inline size_t find(const char* str, const char* characters);
+inline size_t find(String str, const char* characters);
+inline size_t find(const char* str, String seek);
+inline size_t find(String str, String seek);
+internal_yd size_t rfind(String str, char character, size_t start);
+internal_yd size_t rfind(String str, const char* characters, size_t start);
+internal_yd size_t rfind(String str, String seek, size_t start);
+inline size_t rfind(String str, char character);
+inline size_t rfind(String str, const char* characters);
+inline size_t rfind(String str, String seek);
+internal_yd size_t find_first_of(const char* str, const char* characters, size_t start);
+internal_yd size_t find_first_of(String str, const char* characters,  size_t start);
+inline size_t find_first_of(const char* str, const char* characters);
+inline size_t find_first_of(String str, const char* characters);
+internal_yd size_t find_insensitive(const char* str, char character, size_t start);
+internal_yd size_t find_insensitive(String str, char character, size_t start);
+internal_yd size_t find_insensitive(const char* str, const char* characters, size_t start);
+internal_yd size_t find_insensitive(String str, const char* characters, size_t start);
+internal_yd size_t find_insensitive(const char* str, String seek, size_t start);
+internal_yd size_t find_insensitive(String str, String seek, size_t start);
+inline size_t find_insensitive(const char* str, char character);
+inline size_t find_insensitive(String str, char character);
+inline size_t find_insensitive(const char* str, const char* characters);
+inline size_t find_insensitive(String str, const char* characters);
+inline size_t find_insensitive(const char* str, String seek);
+inline size_t find_insensitive(String str, String seek);
 inline b32_yd has_substr(const char* str, String seek);
 inline b32_yd has_substr(String str, String seek);
 inline b32_yd has_substr_insensitive(const char* str, String seek);
 inline b32_yd has_substr_insensitive(String str, String seek);
-internal_yd size_t copy_fast_unsafe(char* dest, const char* src);
-internal_yd size_t copy_fast_unsafe(char* dest, String src);
-internal_yd b32_yd copy_checked(String* dest, String src);
-internal_yd b32_yd copy_checked(char* dest, size_t dest_cap, String src);
-internal_yd b32_yd copy_partial(String* dest, const char* src);
-internal_yd b32_yd copy_partial(String* dest, String src);
-internal_yd b32_yd copy_partial(char* dest, size_t dest_cap, String src);
-inline size_t copy(char* dest, const char* src);
-inline void copy(String* dest, String src);
-inline void copy(String* dest, const char* src);
-internal_yd b32_yd append_checked(String* dest, String src);
-internal_yd b32_yd append_partial(String* dest, const char* src);
-internal_yd b32_yd append_partial(String* dest, String src);
+internal_yd String get_first_double_line(String source);
+internal_yd String get_next_double_line(String source, String line);
+internal_yd String get_next_word(String source, String prev_word);
+inline String get_first_word(String source);
+internal_yd size_t copy_fast_unsafe(char* dest, const char* source);
+internal_yd size_t copy_fast_unsafe(char* dest, String source);
+internal_yd b32_yd copy_checked(String* dest, String source);
+internal_yd b32_yd copy_checked(char* dest, size_t dest_cap, String source);
+internal_yd b32_yd copy_partial(String* dest, const char* source);
+internal_yd b32_yd copy_partial(String* dest, String source);
+internal_yd b32_yd copy_partial(char* dest, size_t dest_cap, String source);
+inline size_t copy(char* dest, const char* source);
+inline void copy(String* dest, String source);
+inline void copy(String* dest, const char* source);
+internal_yd b32_yd append_checked(String* dest, String source);
+internal_yd b32_yd append_partial(String* dest, const char* source);
+internal_yd b32_yd append_partial(String* dest, String source);
 internal_yd b32_yd append(String* dest, char c);
-inline b32_yd append(String* dest, const char* src);
-inline b32_yd append(String* dest, String src);
+inline b32_yd append(String* dest, const char* source);
+inline b32_yd append(String* dest, String source);
 internal_yd b32_yd terminate_with_null(String* str);
 internal_yd b32_yd append_padding(String* dest, char c, size_t target_count);
 internal_yd void replace_range(String* str, size_t first, size_t one_past_last, char with);
@@ -156,25 +179,34 @@ internal_yd void replace(String* str, const char* to_replace, const char* with);
 internal_yd void replace(String* str, const char* to_replace, String with);
 internal_yd void replace(String* str, String to_replace, const char* with);
 internal_yd void replace(String* str, String to_replace, String with);
-internal_yd void string_interpret_escapes(char* dest, String src);
-internal_yd String get_first_double_line(String src);
-internal_yd String get_next_double_line(String src, String line);
+internal_yd void string_interpret_escapes(char* dest, String source);
 internal_yd size_t reverse_seek_slash(String str, size_t shift_from_last_char);
 internal_yd size_t reverse_seek_slash(String str);
 inline String front_of_directory(String dir);
 inline String path_of_directory(String dir);
-internal_yd b32_yd SetLastFolder(String* Dir, const char* FolderName, char Slash);
-internal_yd b32_yd SetLastFolder(String* Dir, String FolderName, char Slash);
-internal_yd String GetFirstWord(String Source);
-internal_yd String GetNextWord(String Source, String PrevWord);
-internal_yd String FileExtention(String FileName);
-internal_yd b32_yd RemoveExtention(String* FileName);
-internal_yd b32_yd RemoveLastFolder(String* Path);
-inline b32_yd IsH(String Extention);
-inline b32_yd IsCPP(String Extention);
-inline b32_yd IsObjectiveC(String Extention);
-inline b32_yd IsCode(String Extention);
-inline b32_yd IsCodeFile(String FileName);
+internal_yd b32_yd set_last_folder(String* dir, const char* folder_name, char slash);
+internal_yd b32_yd set_last_folder(String* dir, String folder_name, char slash);
+internal_yd b32_yd remove_last_folder(String* dir);
+internal_yd String file_extension(String filename);
+internal_yd b32_yd remove_extension(String* filename);
+inline b32_yd is_h(String extension);
+inline b32_yd is_c(String extension);
+inline b32_yd is_cpp(String extension);
+inline b32_yd is_objective_c(String extension);
+inline b32_yd is_shader(String extension);
+inline b32_yd is_inl(String extension);
+inline b32_yd is_java(String extension);
+inline b32_yd is_csharp(String extension);
+inline b32_yd is_python(String extension);
+inline b32_yd is_swift(String extension);
+inline b32_yd is_javascript(String extension);
+inline b32_yd is_bat(String extension);
+inline b32_yd is_bash(String extension);
+inline b32_yd is_txt(String extension);
+inline b32_yd is_code(String extension);
+inline b32_yd is_doc(String extension);
+inline b32_yd is_code_file(String filename);
+inline b32_yd is_doc_file(String filename);
 // TODO(yuval): Think about String push (should require an arena)
 inline b32_yd IsLower(char C);
 inline b32_yd IsLower(const char* str);
@@ -806,7 +838,7 @@ compare(String a, String b) {
 //
 
 internal_yd size_t
-find(const char* str, size_t start, char character) {
+find(const char* str, char character, size_t start) {
     assert_yd(start >= 0);
     
     for (size_t index = start; str[index]; ++index) {
@@ -819,7 +851,7 @@ find(const char* str, size_t start, char character) {
 }
 
 internal_yd size_t
-find(String str, size_t start, char character) {
+find(String str, char character, size_t start) {
     assert_yd((start >= 0) && (start < str.count));
     
     for (size_t index = start; index < str.count; ++index) {
@@ -832,7 +864,7 @@ find(String str, size_t start, char character) {
 }
 
 internal_yd size_t
-find(const char* str, size_t start, const char* characters) {
+find(const char* str, const char* characters, size_t start) {
     assert_yd(start >= 0);
     
     if (!(*characters)) {
@@ -859,7 +891,7 @@ find(const char* str, size_t start, const char* characters) {
 }
 
 internal_yd size_t
-find(String str, size_t start, const char* characters) {
+find(String str, const char* characters,  size_t start) {
     assert_yd((start >= 0) && (start < str.count));
     
     if (!(*characters)) {
@@ -888,7 +920,7 @@ find(String str, size_t start, const char* characters) {
 }
 
 internal_yd size_t
-find(const char* str, size_t start, String seek) {
+find(const char* str, String seek, size_t start) {
     assert_yd(start >= 0);
     
     if (seek.count == 0) {
@@ -917,7 +949,7 @@ find(const char* str, size_t start, String seek) {
 }
 
 internal_yd size_t
-find(String str, size_t start, String seek) {
+find(String str, String seek, size_t start) {
     assert_yd((start >= 0) && (start < str.count));
     
     if (seek.count == 0) {
@@ -947,8 +979,44 @@ find(String str, size_t start, String seek) {
     return STRING_NOT_FOUND;
 }
 
+inline size_t
+find(const char* str, char character) {
+    size_t result = find(str, character, 0);
+    return result;
+}
+
+inline size_t
+find(String str, char character) {
+    size_t result = find(str, character, 0);
+    return result;
+}
+
+inline size_t
+find(const char* str, const char* characters) {
+    size_t result = find(str, characters, 0);
+    return result;
+}
+
+inline size_t
+find(String str, const char* characters) {
+    size_t result = find(str, characters, 0);
+    return result;
+}
+
+inline size_t
+find(const char* str, String seek) {
+    size_t result = find(str, seek, 0);
+    return result;
+}
+
+inline size_t
+find(String str, String seek) {
+    size_t result = find(str, seek, 0);
+    return result;
+}
+
 internal_yd size_t
-rfind(String str, size_t start, char character) {
+rfind(String str, char character, size_t start) {
     assert_yd((start >= 0) && (start < str.count));
     
     for (size_t index = start; index >= 0; --index) {
@@ -961,7 +1029,7 @@ rfind(String str, size_t start, char character) {
 }
 
 internal_yd size_t
-rfind(String str, size_t start, const char* characters) {
+rfind(String str, const char* characters, size_t start) {
     assert_yd((start >= 0) && (start < str.count));
     
     if (!(*characters)) {
@@ -992,7 +1060,7 @@ rfind(String str, size_t start, const char* characters) {
     return STRING_NOT_FOUND;
 }
 internal_yd size_t
-rfind(String str, size_t start, String seek) {
+rfind(String str, String seek, size_t start) {
     assert_yd((start >= 0) && (start < str.count));
     
     if (seek.count == 0) {
@@ -1025,8 +1093,26 @@ rfind(String str, size_t start, String seek) {
     return STRING_NOT_FOUND;
 }
 
+inline size_t
+rfind(String str, char character) {
+    size_t result = rfind(str, character, 0);
+    return result;
+}
+
+inline size_t
+rfind(String str, const char* characters) {
+    size_t result = rfind(str, characters, 0);
+    return result;
+}
+
+inline size_t
+rfind(String str, String seek) {
+    size_t result = rfind(str, seek, 0);
+    return result;
+}
+
 internal_yd size_t
-find_first_of(const char* str, size_t start, const char* characters) {
+find_first_of(const char* str, const char* characters, size_t start) {
     assert_yd(start >= 0);
     
     if (!(*characters)) {
@@ -1045,7 +1131,7 @@ find_first_of(const char* str, size_t start, const char* characters) {
 }
 
 internal_yd size_t
-find_first_of(String str, size_t start, const char* characters) {
+find_first_of(String str, const char* characters, size_t start) {
     assert_yd((start >= 0) && (start < str.count));
     
     if (!(*characters)) {
@@ -1063,8 +1149,20 @@ find_first_of(String str, size_t start, const char* characters) {
     return STRING_NOT_FOUND;
 }
 
+inline size_t
+find_first_of(const char* str, const char* characters) {
+    size_t result = find_first_of(str, characters, 0);
+    return result;
+}
+
+inline size_t
+find_first_of(String str, const char* characters) {
+    size_t result = find_first_of(str, characters, 0);
+    return result;
+}
+
 internal_yd size_t
-find_insensitive(const char* str, size_t start, char character) {
+find_insensitive(const char* str, char character, size_t start) {
     assert_yd(start >= 0);
     
     for (size_t index = start; str[index]; ++index) {
@@ -1077,7 +1175,7 @@ find_insensitive(const char* str, size_t start, char character) {
 }
 
 internal_yd size_t
-find_insensitive(String str, size_t start, char character) {
+find_insensitive(String str, char character, size_t start) {
     assert_yd((start >= 0) && (start < str.count));
     
     for (size_t index = start; index < str.count; ++index) {
@@ -1090,7 +1188,7 @@ find_insensitive(String str, size_t start, char character) {
 }
 
 internal_yd size_t
-find_insensitive(const char* str, size_t start, const char* characters) {
+find_insensitive(const char* str, const char* characters, size_t start) {
     assert_yd(start >= 0);
     
     if (!(*characters)) {
@@ -1117,7 +1215,7 @@ find_insensitive(const char* str, size_t start, const char* characters) {
 }
 
 internal_yd size_t
-find_insensitive(String str, size_t start, const char* characters) {
+find_insensitive(String str, const char* characters, size_t start) {
     assert_yd((start >= 0) && (start < str.count));
     
     if (!(*characters)) {
@@ -1146,7 +1244,7 @@ find_insensitive(String str, size_t start, const char* characters) {
 }
 
 internal_yd size_t
-find_insensitive(const char* str, size_t start, String seek) {
+find_insensitive(const char* str, String seek, size_t start) {
     assert_yd(start >= 0);
     
     if (seek.count == 0) {
@@ -1175,7 +1273,7 @@ find_insensitive(const char* str, size_t start, String seek) {
 }
 
 internal_yd size_t
-find_insensitive(String str, size_t start, String seek) {
+find_insensitive(String str, String seek, size_t start) {
     assert_yd((start >= 0) && (start < str.count));
     
     if (seek.count == 0) {
@@ -1205,27 +1303,142 @@ find_insensitive(String str, size_t start, String seek) {
     return STRING_NOT_FOUND;
 }
 
+inline size_t
+find_insensitive(const char* str, char character) {
+    size_t result = find_insensitive(str, character, 0);
+    return result;
+}
+
+inline size_t
+find_insensitive(String str, char character) {
+    size_t result = find_insensitive(str, character, 0);
+    return result;
+}
+
+inline size_t
+find_insensitive(const char* str, const char* characters) {
+    size_t result = find_insensitive(str, characters, 0);
+    return result;
+}
+
+inline size_t
+find_insensitive(String str, const char* characters) {
+    size_t result = find_insensitive(str, characters, 0);
+    return result;
+}
+
+inline size_t
+find_insensitive(const char* str, String seek) {
+    size_t result = find_insensitive(str, seek, 0);
+    return result;
+}
+
+inline size_t
+find_insensitive(String str, String seek) {
+    size_t result = find_insensitive(str, seek, 0);
+    return result;
+}
+
 inline b32_yd
 has_substr(const char* str, String seek) {
-    b32_yd result = (find(str, 0, seek) != STRING_NOT_FOUND);
+    b32_yd result = (find(str, seek) != STRING_NOT_FOUND);
     return result;
 }
 
 inline b32_yd
 has_substr(String str, String seek) {
-    b32_yd result = (find(str, 0, seek) != STRING_NOT_FOUND);
+    b32_yd result = (find(str, seek) != STRING_NOT_FOUND);
     return result;
 }
 
 inline b32_yd
 has_substr_insensitive(const char* str, String seek) {
-    b32_yd result = (find_insensitive(str, 0, seek) != STRING_NOT_FOUND);
+    b32_yd result = (find_insensitive(str, seek) != STRING_NOT_FOUND);
     return result;
 }
 
 inline b32_yd
 has_substr_insensitive(String str, String seek) {
-    b32_yd result = (find_insensitive(str, 0, seek) != STRING_NOT_FOUND);
+    b32_yd result = (find_insensitive(str, seek) != STRING_NOT_FOUND);
+    return result;
+}
+
+
+internal_yd String
+get_first_double_line(String source) {
+    String result = {};
+    
+    size_t pos = find(source, make_lit_string("\n\n"));
+    if (pos == STRING_NOT_FOUND) {
+        pos = find(source, make_lit_string("\r\n\r\n"));
+    }
+    
+    if (pos != STRING_NOT_FOUND) {
+        result = substr(str, 0, pos);
+    }
+    
+    return result;
+}
+
+internal_yd String
+get_next_double_line(String source, String line) {
+    String result = {};
+    
+    size_t line_end_index = (size_t)(line.data - source.data) + line.count;
+    assert((source.data[line_end_index] == '\n') || (source.data[line_end_index] == '\r'));
+    
+    ++line_end_index;
+    assert((source.data[line_end_index] == '\n') || (source.data[line_end_index] == '\r'));
+    
+    size_t start = line_end_index + 1;
+    
+    if (start < source.count) {
+        size_t pos = find(source, make_lit_string("\n\n"), start);
+        if (pos == STRING_NOT_FOUND) {
+            pos = find(source, make_lit_string("\r\n\r\n"), start);
+        }
+        
+        if (pos != STRING_NOT_FOUND) {
+            result = substr(source, start, pos - start);
+        }
+    }
+    
+    return result;
+}
+
+internal_yd String
+get_next_word(String source, String prev_word) {
+    String result = {};
+    size_t pos0 = (size_t)(prev_word.data - source.data) + prev_word.count;
+    
+    for (; pos0 < source.count; ++pos0) {
+        char c = source.data[pos0];
+        if (!(is_whitespace(c) || c == '(' || c == ')')) {
+            break;
+        }
+    }
+    
+    if (pos0 < source.count) {
+        size_t pos1 = pos;
+        
+        for (; pos1 < source.count; ++pos1) {
+            char c = source.data[pos1];
+            if (is_whitespace(c) || c == '(' || c == ')') {
+                break;
+            }
+        }
+        
+        word = substr(source, pos0, pos1 - pos0);
+    }
+    
+    return word;
+}
+
+
+inline String
+get_first_word(String source) {
+    String start = make_string(source.data, 0);
+    String result = get_next_word(source, start);
     return result;
 }
 
@@ -1234,12 +1447,12 @@ has_substr_insensitive(String str, String seek) {
 //
 
 internal_yd size_t
-copy_fast_unsafe(char* dest, const char* src) {
+copy_fast_unsafe(char* dest, const char* source) {
     char* dest_at = dest;
-    char* src_at = src;
+    char* source_at = source;
     
-    while (*src_at) {
-        *dest_at++ = *src_at++;
+    while (*source_at) {
+        *dest_at++ = *source_at++;
     }
     
     *dest_at = 0;
@@ -1249,37 +1462,37 @@ copy_fast_unsafe(char* dest, const char* src) {
 }
 
 internal_yd s32_yd
-copy_fast_unsafe(char* dest, String src) {
-    for (size_t index = 0; index < src.count; ++index) {
-        dest[index] = src.data[index];
+copy_fast_unsafe(char* dest, String source) {
+    for (size_t index = 0; index < source.count; ++index) {
+        dest[index] = source.data[index];
     }
     
     dest[index] = 0;
-    return src.count;
+    return source.count;
 }
 
 internal_yd b32_yd
-copy_checked(String* dest, String src) {
-    if (dest->memory_size < src.count) {
+copy_checked(String* dest, String source) {
+    if (dest->memory_size < source.count) {
         return false;
     }
     
-    for (size_t index = 0; index < src.count; ++index) {
-        dest->data[index] = src.data[index];
+    for (size_t index = 0; index < source.count; ++index) {
+        dest->data[index] = source.data[index];
     }
     
-    dest->count = src.count;
+    dest->count = source.count;
     return true;
 }
 
 internal_yd b32_yd
-copy_checked(char* dest, size_t dest_cap, String src) {
-    if (dest_cap < src.count + 1) {
+copy_checked(char* dest, size_t dest_cap, String source) {
+    if (dest_cap < source.count + 1) {
         return false;
     }
     
-    for (size_t index = 0; index < src.count; ++index) {
-        dest[index] = src.data[index];
+    for (size_t index = 0; index < source.count; ++index) {
+        dest[index] = source.data[index];
     }
     
     dest[index] = 0;
@@ -1287,16 +1500,16 @@ copy_checked(char* dest, size_t dest_cap, String src) {
 }
 
 internal_yd b32_yd
-copy_partial(String* dest, const char* src) {
+copy_partial(String* dest, const char* source) {
     b32_yd result = true;
     
-    for (size_t index = 0; src[index]; ++index) {
+    for (size_t index = 0; source[index]; ++index) {
         if (index >= dest->memory_size) {
             result = false;
             break;
         }
         
-        dest->data[index] = src[index];
+        dest->data[index] = source[index];
     }
     
     dest->count = index;
@@ -1304,16 +1517,16 @@ copy_partial(String* dest, const char* src) {
 }
 
 internal_yd b32_yd
-copy_partial(String* dest, String src) {
+copy_partial(String* dest, String source) {
     b32_yd result = true;
     
-    for (size_t index = 0; index < src.count; ++index) {
+    for (size_t index = 0; index < source.count; ++index) {
         if (index >= dest->memory_size) {
             result = false;
             break;
         }
         
-        dest->data[index] = src.data[index];
+        dest->data[index] = source.data[index];
     }
     
     dest->count = index;
@@ -1321,16 +1534,16 @@ copy_partial(String* dest, String src) {
 }
 
 internal_yd b32_yd
-copy_partial(char* dest, size_t dest_cap, String src) {
+copy_partial(char* dest, size_t dest_cap, String source) {
     b32_yd result = true;
     
-    for (size_t index = 0; index < src.count; ++index) {
+    for (size_t index = 0; index < source.count; ++index) {
         if (index >= dest_cap - 1) {
             result = false;
             break;
         }
         
-        dest[index] = src.data[index];
+        dest[index] = source.data[index];
     }
     
     dest[index] = 0;
@@ -1338,41 +1551,41 @@ copy_partial(char* dest, size_t dest_cap, String src) {
 }
 
 inline size_t
-copy(char* dest, const char* src) {
-    size_t result = copy_fast_unsafe(dest, src);
+copy(char* dest, const char* source) {
+    size_t result = copy_fast_unsafe(dest, source);
     return result;
 }
 
 inline void
-copy(String* dest, String src) {
-    copy_checked(dest, src);
+copy(String* dest, String source) {
+    copy_checked(dest, source);
 }
 
 inline void
-copy(String* dest, const char* src) {
-    copy_partial(dest, src);
+copy(String* dest, const char* source) {
+    copy_partial(dest, source);
 }
 
 internal_yd b32_yd
-append_checked(String* dest, String src) {
+append_checked(String* dest, String source) {
     String end = tailstr(*dest);
-    b32_yd result = copy_checked(&end, src);
+    b32_yd result = copy_checked(&end, source);
     dest->count += end.count;
     return result;
 }
 
 internal_yd b32_yd
-append_partial(String* dest, const char* src) {
+append_partial(String* dest, const char* source) {
     String end = tailstr(*dest);
-    b32_yd result = copy_partial(&end, src);
+    b32_yd result = copy_partial(&end, source);
     dest->count += end.count;
     return result;
 }
 
 internal_yd b32_yd
-append_partial(String* dest, String src) {
+append_partial(String* dest, String source) {
     String end = tailstr(*dest);
-    b32_yd result = copy_partial(&end, src);
+    b32_yd result = copy_partial(&end, source);
     dest->count += end.count;
     return result;
 }
@@ -1390,14 +1603,14 @@ append(String* dest, char c) {
 }
 
 inline b32_yd
-append(String* dest, const char* src) {
-    b32_yd result = append_partial(dest, src);
+append(String* dest, const char* source) {
+    b32_yd result = append_partial(dest, source);
     return result;
 }
 
 inline b32_yd
-append(String* dest, String src) {
-    b32_yd result = append_partial(dest, src);
+append(String* dest, String source) {
+    b32_yd result = append_partial(dest, source);
     return result;
 }
 
@@ -1450,21 +1663,21 @@ replace_range(String* str, size_t first, size_t one_past_last, const char* with)
 
 // TODO(yuval): Maybe rename to block_copy?
 internal_yd void
-block_move_yds(void* dest_init, const void* src_init, size_t size) {
-    if (dest_init && src_init) {
-        const u8* src = (const u8*)src_init;
+block_move_yds(void* dest_init, const void* source_init, size_t size) {
+    if (dest_init && source_init) {
+        const u8* source = (const u8*)source_init;
         u8* dest = (u8*)dest_init;
         
-        if (dest < src) {
+        if (dest < source) {
             while (size--) {
-                *dest++ = *src++;
+                *dest++ = *source++;
             }
-        } else if (dest > src) {
-            src += size - 1;
+        } else if (dest > source) {
+            source += size - 1;
             dest += size - 1;
             
             while (size--) {
-                *dest-- = *src--;
+                *dest-- = *source--;
             }
         }
     }
@@ -1521,7 +1734,7 @@ replace(String* str, String to_replace, String with) {
     size_t index = 0;
     
     for (;;) {
-        index = find(*str, index, to_replace);
+        index = find(*str, to_replace, index);
         if (index == STRING_NOT_FOUND) {
             break;
         }
@@ -1532,22 +1745,22 @@ replace(String* str, String to_replace, String with) {
 }
 
 internal_yd void
-string_interpret_escapes(char* dest, String src) {
+string_interpret_escapes(char* dest, String source) {
     s32_yd mode = 0;
     size_t dest_index = 0;
     
-    for (size_t src_index = 0; src_index < src.count; ++src_index) {
+    for (size_t source_index = 0; source_index < source.count; ++source_index) {
         switch (mode) {
             case 0: {
-                if (src.data[src_index] = '\\') {
+                if (source.data[source_index] = '\\') {
                     mode = 1;
                 } else {
-                    dest[dest_index++] = src.data[src_index];
+                    dest[dest_index++] = source.data[source_index];
                 }
             } break;
             
             case 1: {
-                char c = src.data[src_index];
+                char c = source.data[source_index];
                 switch (c) {
                     case '\\': { dest[dest_index++] = '\\'; } break;
                     case 'n': { dest[dest_index++] = '\n'; } break;
@@ -1563,48 +1776,6 @@ string_interpret_escapes(char* dest, String src) {
     }
     
     dest[dest_index] = 0;
-}
-
-internal_yd String
-get_first_double_line(String src) {
-    String result = {};
-    
-    size_t pos = find(src, 0, make_lit_string("\n\n"));
-    if (pos == STRING_NOT_FOUND) {
-        pos = find(src, 0, make_lit_string("\r\n\r\n"));
-    }
-    
-    if (pos != STRING_NOT_FOUND) {
-        result = substr(str, 0, pos);
-    }
-    
-    return result;
-}
-
-internal_yd String
-get_next_double_line(String src, String line) {
-    String result = {};
-    
-    size_t line_end_index = (size_t)(line.data - src.data) + line.count;
-    assert((src.data[line_end_index] == '\n') || (src.data[line_end_index] == '\r'));
-    
-    ++line_end_index;
-    assert((src.data[line_end_index] == '\n') || (src.data[line_end_index] == '\r'));
-    
-    size_t start = line_end_index + 1;
-    
-    if (start < src.count) {
-        size_t pos = find(src, start, make_lit_string("\n\n"));
-        if (pos == STRING_NOT_FOUND) {
-            pos = find(src, start, make_lit_string("\r\n\r\n"));
-        }
-        
-        if (pos != STRING_NOT_FOUND) {
-            result = substr(src, start, pos - start);
-        }
-    }
-    
-    return result;
 }
 
 //
@@ -1639,6 +1810,215 @@ front_of_directory(String dir) {
 inline String
 path_of_directory(String dir) {
     String result = substr(dir, 0, reverse_seek_slash(dir) + 1);
+    return result;
+}
+
+internal_yd b32_yd
+set_last_folder(String* dir, const char* folder_name, char slash) {
+    b32_yd result = false;
+    size_t last_slash_index = reverse_seek_slash(*dir);
+    
+    if (last_slash_index != STRING_NOT_FOUND) {
+        size_t count = last_slash_index + 1;
+        dir->count = count;
+        
+        if (append(dir, folder_name)) {
+            if (append(dir, slash)) {
+                result = true;
+            }
+        }
+        
+        if (!result) {
+            dir->count = count;
+        }
+    }
+    
+    return result;
+}
+
+internal_yd b32_yd
+set_last_folder(String* dir, String folder_name, char slash) {
+    b32_yd result = false;
+    size_t last_slash_index = reverse_seek_slash(*dir);
+    
+    if (last_slash_index != STRING_NOT_FOUND) {
+        size_t count = last_slash_index + 1;
+        dir->count = count;
+        
+        if (append(dir, folder_name)) {
+            if (append(dir, slash)) {
+                result = true;
+            }
+        }
+        
+        if (!result) {
+            dir->count = count;
+        }
+    }
+    
+    return result;
+}
+
+internal_yd b32_yd
+remove_last_folder(String* path) {
+    b32_yd result = false;
+    size_t last_slash_index = reverse_seek_slash(*path, 1);
+    
+    if (last_slash_index != STRING_NOT_FOUND) {
+        result = true;
+        path->count = last_slash_index + 1;
+    }
+    
+    return result;
+}
+
+internal_yd String
+file_extension(String filename) {
+    String result = {};
+    size_t dot_index = rfind(filename, '.');
+    
+    if (dot_index != STRING_NOT_FOUND) {
+        result = make_string(filename.data + dot_index + 1,
+                             filename.count - dot_index - 1);
+    }
+    
+    return result;
+}
+
+internal_yd b32_yd
+remove_extension(String* filename) {
+    b32_yd result = false;
+    size_t last_dot_index = rfind(filename, '.');
+    
+    if (last_dot_index != STRING_NOT_FOUND) {
+        result = true;
+        filename->count = last_dot_index + 1;
+    }
+    
+    return result;
+}
+
+inline b32_yd
+is_h(String extension) {
+    b32_yd result = (strings_match(extension, "h") ||
+                     strings_match(extension, "hpp") ||
+                     strings_match(extension, "hin"));
+    return result;
+}
+
+inline b32_yd
+is_c(String extension) {
+    b32_yd result = strings_match(extension, "c");
+    return result;
+}
+
+inline b32_yd
+is_cpp(String extension) {
+    b32_yd result = (strings_match(extension, "cpp") ||
+                     strings_match(extension, "cc") ||
+                     strings_match(extension, "cin"));
+    return result;
+}
+
+inline b32_yd
+is_objective_c(String extension) {
+    b32_yd result = (strings_match(extension, "m") ||
+                     strings_match(extension, "mm"));
+    return result;
+}
+
+inline b32_yd
+is_shader(String extension) {
+    b32_yd result = (strings_match(extension, "ps") ||
+                     strings_match(extension, "vs") ||
+                     strings_match(extension, "cs") ||
+                     strings_match(extension, "ts") ||
+                     strings_match(extension, "gs"));
+    return result;
+}
+
+inline b32_yd
+is_inl(String extension) {
+    b32_yd result = strings_match(extension, "inl");
+    return result;
+}
+
+inline b32_yd
+is_java(String extension) {
+    b32_yd result = strings_match(extension, "java");
+    return result;
+}
+
+inline b32_yd
+is_csharp(String extension) {
+    b32_yd result = strings_match(extension, "cs");
+    return result;
+}
+
+inline b32_yd
+is_python(String extension) {
+    b32_yd result = strings_match(extension, "py");
+    return result;
+}
+
+inline b32_yd
+is_swift(String extension) {
+    b32_yd result = strings_match(extension, "swift");
+    return result;
+}
+
+inline b32_yd
+is_javascript(String extension) {
+    b32_yd result = strings_match(extension, "js");
+    return result;
+}
+
+inline b32_yd
+is_bat(String extension) {
+    b32_yd result = strings_match(extension, "bat");
+    return result;
+}
+
+inline b32_yd
+is_bash(String extension) {
+    b32_yd result = strings_match(extension, "sh");
+    return result;
+}
+
+inline b32_yd
+is_txt(String extension) {
+    b32_yd result = strings_match(extension, "txt");
+    return result;
+}
+
+inline b32_yd
+is_code(String extension) {
+    b32_yd result = (is_h(extension) || is_c(extension) || is_cpp(extension) ||
+                     is_objective_c(extension) || is_shader(extension) ||
+                     is_inl(extension) || is_java(extension) || is_csharp(extension) ||
+                     is_python(extension) || is_swift(extension) || is_javascript(extension) ||
+                     is_bat(extension) || is_bash(extension));
+    return result;
+}
+
+inline b32_yd
+is_doc(String extension) {
+    b32_yd result = is_txt(extension);
+    return result;
+}
+
+inline b32_yd
+is_code_file(String filename) {
+    String extension = file_extension(filename);
+    b32_yd result = is_code(extension);
+    return result;
+}
+
+inline b32_yd
+is_doc_file(String filename) {
+    String extension = file_extension(filename);
+    b32_yd result = is_doc(extension);
+    return result;
 }
 
 #endif
