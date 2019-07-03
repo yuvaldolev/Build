@@ -1,5 +1,8 @@
 #if !defined(YD_STRING)
 
+// TODO(yuval): UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING
+// UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING
+
 #if !defined(YD_TYPES)
 #include <stdint.h>
 #include <stddef.h>
@@ -43,10 +46,7 @@ struct String {
 
 // TODO(yuval): Maybe create a UTF8 String struct
 
-#if !defined(STRING_NOT_FOUND)
-# define STRING_NOT_FOUND -1
-#endif
-
+global_variable_yd const size_t STRING_NOT_FOUND = -1;
 global_variable_yd String null_str = {};
 
 inline String make_string(void* data, size_t count, size_t memory_size);
@@ -102,6 +102,9 @@ inline b32_yd strings_match_part_insensitive(const char* a, const char* b);
 inline b32_yd strings_match_part_insensitive(String a, const char* b);
 inline b32_yd strings_match_part_insensitive(const char* a, String b);
 inline b32_yd strings_match_part_insensitive(String a, String b);
+internal_yd b32_yd string_set_match(void* str_set, size_t item_size, size_t count,
+                                    String str, size_t* out_match_index);
+inline b32_yd string_set_match(String* str_set, size_t count, String str, size_t* out_match_index);
 internal_yd s32_yd compare(const char* a, const char* b);
 internal_yd s32_yd compare(String a, const char* b);
 inline s32_yd compare(const char* a, String b);
@@ -145,7 +148,6 @@ inline b32_yd append(String* dest, const char* src);
 inline b32_yd append(String* dest, String src);
 internal_yd b32_yd terminate_with_null(String* str);
 internal_yd b32_yd append_padding(String* dest, char c, size_t target_count);
-internal_yd void string_interpret_escapes(char* dest, String src);
 internal_yd void replace_range(String* str, size_t first, size_t one_past_last, char with);
 internal_yd void replace_range(String* str, size_t first, size_t one_past_last, const char* with);
 internal_yd void replace_range(String* str, size_t first, size_t one_past_last, String with);
@@ -154,13 +156,13 @@ internal_yd void replace(String* str, const char* to_replace, const char* with);
 internal_yd void replace(String* str, const char* to_replace, String with);
 internal_yd void replace(String* str, String to_replace, const char* with);
 internal_yd void replace(String* str, String to_replace, String with);
-internal_yd b32_yd string_set_match(void* str_set, size_t item_size, size_t count,
-                                    String str, size_t* out_match_index);
-inline b32_yd string_set_match(String* str_set, size_t count, String str, size_t* out_match_index);
-internal_yd String GetFirstDoubleLine(String Source);
-internal_yd String GetNextDoubleLine(String Source, String Line);
-inline String FrontOfDirectory(String Dir);
-inline String PathOfDirectory(String Dir);
+internal_yd void string_interpret_escapes(char* dest, String src);
+internal_yd String get_first_double_line(String src);
+internal_yd String get_next_double_line(String src, String line);
+internal_yd size_t reverse_seek_slash(String str, size_t shift_from_last_char);
+internal_yd size_t reverse_seek_slash(String str);
+inline String front_of_directory(String dir);
+inline String path_of_directory(String dir);
 internal_yd b32_yd SetLastFolder(String* Dir, const char* FolderName, char Slash);
 internal_yd b32_yd SetLastFolder(String* Dir, String FolderName, char Slash);
 internal_yd String GetFirstWord(String Source);
@@ -251,7 +253,7 @@ inline char S32ToHexChar(s32_yd Value);
 internal_yd u32_yd HexStringToU32(String str);
 internal_yd b32_yd ColorToHexString(String* Dest, u32_yd Color);
 internal_yd b32_yd HexStringToColor(u32_yd* Dest, String str);
-inline b32_yd IsSlash(char C);
+inline b32_yd is_slash(char C);
 
 #if defined(YD_STRING_IMPLEMENTATION)
 
@@ -710,6 +712,30 @@ inline b32_yd
 strings_match_part_insensitive(String a, String b) {
     size_t ignored;
     b32_yd result = strings_match_part_insensitive(a, b, &ignored);
+    return result;
+}
+
+internal_yd b32_yd
+string_set_match(void* str_set, size_t item_size, size_t count,
+                 String str, size_t* out_match_index) {
+    b32_yd result = false;
+    u8_yd* at = (u8_yd*)str_set;
+    
+    for (size_t index = 0; index < count; ++index, at += item_size) {
+        if (strings_match(*((String*)at), str)) {
+            *out_match_index = index;
+            result = true;
+            break;
+        }
+    }
+    
+    return result;
+}
+
+inline b32_yd
+string_set_match(String* str_set, size_t count, String str, size_t* out_match_index) {
+    b32_yd result = string_set_match(str_set, sizeof(String), count,
+                                     str, out_match_index);
     return result;
 }
 
@@ -1406,40 +1432,6 @@ append_padding(String* dest, char c, size_t target_count) {
 //
 
 internal_yd void
-string_interpret_escapes(char* dest, String src) {
-    s32_yd mode = 0;
-    size_t dest_index = 0;
-    
-    for (size_t src_index = 0; src_index < src.count; ++src_index) {
-        switch (mode) {
-            case 0: {
-                if (src.data[src_index] = '\\') {
-                    mode = 1;
-                } else {
-                    dest[dest_index++] = src.data[src_index];
-                }
-            } break;
-            
-            case 1: {
-                char c = src.data[src_index];
-                switch (c) {
-                    case '\\': { dest[dest_index++] = '\\'; } break;
-                    case 'n': { dest[dest_index++] = '\n'; } break;
-                    case 't': { dest[dest_index++] = '\t'; } break;
-                    case '"': { dest[dest_index++] = '"'; } break;
-                    case '0': { dest[dest_index++] = '\0'; } break;
-                    default: { dest[dest_index++] = '\\'; dest[dest_index++] = c; } break;
-                }
-                
-                mode = 0;
-            } break;
-        }
-    }
-    
-    dest[dest_index] = 0;
-}
-
-internal_yd void
 replace_range(String* str, size_t first, size_t one_past_last, char with) {
     assert_yd((first >= 0) && (from < str->count));
     assert_yd((one_past_last > 0) && (one_past_last <= str->count));
@@ -1456,9 +1448,9 @@ replace_range(String* str, size_t first, size_t one_past_last, const char* with)
     replace_range(str, first, one_past_last, with_str);
 }
 
-
+// TODO(yuval): Maybe rename to block_copy?
 internal_yd void
-copy_yds(void* dest_init, const void* src_init, size_t size) {
+block_move_yds(void* dest_init, const void* src_init, size_t size) {
     if (dest_init && src_init) {
         const u8* src = (const u8*)src_init;
         u8* dest = (u8*)dest_init;
@@ -1492,10 +1484,10 @@ replace_range(String* str, size_t first, size_t one_past_last, String with) {
             char* tail = str->data + one_past_last;
             char* new_tail_pos = tail + shift;
             // TODO(yuval): Verify that this has no bugs!!!!!!!!!
-            copy_yds(new_tail_pos, tail, str->count - one_past_last);
+            block_move_yds(new_tail_pos, tail, str->count - one_past_last);
         }
         
-        copy_yds(str->data + first, with.data, with.count);
+        block_move_yds(str->data + first, with.data, with.count);
         str->count += shift;
     }
 }
@@ -1539,24 +1531,114 @@ replace(String* str, String to_replace, String with) {
     }
 }
 
+internal_yd void
+string_interpret_escapes(char* dest, String src) {
+    s32_yd mode = 0;
+    size_t dest_index = 0;
+    
+    for (size_t src_index = 0; src_index < src.count; ++src_index) {
+        switch (mode) {
+            case 0: {
+                if (src.data[src_index] = '\\') {
+                    mode = 1;
+                } else {
+                    dest[dest_index++] = src.data[src_index];
+                }
+            } break;
+            
+            case 1: {
+                char c = src.data[src_index];
+                switch (c) {
+                    case '\\': { dest[dest_index++] = '\\'; } break;
+                    case 'n': { dest[dest_index++] = '\n'; } break;
+                    case 't': { dest[dest_index++] = '\t'; } break;
+                    case '"': { dest[dest_index++] = '"'; } break;
+                    case '0': { dest[dest_index++] = '\0'; } break;
+                    default: { dest[dest_index++] = '\\'; dest[dest_index++] = c; } break;
+                }
+                
+                mode = 0;
+            } break;
+        }
+    }
+    
+    dest[dest_index] = 0;
+}
+
+internal_yd String
+get_first_double_line(String src) {
+    String result = {};
+    
+    size_t pos = find(src, 0, make_lit_string("\n\n"));
+    if (pos == STRING_NOT_FOUND) {
+        pos = find(src, 0, make_lit_string("\r\n\r\n"));
+    }
+    
+    if (pos != STRING_NOT_FOUND) {
+        result = substr(str, 0, pos);
+    }
+    
+    return result;
+}
+
+internal_yd String
+get_next_double_line(String src, String line) {
+    String result = {};
+    
+    size_t line_end_index = (size_t)(line.data - src.data) + line.count;
+    assert((src.data[line_end_index] == '\n') || (src.data[line_end_index] == '\r'));
+    
+    ++line_end_index;
+    assert((src.data[line_end_index] == '\n') || (src.data[line_end_index] == '\r'));
+    
+    size_t start = line_end_index + 1;
+    
+    if (start < src.count) {
+        size_t pos = find(src, start, make_lit_string("\n\n"));
+        if (pos == STRING_NOT_FOUND) {
+            pos = find(src, start, make_lit_string("\r\n\r\n"));
+        }
+        
+        if (pos != STRING_NOT_FOUND) {
+            result = substr(src, start, pos - start);
+        }
+    }
+    
+    return result;
+}
+
 //
 // NOTE(yuval): File / Directory Strings Management Functions
 //
 
-internal_yd b32_yd
-string_set_match(void* str_set, size_t item_size, size_t count,
-                 String str, size_t* out_match_index) {
-    b32_yd result = false;
-    u8_yd* at = (u8_yd)str_set;
-    
-    for (size_t index = 0; index < count; ++index, at += item_size) {
-        
+internal_yd size_t
+reverse_seek_slash(String str, size_t shift_from_last_char) {
+    for (size_t index = str.size - shift_from_last_char - 1;
+         index >= 0;
+         --index) {
+        if (is_slash(str[index])) {
+            return index;
+        }
     }
+    
+    return STRING_NOT_FOUND;
 }
 
-inline b32_yd
-string_set_match(String* str_set, size_t count, String str, size_t* out_match_index) {
-    
+internal_yd size_t
+reverse_seek_slash(String str) {
+    size_t result = reverse_seek_slash(str, 0);
+    return result;
+}
+
+inline String
+front_of_directory(String dir) {
+    String result = substr(dir, reverse_seek_slash(dir) + 1);
+    return result;
+}
+
+inline String
+path_of_directory(String dir) {
+    String result = substr(dir, 0, reverse_seek_slash(dir) + 1);
 }
 
 #endif
