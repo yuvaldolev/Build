@@ -2175,37 +2175,70 @@ to_lower(String* dest, String source) {
 
 inline char
 to_upper(char c) {
+    char result = c;
     
+    if (is_lower(result)) {
+        result -= 'a' - 'A';
+    }
+    
+    return result;
 }
 
 internal_yd void
 to_upper(char* str) {
-    
+    for (char* at = str; *at; ++at) {
+        *at = to_upper(*at);
+    }
 }
 
 internal_yd void
 to_upper(String* str) {
-    
+    for (size_t index = 0; index < str->count; ++index) {
+        str->data[index] = to_upper(str->data[index]);
+    }
 }
 
 internal_yd void
 to_upper(char* dest, const char* source) {
+    const char* source_at = source;
+    char* dest_at = dest;
     
+    while (*source_at) {
+        *dest_at++ = to_upper(*source_at++);
+    }
+    
+    *dest_at = 0;
 }
 
 internal_yd void
 to_upper(String* dest, const char* source) {
+    size_t index = 0;
     
+    for (; source[index]; ++index) {
+        dest->data[index] = to_upper(source[index]);
+    }
+    
+    dest->count = index;
 }
 
 internal_yd void
 to_upper(char* dest, String source) {
+    for (size_t index = 0; index < source.count; ++index) {
+        dest[index] = to_upper(source.data[index]);
+    }
     
+    dest[source.count] = 0;
 }
 
 internal_yd void
 to_upper(String* dest, String source) {
-    
+    if (dest->memory_size >= source.count) {
+        for (size_t index = 0; index < source.count; ++index) {
+            dest->data[index] = to_upper(source.data[index]);
+        }
+        
+        dest->count = source.count;
+    }
 }
 
 #endif
