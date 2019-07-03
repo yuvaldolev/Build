@@ -230,12 +230,12 @@ internal_yd void to_upper(char* dest, const char* source);
 internal_yd void to_upper(String* dest, const char* source);
 internal_yd void to_upper(char* dest, String source);
 internal_yd void to_upper(String* dest, String source);
-internal_yd void ToCamel(char* str);
-internal_yd void ToCamel(String* str);
-internal_yd void ToCamel(char* dest, const char* source);
-internal_yd void ToCamel(String* dest, const char* source);
-internal_yd void ToCamel(char* dest, String source);
-internal_yd void ToCamel(String* dest, String source);
+internal_yd void to_camel(char* str);
+internal_yd void to_camel(String* str);
+internal_yd void to_camel(char* dest, const char* source);
+internal_yd void to_camel(String* dest, const char* source);
+internal_yd void to_camel(char* dest, String source);
+internal_yd void to_camel(String* dest, String source);
 inline b32_yd IsSpacing(char C);
 inline b32_yd IsSpacing(const char* str);
 inline b32_yd IsSpacing(String str);
@@ -268,14 +268,14 @@ internal_yd b32_yd AppendU64ToString(String* dest, u64_yd Value);
 internal_yd size_t F32ToStringCount(f32_yd Value);
 internal_yd b32_yd F32ToString(String* dest, f32_yd Value);
 internal_yd b32_yd AppendF32ToString(String* dest, f32_yd Value);
-inline b32_yd IsAlphaNumeric(char C);
-inline b32_yd IsAlphaNumeric(const char* str);
-inline b32_yd IsAlphaNumeric(String str);
-inline b32_yd IsAlphaNumericUTF8(u8_yd C);
-inline b32_yd IsAlphaNumericTrue(char C);
-inline b32_yd IsAlphaNumericTrue(const char* str);
-inline b32_yd IsAlphaNumericTrue(String str);
-inline b32_yd IsAlphaNumericTrueUTF8(u8_yd C);
+inline b32_yd is_alpha_numeric(char C);
+inline b32_yd is_alpha_numeric(const char* str);
+inline b32_yd is_alpha_numeric(String str);
+inline b32_yd is_alpha_numeric_utf8(u8_yd C);
+inline b32_yd is_alpha_numeric_true(char C);
+inline b32_yd is_alpha_numeric_true(const char* str);
+inline b32_yd is_alpha_numeric_true(String str);
+inline b32_yd is_alpha_numeric_true_utf8(u8_yd C);
 inline b32_yd IsHex(char C);
 inline b32_yd IsHex(const char* str);
 inline b32_yd IsHex(String str);
@@ -2235,6 +2235,143 @@ to_upper(String* dest, String source) {
     if (dest->memory_size >= source.count) {
         for (size_t index = 0; index < source.count; ++index) {
             dest->data[index] = to_upper(source.data[index]);
+        }
+        
+        dest->count = source.count;
+    }
+}
+
+internal_yd void
+to_camel(char* str) {
+    b32_yd is_first = true;
+    
+    for (char* at = str; *at; ++at) {
+        if (is_alpha_numeric_true(*at)) {
+            if (is_first) {
+                *at = to_upper(*at);
+                is_first = false;
+            } else {
+                *at = to_lower(*at);
+            }
+        } else {
+            is_first = true;
+        }
+    }
+}
+
+internal_yd void
+to_camel(String* str) {
+    b32_yd is_first = true;
+    
+    for (size_t index = 0; index < str->count; ++index) {
+        if (is_alpha_numeric_true(str->data[index])) {
+            if (is_first) {
+                str->data[index] = to_upper(str->data[index]);
+                is_first = false;
+            } else {
+                str->data[index] = to_lower(str->data[index]);
+            }
+        } else {
+            is_first = true;
+        }
+    }
+}
+
+internal_yd void
+to_camel(char* dest, const char* source) {
+    const char* source_at = source;
+    char* dest_at = dest;
+    b32_yd is_first = false;
+    
+    for (; *source_at; ++source_at, ++dest_at) {
+        char c = *source_at;
+        
+        if (is_alpha_numeric_true(c)) {
+            if (is_first) {
+                c = to_upper(c);
+                is_first = false;
+            } else {
+                c = to_lower(c);
+            }
+        } else {
+            is_first = true;
+        }
+        
+        *dest_at = c;
+    }
+    
+    *dest_at = 0;
+}
+
+internal_yd void
+to_camel(String* dest, const char* source) {
+    size_t index = 0;
+    b32_yd is_first = true;
+    
+    for (; source[index]; ++index) {
+        char c = source[index];
+        
+        if (is_alpha_numeric_true(c)) {
+            if (is_first) {
+                c = to_upper(c);
+                is_first = false;
+            } else {
+                c = to_lower(c);
+            }
+        } else {
+            is_first = true;
+        }
+        
+        dest->data[index] = c;
+    }
+    
+    dest->count = index;
+}
+
+internal_yd void
+to_camel(char* dest, String source) {
+    b32_yd is_first = true;
+    
+    for (size_t index = 0; index < source.count; ++index) {
+        char c = source.data[index];
+        
+        if (is_alpha_numeric_true(c)) {
+            if (is_first) {
+                c = to_upper(c);
+                is_first = false;
+            } else {
+                c = to_lower(c);
+            }
+        } else {
+            is_first = true;
+        }
+        
+        dest[index] = c;
+    }
+    
+    dest[source.count] = index;
+}
+
+internal_yd void
+to_camel(String* dest, String source) {
+    if (dest->memory_size >= source.count) {
+        b32_yd is_first = true;
+        
+        for (size_t index = 0; index < source.count; ++index) {
+            char c = source.data[index];
+            
+            if (is_alpha_numeric_true(c)) {
+                if (is_first) {
+                    c = to_upper(c);
+                    is_first = false;
+                } else {
+                    c = to_lower(c);
+                }
+            } else {
+                is_first = true;
+            }
+            
+            dest->data[index] = c;
         }
         
         dest->count = source.count;
