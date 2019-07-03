@@ -208,34 +208,34 @@ inline b32_yd is_doc(String extension);
 inline b32_yd is_code_file(String filename);
 inline b32_yd is_doc_file(String filename);
 // TODO(yuval): Think about String push (should require an arena)
-inline b32_yd IsLower(char C);
-inline b32_yd IsLower(const char* str);
-inline b32_yd IsLower(String str);
-inline b32_yd IsLowerUTF8(u8_yd C);
-inline b32_yd IsUpper(char C);
-inline b32_yd IsUpper(const char* str);
-inline b32_yd IsUpper(String str);
-inline b32_yd IsUpperUTF8(u8_yd C);
-inline char to_lower(char C);
-internal_yd void ToLower(char* str);
-internal_yd void ToLower(String* str);
-internal_yd void ToLower(char* Dest, const char* Src);
-internal_yd void ToLower(String* Dest, const char* Src);
-internal_yd void ToLower(char* Dest, String Src);
-internal_yd void ToLower(String* Dest, String Src);
-inline char ToUpper(char C);
-internal_yd void ToUpper(char* str);
-internal_yd void ToUpper(String* str);
-internal_yd void ToUpper(char* Dest, const char* Src);
-internal_yd void ToUpper(String* Dest, const char* Src);
-internal_yd void ToUpper(char* Dest, String Src);
-internal_yd void ToUpper(String* Dest, String Src);
+inline b32_yd is_lower(char c);
+inline b32_yd is_lower(const char* str);
+inline b32_yd is_lower(String str);
+inline b32_yd is_lower_utf8(u8_yd c);
+inline b32_yd is_upper(char c);
+inline b32_yd is_upper(const char* str);
+inline b32_yd is_upper(String str);
+inline b32_yd is_upper_utf8(u8_yd c);
+inline char to_lower(char c);
+internal_yd void to_lower(char* str);
+internal_yd void to_lower(String* str);
+internal_yd void to_lower(char* dest, const char* source);
+internal_yd void to_lower(String* dest, const char* source);
+internal_yd void to_lower(char* dest, String source);
+internal_yd void to_lower(String* dest, String source);
+inline char to_upper(char c);
+internal_yd void to_upper(char* str);
+internal_yd void to_upper(String* str);
+internal_yd void to_upper(char* dest, const char* source);
+internal_yd void to_upper(String* dest, const char* source);
+internal_yd void to_upper(char* dest, String source);
+internal_yd void to_upper(String* dest, String source);
 internal_yd void ToCamel(char* str);
 internal_yd void ToCamel(String* str);
-internal_yd void ToCamel(char* Dest, const char* Src);
-internal_yd void ToCamel(String* Dest, const char* Src);
-internal_yd void ToCamel(char* Dest, String Src);
-internal_yd void ToCamel(String* Dest, String Src);
+internal_yd void ToCamel(char* dest, const char* source);
+internal_yd void ToCamel(String* dest, const char* source);
+internal_yd void ToCamel(char* dest, String source);
+internal_yd void ToCamel(String* dest, String source);
 inline b32_yd IsSpacing(char C);
 inline b32_yd IsSpacing(const char* str);
 inline b32_yd IsSpacing(String str);
@@ -260,14 +260,14 @@ inline b32_yd IsNumericUTF8(u8_yd C);
 internal_yd s32_yd ToNumeric(const char* str);
 internal_yd s32_yd ToNumeric(String str);
 internal_yd size_t S32ToStringCount(s32_yd Value);
-internal_yd b32_yd S32ToString(String* Dest, s32_yd Value);
-internal_yd b32_yd AppendS32ToString(String* Dest, s32_yd Value);
+internal_yd b32_yd S32ToString(String* dest, s32_yd Value);
+internal_yd b32_yd AppendS32ToString(String* dest, s32_yd Value);
 internal_yd size_t U64ToStringCount(u64_yd Value);
-internal_yd b32_yd U64ToString(String* Dest, u64_yd Value);
-internal_yd b32_yd AppendU64ToString(String* Dest, u64_yd Value);
+internal_yd b32_yd U64ToString(String* dest, u64_yd Value);
+internal_yd b32_yd AppendU64ToString(String* dest, u64_yd Value);
 internal_yd size_t F32ToStringCount(f32_yd Value);
-internal_yd b32_yd F32ToString(String* Dest, f32_yd Value);
-internal_yd b32_yd AppendF32ToString(String* Dest, f32_yd Value);
+internal_yd b32_yd F32ToString(String* dest, f32_yd Value);
+internal_yd b32_yd AppendF32ToString(String* dest, f32_yd Value);
 inline b32_yd IsAlphaNumeric(char C);
 inline b32_yd IsAlphaNumeric(const char* str);
 inline b32_yd IsAlphaNumeric(String str);
@@ -283,8 +283,8 @@ inline b32_yd IsHexUTF8(u8_yd C);
 inline s32_yd HexCharToS32(char C);
 inline char S32ToHexChar(s32_yd Value);
 internal_yd u32_yd HexStringToU32(String str);
-internal_yd b32_yd ColorToHexString(String* Dest, u32_yd Color);
-internal_yd b32_yd HexStringToColor(u32_yd* Dest, String str);
+internal_yd b32_yd ColorToHexString(String* dest, u32_yd Color);
+internal_yd b32_yd HexStringToColor(u32_yd* dest, String str);
 inline b32_yd is_slash(char C);
 
 #if defined(YD_STRING_IMPLEMENTATION)
@@ -2019,6 +2019,193 @@ is_doc_file(String filename) {
     String extension = file_extension(filename);
     b32_yd result = is_doc(extension);
     return result;
+}
+
+//
+// NOTE(yuval): Case / Numeric Checking And Conversion Functions
+//
+
+inline b32_yd
+is_lower(char c) {
+    b32_yd result = ((c >= 'a') && (c <= 'z'));
+    return result;
+}
+
+inline b32_yd
+is_lower(const char* str) {
+    b32_yd result = true;
+    
+    for (const char* at = str; *at; ++at) {
+        if (!is_lower(*at)) {
+            result = false;
+            break;
+        }
+    }
+    
+    return result;
+}
+
+inline b32_yd
+is_lower(String str) {
+    b32_yd result = true;
+    
+    for (size_t index = 0; index < str.count; ++index) {
+        if (!is_lower(str.data[index])) {
+            result = false;
+            break;
+        }
+    }
+    
+    return result;
+}
+
+inline b32_yd
+is_lower_utf8(u8_yd c) {
+    b32_yd result = (is_lower((char)c) || (c >= 128));
+    return result;
+}
+
+inline b32_yd
+is_upper(char c) {
+    b32_yd result = ((c >= 'A') && (c <= 'Z'));
+    return result;
+}
+
+inline b32_yd
+is_upper(const char* str) {
+    b32_yd result = true;
+    
+    for (const char* at = str; *at; ++at) {
+        if (!is_upper(*at)) {
+            result = false;
+            break;
+        }
+    }
+    
+    return result;
+}
+
+inline b32_yd
+is_upper(String str) {
+    b32_yd result;
+    
+    for (size_t index = 0; index < str.count; ++index) {
+        if (!is_upper(str.data[index])) {
+            result = false;
+            break;
+        }
+    }
+    
+    return result;
+}
+
+inline b32_yd
+is_upper_utf8(u8_yd c) {
+    b32_yd result = (is_upper((char)c) || (c >= 128));
+    return result;
+}
+
+inline char
+to_lower(char c) {
+    char result = c;
+    
+    if (is_upper(result)) {
+        result += 'a' - 'A';
+    }
+    
+    return result;
+}
+
+internal_yd void
+to_lower(char* str) {
+    for (char* at = str; *at; ++at) {
+        *at = to_lower(*at);
+    }
+}
+
+internal_yd void
+to_lower(String* str) {
+    for (size_t index = 0; index < str->count; ++index) {
+        str->data[index] = to_lower(str->data[index]);
+    }
+}
+
+internal_yd void
+to_lower(char* dest, const char* source) {
+    const char* source_at = source;
+    char* dest_at = dest;
+    
+    while (*source_at) {
+        *dest_at++ = to_lower(*source_at++);
+    }
+    
+    *dest_at = 0;
+}
+
+internal_yd void
+to_lower(String* dest, const char* source) {
+    size_t index = 0;
+    
+    for (; source[index]; ++index) {
+        dest->data[index] = to_lower(source[index]);
+    }
+    
+    dest->count = index;
+}
+
+internal_yd void
+to_lower(char* dest, String source) {
+    for (size_t index = 0; index < source.count; ++index) {
+        dest[index] = to_lower(source.data[index]);
+    }
+    
+    dest[source.count] = 0;
+}
+
+internal_yd void
+to_lower(String* dest, String source) {
+    if (dest->memory_size >= source.count) {
+        for (size_t index = 0; index < source.count; ++index) {
+            dest->data[index] = to_lower(source.data[index]);
+        }
+        
+        dest->count = source.count;
+    }
+}
+
+inline char
+to_upper(char c) {
+    
+}
+
+internal_yd void
+to_upper(char* str) {
+    
+}
+
+internal_yd void
+to_upper(String* str) {
+    
+}
+
+internal_yd void
+to_upper(char* dest, const char* source) {
+    
+}
+
+internal_yd void
+to_upper(String* dest, const char* source) {
+    
+}
+
+internal_yd void
+to_upper(char* dest, String source) {
+    
+}
+
+internal_yd void
+to_upper(String* dest, String source) {
+    
 }
 
 #endif
