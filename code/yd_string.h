@@ -247,10 +247,10 @@ inline b32_yd is_alpha(char c);
 inline b32_yd is_alpha(const char* str);
 inline b32_yd is_alpha(String str);
 inline b32_yd is_alpha_utf8(u8_yd c);
-inline b32_yd IsNumeric(char c);
-inline b32_yd IsNumeric(const char* str);
-inline b32_yd IsNumeric(String str);
-inline b32_yd IsNumeric_utf8(u8_yd c);
+inline b32_yd is_numeric(char c);
+inline b32_yd is_numeric(const char* str);
+inline b32_yd is_numeric(String str);
+inline b32_yd is_numeric_utf8(u8_yd c);
 internal_yd s32_yd ToNumeric(const char* str);
 internal_yd s32_yd ToNumeric(String str);
 internal_yd size_t S32ToStringCount(s32_yd Value);
@@ -2465,8 +2465,50 @@ is_alpha(String str) {
 
 inline b32_yd
 is_alpha_utf8(u8_yd c) {
-    b32_yd result = (is_alpha(c) || (c >= 128));
+    b32_yd result = (is_alpha((char)c) || (c >= 128));
+    return result;
 }
+
+inline b32_yd
+is_numeric(char c) {
+    b32_yd result = ((c >= '0') && (c <= '9'));
+    return result;
+}
+
+inline b32_yd
+is_numeric(const char* str) {
+    b32_yd result = true;
+    
+    for (const char* at = str; *at; ++at) {
+        if (!is_numeric(*at)) {
+            result = false;
+            break;
+        }
+    }
+    
+    return result;
+}
+
+inline b32_yd
+is_numeric(String str) {
+    b32_yd result = true;
+    
+    for (size_t index = 0; index < str.count; ++index) {
+        if (!is_numeric(str.data[index])) {
+            result = false;
+            break;
+        }
+    }
+    
+    return result;
+}
+
+inline b32_yd
+is_numeric_utf8(u8_yd c) {
+    b32_yd result = (is_numeric((char)c) || (c >= 128));
+    return result;
+}
+
 
 #endif
 
