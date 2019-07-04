@@ -236,27 +236,21 @@ internal_yd void to_camel(char* dest, const char* source);
 internal_yd void to_camel(String* dest, const char* source);
 internal_yd void to_camel(char* dest, String source);
 internal_yd void to_camel(String* dest, String source);
-inline b32_yd IsSpacing(char C);
-inline b32_yd IsSpacing(const char* str);
-inline b32_yd IsSpacing(String str);
-inline b32_yd IsEndOfLine(char C);
-inline b32_yd IsEndOfLine(const char* str);
-inline b32_yd IsEndOfLine(String str);
-inline b32_yd is_whitespace(char C);
-inline b32_yd IsWhitespace(const char* str);
-inline b32_yd IsWhitespace(String str);
-inline b32_yd IsAlpha(char C);
-inline b32_yd IsAlpha(const char* str);
-inline b32_yd IsAlpha(String str);
-inline b32_yd IsAlphaUTF8(u8_yd C);
-inline b32_yd IsAlphaTrue(char C);
-inline b32_yd IsAlphaTrue(const char* str);
-inline b32_yd IsAlphaTrue(String str);
-inline b32_yd IsAlphaTrueUTF8(u8_yd C);
-inline b32_yd IsNumeric(char C);
+inline b32_yd is_spacing(char c);
+inline b32_yd is_end_of_line(char c);
+inline b32_yd is_whitespace(char c);
+inline b32_yd is_alpha_true(char c);
+inline b32_yd is_alpha_true(const char* str);
+inline b32_yd is_alpha_true(String str);
+inline b32_yd is_alpha_true_utf8(u8_yd c);
+inline b32_yd is_alpha(char c);
+inline b32_yd is_alpha(const char* str);
+inline b32_yd is_alpha(String str);
+inline b32_yd is_alpha_utf8(u8_yd c);
+inline b32_yd IsNumeric(char c);
 inline b32_yd IsNumeric(const char* str);
 inline b32_yd IsNumeric(String str);
-inline b32_yd IsNumericUTF8(u8_yd C);
+inline b32_yd IsNumeric_utf8(u8_yd c);
 internal_yd s32_yd ToNumeric(const char* str);
 internal_yd s32_yd ToNumeric(String str);
 internal_yd size_t S32ToStringCount(s32_yd Value);
@@ -279,7 +273,7 @@ inline b32_yd is_alpha_numeric_true_utf8(u8_yd C);
 inline b32_yd IsHex(char C);
 inline b32_yd IsHex(const char* str);
 inline b32_yd IsHex(String str);
-inline b32_yd IsHexUTF8(u8_yd C);
+inline b32_yd IsHex_utf8(u8_yd C);
 inline s32_yd HexCharToS32(char C);
 inline char S32ToHexChar(s32_yd Value);
 internal_yd u32_yd HexStringToU32(String str);
@@ -2376,6 +2370,102 @@ to_camel(String* dest, String source) {
         
         dest->count = source.count;
     }
+}
+
+inline b32_yd
+is_spacing(char c) {
+    b32_yd result = ((c == ' ') || (c == '\t') ||
+                     (c == '\v') || (c == '\f'));
+    return result;
+}
+
+inline b32_yd
+is_end_of_line(char c) {
+    b32_yd result = ((c == '\n') || (c == '\r'));
+    return result;
+}
+
+inline b32_yd
+is_whitespace(char c) {
+    b32_yd result = (is_spacing(c) || is_end_of_line(c));
+}
+
+inline b32_yd
+is_alpha_true(char c) {
+    b32_yd result = (is_lower(c) || is_upper(c));
+}
+
+inline b32_yd
+is_alpha_true(const char* str) {
+    b32_yd result = true;
+    
+    for (const char* at = str; *at; ++at) {
+        if (!is_alpha_true(*at)) {
+            result = false;
+            break;
+        }
+    }
+    
+    return result;
+}
+
+inline b32_yd
+is_alpha_true(String str) {
+    b32_yd result = true;
+    
+    for (size_t index = 0; index < str.count; ++index) {
+        if (!is_alpha_true(str.data[index])) {
+            result = false;
+            break;
+        }
+    }
+    
+    return result;
+}
+
+inline b32_yd
+is_alpha_true_utf8(u8_yd c) {
+    b32_yd result = (is_alpha_true((char)c) || (c >= 128));
+    return result;
+}
+
+inline b32_yd
+is_alpha(char c) {
+    b32_yd result = (is_alpha_true(c) || (c == '_'));
+    return result;
+}
+
+inline b32_yd
+is_alpha(const char* str) {
+    b32_yd result = true;
+    
+    for (const char* at = str; *at; ++at) {
+        if (!is_alpha(*at)) {
+            result = false;
+            break;
+        }
+    }
+    
+    return result;
+}
+
+inline b32_yd
+is_alpha(String str) {
+    b32_yd result = true;
+    
+    for (size_t index = 0; index < str.count; ++index) {
+        if (!is_alpha(str.data[index])) {
+            result = false;
+            break;
+        }
+    }
+    
+    return result;
+}
+
+inline b32_yd
+is_alpha_utf8(u8_yd c) {
+    b32_yd result = (is_alpha(c) || (c >= 128));
 }
 
 #endif
