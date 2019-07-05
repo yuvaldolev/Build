@@ -1,4 +1,4 @@
-#if !defined(META_TOOL_PARSER_H)
+#if !defined(BUILD_PARSER_H)
 
 struct ast;
 struct ast_file;
@@ -368,5 +368,5 @@ struct ast_file
     token Token;
 };
 
-#define META_TOOL_PARSER_H
+#define BUILD_PARSER_H
 #endif

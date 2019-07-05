@@ -1,4 +1,4 @@
-#if !defined(META_TOOL_SHARED_H)
+#if !defined(BUILD_SHARED_H)
 
 #include <stdarg.h>
 
@@ -976,5 +976,5 @@ FormatString(char *Dest, umm DestSize, const char *Format, ...)
     return(Result);
 }
 
-#define META_TOOL_SHARED_H
+#define BUILD_SHARED_H
 #endif

@@ -1,4 +1,4 @@
-#if !defined(META_TOOL_MEMORY_H)
+#if !defined(BUILD_MEMORY_H)
 
 // TODO(yuval): Replace all of these with my own memory management using memory arena
 #define Alloc(Type) (Type*)Alloc_(sizeof(Type))
@@ -17,5 +17,5 @@ Alloc_(memory_index Size)
     return Result;
 }
 
-#define META_TOOL_MEMORY_H
+#define BUILD_MEMORY_H
 #endif

@@ -1,4 +1,4 @@
-#if !defined(META_TOOL_ERRORS_H)
+#if !defined(BUILD_ERRORS_H)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -142,5 +142,5 @@ AstError(ast* Ast, const char* Format, ...)
     va_end(ArgList);
 }
 
-#define META_TOOL_ERRORS_H
+#define BUILD_ERRORS_H
 #endif

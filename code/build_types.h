@@ -1,4 +1,4 @@
-#if !defined(META_TOOL_TYPES_H)
+#if !defined(BUILD_TYPES_H)
 
 //////////////////////////////
 //        Compilers         //
@@ -67,7 +67,7 @@ typedef uintptr_t umm;
 inline size_t
 StringLength(const char* String)
 {
-     size_t Count = 0;
+    size_t Count = 0;
     
     if (String)
     {
@@ -80,7 +80,7 @@ StringLength(const char* String)
     return Count;
 }
 
-#define META_TOOL_TYPES_H
+#define BUILD_TYPES_H
 #endif
 
 

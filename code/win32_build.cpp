@@ -1,7 +1,7 @@
-#include "meta_tool.cpp"
+#include "build.cpp"
 
 #include <windows.h>
-#include "win32_meta_tool.h"
+#include "win32_build.h"
 
 #include <stdio.h> // TODO(yuval): Remove
 
@@ -278,7 +278,7 @@ main(s32 argCount, char** args)
     if (argCount >= 2)
     {
         printf("Meta Tool:\n");
-        Win32StartCTime("meta_tool.ctm");
+        Win32StartCTime("build.ctm");
         
         char dirNameData[MAX_PATH] = ".";
         memory_index dirNameSize = MAX_PATH * sizeof(char);
@@ -323,7 +323,7 @@ main(s32 argCount, char** args)
             printf("A directory with the name %s was not found!\n", dirName.data);
         }
         
-        Win32EndCTime("meta_tool.ctm");
+        Win32EndCTime("build.ctm");
         
         printf("\nCompiling using %s:\n", args[1]);
         Win32StartCTime("compile.ctm");
@@ -339,7 +339,7 @@ main(s32 argCount, char** args)
     }
     else
     {
-        printf("win32_meta_tool.exe [build-script] [directory-name](optional)");
+        printf("win32_build.exe [build-script] [directory-name](optional)");
     }
     
     return 0;

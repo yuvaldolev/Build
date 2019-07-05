@@ -1,4 +1,4 @@
-#if !defined(META_TOOL_FOR_H)
+#if !defined(BUILD_FOR_H)
 
 ///////////////////////////////
 //       Array Foreach       //
@@ -12,6 +12,7 @@ for (auto& It = (Array)[Index]; \
 ArgJoin_(B, __LINE__); \
 ArgJoin_(B, __LINE__) = false)
 
+#if 0
 ///////////////////////////////
 //         For Range         //
 ///////////////////////////////
@@ -45,6 +46,9 @@ ArgJoin_(B, __LINE__) = false)
 ///////////////////////////////
 #define GetFor_(_1, _2, Name, ...) Name
 #define For(...) GetFor_(__VA_ARGS__, ForRange_, ArrayForeach_)(__VA_ARGS__)
+#endif
 
-#define META_TOOL_FOR_H
+#define For(...) ArrayForeach_(__VA_ARGS__)
+
+#define BUILD_FOR_H
 #endif

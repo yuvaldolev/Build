@@ -1,4 +1,4 @@
-#if !defined(META_TOOL_TOKENIZER_H)
+#if !defined(BUILD_TOKENIZER_H)
 
 /* TODO(yuval): Create Default Ast Types For These Keywords:
 KeywordTokenType(Void, "void")
@@ -170,5 +170,5 @@ struct tokenizer
     b32 Error;
 };
 
-#define META_TOOL_TOKENIZER_H
+#define BUILD_TOKENIZER_H
 #endif

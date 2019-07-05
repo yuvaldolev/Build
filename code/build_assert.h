@@ -1,6 +1,6 @@
-#if !defined(META_TOOL_ASSERT_H)
+#if !defined(BUILD_ASSERT_H)
 
-#if META_TOOL_SLOW
+#if BUILD_SLOW
 // TODO(yuval): Temporary
 #include <stdio.h>
 
@@ -44,5 +44,5 @@ if (!(Expression)) \
 #define SoftAssert(Expression)
 #endif
 
-#define META_TOOL_ASSERT_H
+#define BUILD_ASSERT_H
 #endif

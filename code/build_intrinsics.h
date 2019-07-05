@@ -1,4 +1,4 @@
-#if !defined(META_TOOL_INTRINSICS_H)
+#if !defined(BUILD_INTRINSICS_H)
 
 #include <math.h>
 
@@ -31,5 +31,5 @@ SafeTruncateToU32(u64 Value)
     return (u32)Value;
 }
 
-#define META_TOOL_INTRINSICS_H
+#define BUILD_INTRINSICS_H
 #endif
