@@ -517,7 +517,7 @@ U64ToASCII(format_dest* Dest, u64 Value, u32 Base, const char* Digits)
     {
         --End;
         
-        // TODO(yuval, eran): Metaprogramming SWAP
+        // TODO(yuval) Metaprogramming SWAP
         char Temp = *End;
         *End = *Start;
         *Start = Temp;

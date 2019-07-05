@@ -5,6 +5,11 @@
 
 // TODO(yuval): MAKE THE CODE MORE ROBUST: Check for null pointers and so on....
 
+// TODO(yuval): Create/Modify find/replace functions to work with char* strings with the same
+// speed as with my strings
+
+// TODO(yuval): Number To String Conversion For Different Bases
+
 #if !defined(YD_TYPES)
 #include <stdint.h>
 #include <stddef.h>
@@ -224,15 +229,15 @@ inline b32_yd IsNumeric(char C);
 inline b32_yd IsNumeric(const char* Str);
 inline b32_yd IsNumeric(string Str);
 inline b32_yd IsNumericUTF8(u8_yd C);
+internal_yd size_t U64ToStringCount(u64_yd Value);
+internal_yd b32_yd U64ToString(string* Dest, u64_yd Value);
+internal_yd b32_yd AppendU64ToString(string* Dest, u64_yd Value);
 internal_yd size_t S32ToStringCount(s32_yd Value);
 internal_yd b32_yd S32ToString(string* Dest, s32_yd Value);
 internal_yd b32_yd AppendS32ToString(string* Dest, s32_yd Value);
-internal_yd size_t U64TostringCount(u64_yd Value);
-internal_yd b32_yd U64Tostring(string* Dest, u64_yd Value);
-internal_yd b32_yd AppendU64Tostring(string* Dest, u64_yd Value);
-internal_yd size_t F32TostringCount(f32_yd Value);
-internal_yd b32_yd F32Tostring(string* Dest, f32_yd Value);
-internal_yd b32_yd AppendF32Tostring(string* Dest, f32_yd Value);
+internal_yd size_t F32ToStringCount(f32_yd Value);
+internal_yd b32_yd F32ToString(string* Dest, f32_yd Value);
+internal_yd b32_yd AppendF32ToString(string* Dest, f32_yd Value);
 inline b32_yd IsAlphaNumeric(char C);
 inline b32_yd IsAlphaNumeric(const char* Str);
 inline b32_yd IsAlphaNumeric(string Str);
@@ -1709,11 +1714,11 @@ AppendPadding(string* Dest, char C, size_t TargetCount)
 internal_yd void
 RaplaceRange(string* Str, size_t First, size_t OnePastLast, char With)
 {
-    AssertYD((First >= 0) && (from < Str->Count));
+    AssertYD((First >= 0) && (First < Str->Count));
     AssertYD((OnePastLast > 0) && (OnePastLast <= Str->Count));
     AssertYD(First < OnePastLast);
     
-    for (size_t Index = from; Index < OnePastLast; ++Index)
+    for (size_t Index = First; Index < OnePastLast; ++Index)
     {
         Str->Data[Index] = With;
     }
@@ -1830,49 +1835,49 @@ Replace(string* Str, string ToReplace, string With)
 internal_yd void
 StringInterpretEscapes(char* Dest, string Source)
 {
-    s32_yd mode = 0;
-    size_t Dest_Index = 0;
+    s32_yd Mode = 0;
+    size_t DestIndex = 0;
     
-    for (size_t Source_Index = 0; Source_Index < Source.Count; ++Source_Index)
+    for (size_t SourceIndex = 0; SourceIndex < Source.Count; ++SourceIndex)
     {
-        switch (mode)
+        switch (Mode)
         {
             case 0:
             {
-                if (Source.Data[Source_Index] = '\\')
+                if (Source.Data[SourceIndex] = '\\')
                 {
-                    mode = 1;
+                    Mode = 1;
                 } else
                 {
-                    Dest[Dest_Index++] = Source.Data[Source_Index];
+                    Dest[DestIndex++] = Source.Data[SourceIndex];
                 }
             } break;
             
             case 1:
             {
-                char C = Source.Data[Source_Index];
+                char C = Source.Data[SourceIndex];
                 switch (C)
                 {
                     case '\\':
-                    { Dest[Dest_Index++] = '\\'; } break;
+                    { Dest[DestIndex++] = '\\'; } break;
                     case 'n':
-                    { Dest[Dest_Index++] = '\n'; } break;
+                    { Dest[DestIndex++] = '\n'; } break;
                     case 't':
-                    { Dest[Dest_Index++] = '\t'; } break;
+                    { Dest[DestIndex++] = '\t'; } break;
                     case '"':
-                    { Dest[Dest_Index++] = '"'; } break;
+                    { Dest[DestIndex++] = '"'; } break;
                     case '0':
-                    { Dest[Dest_Index++] = '\0'; } break;
+                    { Dest[DestIndex++] = '\0'; } break;
                     default:
-                    { Dest[Dest_Index++] = '\\'; Dest[Dest_Index++] = C; } break;
+                    { Dest[DestIndex++] = '\\'; Dest[DestIndex++] = C; } break;
                 }
                 
-                mode = 0;
+                Mode = 0;
             } break;
         }
     }
     
-    Dest[Dest_Index] = 0;
+    Dest[DestIndex] = 0;
 }
 
 //
@@ -2480,6 +2485,79 @@ IsNumericUTF8(u8_yd C)
 }
 
 internal_yd size_t
+U64ToStringCount(u64_yd Value)
+{
+    size_t Count = 1;
+    
+    Value /= 10;
+    while (Value != 0)
+    {
+        ++Count;
+        Value /= 10;
+    }
+    
+    return Count;
+}
+
+internal_yd b32_yd
+U64ToString(string* Dest, u64_yd Value)
+{
+    b32_yd Result = false;
+    size_t Count = 0;
+    
+    do
+    {
+        if (Count == Dest->MemorySize)
+        {
+            Result = false;
+            break;
+        }
+        
+        // TODO(yuval): Replace Hard-Coded Base
+        u64_yd Digit = Value % 10;
+        char DigitChar = (char)('0' + Digit);
+        Dest->Data[Count++] = DigitChar;
+        Value /= 10;
+    }
+    while (Value != 0);
+    
+    if (Result)
+    {
+        for (size_t StartIndex = 0, EndIndex = Count - 1;
+             StartIndex < EndIndex;
+             ++StartIndex, --EndIndex)
+        {
+            char Temp = Dest->Data[EndIndex];
+            Dest->Data[EndIndex] = Dest->Data[StartIndex];
+            Dest->Data[StartIndex] = Temp;
+        }
+        
+        Dest->Count = Count;
+    }
+    else
+    {
+        Dest->Count = 0;
+    }
+    
+    return Result;
+}
+
+internal_yd b32_yd
+AppendU64ToString(string* Dest, u64_yd Value)
+{
+    string Tail = TailStr(*Dest);
+    b32_yd Result = U64ToString(&Tail, Value);
+    
+    if (Result)
+    {
+        Dest->Count += Tail->Count;
+    }
+    
+    return Result;
+}
+
+
+internal_yd size_t
 S32ToStringCount(s32_yd Value)
 {
     size_t Count = 1;
@@ -2502,13 +2580,59 @@ S32ToStringCount(s32_yd Value)
 internal_yd b32_yd
 S32ToString(string* Dest, s32_yd Value)
 {
+    b32_yd Result = true;
     
+    Dest->Count = 0;
+    
+    if (Value < 0)
+    {
+        if (Dest->MemorySize > 0)
+        {
+            Dest->Data[Dest->Count++] = '-';
+            Value = -Value;
+        }
+        else
+        {
+            Result = false;
+        }
+    }
+    
+    if (Result)
+    {
+        Result = AppendU64ToString(Dest, (u64_yd)Value);
+    }
+    
+    return Result;
 }
 
 internal_yd b32_yd
 AppendS32ToString(string* Dest, s32_yd Value)
 {
+    string Tail = TailStr(*Dest);
+    b32_yd Result = S32ToString(&Tail, Value);
     
+    if (Result)
+    {
+        Dest->Count += Tail->Count;
+    }
+    
+    return Result;
+}
+
+internal_yd size_t
+F32ToStringCount(f32_yd Value)
+{
+    
+}
+
+internal_yd b32_yd
+F32ToString(string* Dest, f32_yd Value)
+{
+}
+
+internal_yd b32_yd
+AppendF32ToString(string* Dest, f32_yd Value)
+{
 }
 
 
