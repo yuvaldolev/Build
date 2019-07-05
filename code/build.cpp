@@ -1,7 +1,7 @@
-#include "meta_tool.h"
+#include "build.h"
 
-#include "meta_tool_tokenizer.cpp"
-#include "meta_tool_parser.cpp"
+#include "build_tokenizer.cpp"
+#include "build_parser.cpp"
 
 global_variable b32 MetaToolIsInitialized = false;
 

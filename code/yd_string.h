@@ -76,8 +76,8 @@ inline string MakeString(void* Data, size_t Count);
 # define MakeLitString(Str) (MakeString((char*)(Str), sizeof(Str) - 1, sizeof(Str)))
 #endif
 
-#if !defined(lit)
-# define lit(Str) MakeLitString(Str)
+#if !defined(Lit)
+# define Lit(Str) MakeLitString(Str)
 #endif
 
 #if !defined(MakeFixedWidthString)
