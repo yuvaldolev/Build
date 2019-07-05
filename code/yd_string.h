@@ -10,6 +10,9 @@
 
 // TODO(yuval): Number To String Conversion For Different Bases
 
+// TODO(yuval): Implement ColorToHexString and HexStringToColor
+// after I decide on my color string format
+
 #if !defined(YD_TYPES)
 #include <stdint.h>
 #include <stddef.h>
@@ -235,9 +238,12 @@ internal_yd b32_yd AppendU64ToString(string* Dest, u64_yd Value);
 internal_yd size_t S32ToStringCount(s32_yd Value);
 internal_yd b32_yd S32ToString(string* Dest, s32_yd Value);
 internal_yd b32_yd AppendS32ToString(string* Dest, s32_yd Value);
-internal_yd size_t F32ToStringCount(f32_yd Value);
-internal_yd b32_yd F32ToString(string* Dest, f32_yd Value);
-internal_yd b32_yd AppendF32ToString(string* Dest, f32_yd Value);
+internal_yd size_t F32ToStringCount(f32_yd Value, u32_yd MaxPrecision);
+inline size_t F32ToStringCount(f32_yd Value);
+internal_yd b32_yd F32ToString(string* Dest, f32_yd Value, u32_yd MaxPrecision);
+inline b32_yd F32ToString(string* Dest, f32_yd Value);
+internal_yd b32_yd AppendF32ToString(string* Dest, f32_yd Value, u32_yd MaxPrecision);
+inline b32_yd AppendF32ToString(string* Dest, f32_yd Value);
 inline b32_yd IsAlphaNumeric(char C);
 inline b32_yd IsAlphaNumeric(const char* Str);
 inline b32_yd IsAlphaNumeric(string Str);
@@ -2620,18 +2626,323 @@ AppendS32ToString(string* Dest, s32_yd Value)
 }
 
 internal_yd size_t
+F32ToStringCount(f32_yd Value, u32_yd MaxPrecision)
+{
+    size_t Count = 0;
+    
+    if (Value < 0)
+    {
+        Count = 1;
+        Value = -Value;
+    }
+    
+    u64_yd IntegerPart = (u64_yd)Value;
+    Count += U64ToStringCount(IntegerPart);
+    
+    Value -= IntegerPart;
+    
+    for (u32_yd PrecisionIndex = 0;
+         PrecisionIndex < MaxPrecision;
+         ++PrecisionIndex)
+    {
+        if (Value == 0.0f)
+        {
+            break;
+        }
+        
+        Value *= 10.0f;
+        
+        u32_yd Integer = (u32_yd)Value;
+        Value -= Integer;
+        
+        ++Count;
+    }
+    
+    return Count;
+}
+
+inline size_t
 F32ToStringCount(f32_yd Value)
+{
+    size_t Result = F32ToStringCount(Value, 8);
+    return Result;
+}
+
+internal_yd b32_yd
+F32ToString(string* Dest, f32_yd Value, u32_yd MaxPrecision)
+{
+    s32_yd IntegerPart = (s32_yd)Value;
+    b32_yd Result = S32ToString(Dest, Value);
+    
+    if (Result)
+    {
+        Value -= IntegerPart;
+        
+        if (Value != 0)
+        {
+            Append(Dest, '.');
+            
+            for (u32_yd PrecisionIndex = 0;
+                 PrecisionIndex < MaxPrecision;
+                 ++PrecisionIndex)
+            {
+                if (Value == 0.0f)
+                {
+                    break;
+                }
+                
+                Value *= 10.0f;
+                
+                u64_yd Integer = (u64_yd)Value;
+                Result = AppendU64ToString(Dest, Integer);
+                
+                if (!Result)
+                {
+                    break;
+                }
+                
+                Value -= Integer;
+            }
+        }
+    }
+    
+    return Result;
+}
+
+inline b32_yd
+F32ToString(string* Dest, f32_yd Value)
+{
+    b32_yd Result = F32ToString(Dest, Value, 8);
+    return Result;
+}
+
+internal_yd b32_yd
+AppendF32ToString(string* Dest, f32_yd Value, u32_yd MaxPrecision)
+{
+    string Tail = TailStr(*Dest);
+    b32_yd Result = F32ToString(&Tail, Value, MaxPrecision);
+    
+    if (Result)
+    {
+        Dest->Count += Tail->Count;
+    }
+    
+    return Result;
+}
+
+inline b32_yd
+AppendF32ToString(string* Dest, f32_yd Value)
+{
+    b32_yd Result = AppendF32ToString(Dest, Value, 8);
+    return Result;
+}
+
+inline b32_yd
+IsAlphaNumeric(char C)
+{
+    b32_yd Result = (IsAlpha(C) || IsNumeric(C));
+    return Result;
+}
+
+inline b32_yd
+IsAlphaNumeric(const char* Str)
+{
+    b32_yd Result = true;
+    
+    for (const char* At = Str; *At; ++At)
+    {
+        if (!IsAlphaNumeric(*At))
+        {
+            Result = false;
+            break;
+        }
+    }
+    
+    return Result;
+}
+
+inline b32_yd
+IsAlphaNumeric(string Str)
+{
+    b32_yd Result = true;
+    
+    for (size_t Index = 0; Index < Str.Count; ++Index)
+    {
+        if (!IsAlphaNumeric(Str.Data[Index]))
+        {
+            Result = false;
+            break;
+        }
+    }
+    
+    return Result;
+}
+
+inline b32_yd
+IsAlphaNumericUTF8(u8_yd C)
+{
+    b32_yd Result = (IsAlphaNumeric((char)C) || (C >= 128));
+    return Result;
+}
+
+inline b32_yd
+IsAlphaNumericTrue(char C)
+{
+    b32_yd Result = (IsAlphaTrue(C) || IsNumeric(C));
+    return Result;
+}
+
+inline b32_yd
+IsAlphaNumericTrue(const char* Str)
+{
+    b32_yd Result = true;
+    
+    for (const char* At = Str; *At; ++At)
+    {
+        if (!IsAlphaNumericTrue(*At))
+        {
+            Result = false;
+            break;
+        }
+    }
+    
+    return Result;
+}
+
+inline b32_yd
+IsAlphaNumericTrue(string Str)
+{
+    b32_yd Result = true;
+    
+    for (size_t Index = 0; Index < Str.Count; ++Index)
+    {
+        if (!IsAlphaNumericTrue(Str.Data[Index]))
+        {
+            Result = false;
+            break;
+        }
+    }
+    
+    return Result;
+}
+
+inline b32_yd
+IsAlphaNumericTrueUTF8(u8_yd C)
+{
+    b32_yd Result = (IsAlphaNumericTrue((char)C) || (C >= 128));
+    return Result;
+}
+
+inline b32_yd
+IsHex(char C)
+{
+    b32_yd Result = (((C >= '0') && (C <= '9')) ||
+                     ((C >= 'A') && (C <= 'F')) ||
+                     ((C >= 'a') && (C <= 'f')));
+    return Result;
+}
+
+inline b32_yd
+IsHex(const char* Str)
+{
+    b32_yd Result = true;
+    
+    for (const char* At = Str; *At; ++At)
+    {
+        if (!IsHex(*At))
+        {
+            Result = false;
+            break;
+        }
+    }
+    
+    return Result;
+}
+
+inline b32_yd
+IsHex(string Str)
+{
+    b32_yd Result = true;
+    
+    for (size_t Index = 0; Index < Str.Count; ++Index)
+    {
+        if (!IsHex(Str.Data[Index]))
+        {
+            Result = false;
+            break;
+        }
+    }
+    
+    return Result;
+}
+
+inline b32_yd
+IsHexUTF8(u8_yd C)
+{
+    b32_yd Result = (IsHex((char)C) || (C >= 128));
+    return Result;
+}
+
+inline s32_yd
+HexCharToS32(char C)
+{
+    s32_yd Result;
+    
+    if (IsNumeric(C))
+    {
+        Result = C - '0';
+    }
+    else if (C > 'F')
+    {
+        Result = 10 + (C - 'a');
+    }
+    else
+    {
+        Result = 10 + (C - 'A');
+    }
+    
+    return Result;
+}
+
+inline char
+S32ToHexChar(s32_yd Value)
+{
+    s32_yd Result;
+    
+    if (Value < 10)
+    {
+        Result = '0' + Value;
+    }
+    else
+    {
+        Result = 'A' + (Value - 10);
+    }
+    
+    return Result;
+}
+
+internal_yd u32_yd
+HexStringToU32(string Str)
+{
+    u32_yd Result = 0;
+    
+    for (size_t Index = 0; Index < Str.Count; ++Index)
+    {
+        Result += HexCharToS32(Str.Data[Index]);
+        Result *= 0x10;
+    }
+    
+    return Result;
+}
+
+internal_yd b32_yd
+ColorToHexString(string* Dest, u32_yd Color)
 {
     
 }
 
 internal_yd b32_yd
-F32ToString(string* Dest, f32_yd Value)
-{
-}
-
-internal_yd b32_yd
-AppendF32ToString(string* Dest, f32_yd Value)
+HexStringToColor(u32_yd* Dest, string Str)
 {
 }
 

@@ -517,7 +517,7 @@ U64ToASCII(format_dest* Dest, u64 Value, u32 Base, const char* Digits)
     {
         --End;
         
-        // TODO(yuval) Metaprogramming SWAP
+        // TODO(yuval): Metaprogramming SWAP
         char Temp = *End;
         *End = *Start;
         *Start = Temp;
@@ -541,7 +541,7 @@ F64ToASCII(format_dest* Dest, f64 Value, u32 Precision)
     
     OutChar(Dest, '.');
     
-    // TODO(yuval & eran): Round to the precision
+    // TODO(yuval): Round to the precision
     for (u32 PrecisionIndex = 0;
          PrecisionIndex < Precision;
          PrecisionIndex++)
