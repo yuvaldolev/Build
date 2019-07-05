@@ -70,7 +70,7 @@ StartWorkspace(string Name)
 {
     build_workspace Workspace = BuildCreateWorkspace(Name);
     
-    // TODO(yuval): Flags for if to use metaprogramming or not
+    // TODO(yuval): Flags to indicate whether or not to usemetaprogramming
     
     BuildAddFile(Lit("test.cpp"));
     
