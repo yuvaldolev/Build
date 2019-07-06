@@ -1,7 +1,7 @@
 #include "build.h"
 
 build_internal void
-Build(build_workspace* Workspace)
+Build()
 {
     for (;;)
     {
@@ -12,6 +12,12 @@ Build(build_workspace* Workspace)
             case BuildMessage_Started:
             {
                 printf("Build Started!\n");
+            } break;
+            
+            case BuildMessage_Workspace:
+            {
+                printf("Building Workspace: %.*s\n",
+                       (s32)Message.Data.Count, Message.Data.Data);
             } break;
             
             case BuildMessage_File:
@@ -43,8 +49,6 @@ SetupDebug(build_workspace* Workspace)
     
     // NOTE(yuval): Compiler Options
     Options->Compiler = BuildCompiler_Clang;
-    
-    BuildSetWorkspace(Workspace);
 }
 
 build_internal void
@@ -61,18 +65,16 @@ SetupRelease(build_workspace* Workspace)
     
     // NOTE(yuval): Compiler Options
     Options->Compiler = Compiler_Clang;
-    
-    BuildSetWorkspace(Workspace);
 }
 
 build_internal workspace
 StartWorkspace(string Name)
 {
-    build_workspace Workspace = BuildCreateWorkspace(Name);
+    build_workspace* Workspace = BuildCreateWorkspace(Name);
     
     // TODO(yuval): Flags to indicate whether or not to usemetaprogramming
     
-    BuildAddFile(Lit("test.cpp"));
+    BuildAddFile(Workspace, Lit("test.cpp"));
     
     return Workspace;
 }
@@ -80,16 +82,16 @@ StartWorkspace(string Name)
 BUILD_FUNC void
 BuildDebug()
 {
-    build_workspace Workspace = StartWorkspace(Lit("Debug"));
-    SetupDebug(&Workspace);
+    build_workspace* Workspace = StartWorkspace(Lit("Debug"));
+    SetupDebug(Workspace);
     Build();
 }
 
 BUILD_FUNC void
 BuildRelease()
 {
-    build_workspace Workspace = StartWorkspace(Lit("Release"));
-    SetupRelease(&Workspace);
+    build_workspace* Workspace = StartWorkspace(Lit("Release"));
+    SetupRelease(Workspace);
     Build();
 }
 
