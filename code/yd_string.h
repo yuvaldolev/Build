@@ -62,8 +62,7 @@ struct string
 //
 
 global_variable_yd const size_t STRING_NOT_FOUND = -1;
-global_variable_yd const string NULL_STR =
-{};
+global_variable_yd const string NULL_STR = {};
 
 //
 // NOTE(yuval): Public API Function Declarations
@@ -88,8 +87,12 @@ inline string MakeString(void* Data, size_t Count);
 # define ExpandString(Str) ((Str).Data), ((Str).Count)
 #endif
 
+#if !defined(PrintableString)
+# define PrintableString(Str) ((s32_yd)((Str).Count)), ((Str).Data)
+#endif
+
 inline size_t StringLength(const char* Str);
-inline string MakeStringSlowly(void* Str);
+inline string MakeStringSlowly(const void* Str);
 inline string Substr(string Str, size_t Start);
 inline string Substr(string Str, size_t Start, size_t Count);
 internal_yd string SkipWhitespace(string Str);
@@ -179,9 +182,9 @@ inline b32_yd Append(string* Dest, const char* Source);
 inline b32_yd Append(string* Dest, string Source);
 internal_yd b32_yd TerminateWithNull(string* Str);
 internal_yd b32_yd AppendPadding(string* Dest, char C, size_t TargetCount);
-internal_yd void RaplaceRange(string* Str, size_t First, size_t OnePastLast, char With);
-internal_yd void RaplaceRange(string* Str, size_t First, size_t OnePastLast, const char* With);
-internal_yd void RaplaceRange(string* Str, size_t First, size_t OnePastLast, string With);
+internal_yd void ReplaceRange(string* Str, size_t First, size_t OnePastLast, char With);
+internal_yd void ReplaceRange(string* Str, size_t First, size_t OnePastLast, const char* With);
+internal_yd void ReplaceRange(string* Str, size_t First, size_t OnePastLast, string With);
 internal_yd void Replace(string* Str, char ToReplace, char With);
 internal_yd void Replace(string* Str, const char* ToReplace, const char* With);
 internal_yd void Replace(string* Str, const char* ToReplace, string With);
@@ -328,11 +331,11 @@ StringLength(const char* Str)
 }
 
 inline string
-MakeStringSlowly(void* Str)
+MakeStringSlowly(const void* Str)
 {
     string Result;
     Result.Data = (char*)Str;
-    Result.Count = StringLength(Str);
+    Result.Count = StringLength((const char*)Str);
     Result.MemorySize = Result.Count + 1;
     
     return Result;
@@ -349,7 +352,7 @@ Substr(string Str, size_t Start)
     
     string Result;
     Result.Data = Str.Data + Start;
-    Result.Size = Str.Count - Start;
+    Result.Count = Str.Count - Start;
     Result.MemorySize = 0;
     
     return Result;
@@ -937,7 +940,7 @@ Compare(string A, string B)
     }
     
     s32_yd Index = 0;
-    while ((Index < MinCount) && (A.Data[i] == B.Data[i]))
+    while ((Index < MinCount) && (A.Data[Index] == B.Data[Index]))
     {
         ++Index;
     }
@@ -1400,7 +1403,7 @@ GetFirstDoubleLine(string Source)
     
     if (Pos != STRING_NOT_FOUND)
     {
-        Result = Substr(Str, 0, Pos);
+        Result = Substr(Source, 0, Pos);
     }
     
     return Result;
@@ -1412,10 +1415,10 @@ GetNextDoubleLine(string Source, string Line)
     string Result = {};
     
     size_t LineEndIndex = (size_t)(Line.Data - Source.Data) + Line.Count;
-    assert((Source.Data[LineEndIndex] == '\n') || (Source.Data[LineEndIndex] == '\r'));
+    AssertYD((Source.Data[LineEndIndex] == '\n') || (Source.Data[LineEndIndex] == '\r'));
     
     ++LineEndIndex;
-    assert((Source.Data[LineEndIndex] == '\n') || (Source.Data[LineEndIndex] == '\r'));
+    AssertYD((Source.Data[LineEndIndex] == '\n') || (Source.Data[LineEndIndex] == '\r'));
     
     size_t Start = LineEndIndex + 1;
     
@@ -1453,7 +1456,7 @@ GetNextWord(string Source, string PrevWord)
     
     if (Pos0 < Source.Count)
     {
-        size_t Pos1 = Pos;
+        size_t Pos1 = Pos0;
         
         for (; Pos1 < Source.Count; ++Pos1)
         {
@@ -1464,10 +1467,10 @@ GetNextWord(string Source, string PrevWord)
             }
         }
         
-        word = Substr(Source, Pos0, Pos1 - Pos0);
+        Result = Substr(Source, Pos0, Pos1 - Pos0);
     }
     
-    return word;
+    return Result;
 }
 
 
@@ -1487,7 +1490,7 @@ internal_yd size_t
 CopyFastUnsafe(char* Dest, const char* Source)
 {
     char* DestAt = Dest;
-    char* SourceAt = Source;
+    const char* SourceAt = Source;
     
     while (*SourceAt)
     {
@@ -1500,7 +1503,7 @@ CopyFastUnsafe(char* Dest, const char* Source)
     return Result;
 }
 
-internal_yd s32_yd
+internal_yd size_t
 CopyFastUnsafe(char* Dest, string Source)
 {
     for (size_t Index = 0; Index < Source.Count; ++Index)
@@ -1550,8 +1553,9 @@ internal_yd b32_yd
 CopyPartial(string* Dest, const char* Source)
 {
     b32_yd Result = true;
+    size_t Index = 0;
     
-    for (size_t Index = 0; Source[Index]; ++Index)
+    for (; Source[Index]; ++Index)
     {
         if (Index >= Dest->MemorySize)
         {
@@ -1718,7 +1722,7 @@ AppendPadding(string* Dest, char C, size_t TargetCount)
 //
 
 internal_yd void
-RaplaceRange(string* Str, size_t First, size_t OnePastLast, char With)
+ReplaceRange(string* Str, size_t First, size_t OnePastLast, char With)
 {
     AssertYD((First >= 0) && (First < Str->Count));
     AssertYD((OnePastLast > 0) && (OnePastLast <= Str->Count));
@@ -1731,10 +1735,10 @@ RaplaceRange(string* Str, size_t First, size_t OnePastLast, char With)
 }
 
 internal_yd void
-RaplaceRange(string* Str, size_t First, size_t OnePastLast, const char* With)
+ReplaceRange(string* Str, size_t First, size_t OnePastLast, const char* With)
 {
     string WithStr = MakeStringSlowly(With);
-    RaplaceRange(Str, First, OnePastLast, WithStr);
+    ReplaceRange(Str, First, OnePastLast, WithStr);
 }
 
 // TODO(yuval): Maybe rename to block_copy?
@@ -1743,8 +1747,8 @@ block_move_yds(void* Dest_init, const void* Source_init, size_t size)
 {
     if (Dest_init && Source_init)
     {
-        const u8* Source = (const u8*)Source_init;
-        u8* Dest = (u8*)Dest_init;
+        const u8_yd* Source = (const u8_yd*)Source_init;
+        u8_yd* Dest = (u8_yd*)Dest_init;
         
         if (Dest < Source)
         {
@@ -1766,9 +1770,9 @@ block_move_yds(void* Dest_init, const void* Source_init, size_t size)
 }
 
 internal_yd void
-RaplaceRange(string* Str, size_t First, size_t OnePastLast, string With)
+ReplaceRange(string* Str, size_t First, size_t OnePastLast, string With)
 {
-    AssertYD((First >= 0) && (from < Str->Count));
+    AssertYD((First >= 0) && (First < Str->Count));
     AssertYD((OnePastLast > 0) && (OnePastLast <= Str->Count));
     AssertYD(First < OnePastLast);
     
@@ -1833,7 +1837,7 @@ Replace(string* Str, string ToReplace, string With)
             break;
         }
         
-        RaplaceRange(Str, Index, Index + ToReplace.Count, With);
+        ReplaceRange(Str, Index, Index + ToReplace.Count, With);
         Index += With.Count;
     }
 }
@@ -1850,7 +1854,7 @@ StringInterpretEscapes(char* Dest, string Source)
         {
             case 0:
             {
-                if (Source.Data[SourceIndex] = '\\')
+                if (Source.Data[SourceIndex] == '\\')
                 {
                     Mode = 1;
                 } else
@@ -1864,18 +1868,12 @@ StringInterpretEscapes(char* Dest, string Source)
                 char C = Source.Data[SourceIndex];
                 switch (C)
                 {
-                    case '\\':
-                    { Dest[DestIndex++] = '\\'; } break;
-                    case 'n':
-                    { Dest[DestIndex++] = '\n'; } break;
-                    case 't':
-                    { Dest[DestIndex++] = '\t'; } break;
-                    case '"':
-                    { Dest[DestIndex++] = '"'; } break;
-                    case '0':
-                    { Dest[DestIndex++] = '\0'; } break;
-                    default:
-                    { Dest[DestIndex++] = '\\'; Dest[DestIndex++] = C; } break;
+                    case '\\': { Dest[DestIndex++] = '\\'; } break;
+                    case 'n': { Dest[DestIndex++] = '\n'; } break;
+                    case 't': { Dest[DestIndex++] = '\t'; } break;
+                    case '"': { Dest[DestIndex++] = '"'; } break;
+                    case '0': { Dest[DestIndex++] = '\0'; } break;
+                    default: { Dest[DestIndex++] = '\\'; Dest[DestIndex++] = C; } break;
                 }
                 
                 Mode = 0;
@@ -2248,11 +2246,13 @@ ToCamel(string* Dest, const char* Source)
             {
                 C = ToUpper(C);
                 IsFirst = false;
-            } else
+            }
+            else
             {
                 C = ToLower(C);
             }
-        } else
+        }
+        else
         {
             IsFirst = true;
         }
@@ -2278,11 +2278,13 @@ ToCamel(char* Dest, string Source)
             {
                 C = ToUpper(C);
                 IsFirst = false;
-            } else
+            }
+            else
             {
                 C = ToLower(C);
             }
-        } else
+        }
+        else
         {
             IsFirst = true;
         }
@@ -2290,7 +2292,7 @@ ToCamel(char* Dest, string Source)
         Dest[Index] = C;
     }
     
-    Dest[Source.Count] = Index;
+    Dest[Source.Count] = 0;
 }
 
 internal_yd void
@@ -2345,12 +2347,14 @@ inline b32_yd
 IsWhitespace(char C)
 {
     b32_yd Result = (IsSpacing(C) || IsEndOfLine(C));
+    return Result;
 }
 
 inline b32_yd
 IsAlphaTrue(char C)
 {
     b32_yd Result = (IsLower(C) || IsUpper(C));
+    return Result;
 }
 
 inline b32_yd
@@ -2556,7 +2560,7 @@ AppendU64ToString(string* Dest, u64_yd Value)
     
     if (Result)
     {
-        Dest->Count += Tail->Count;
+        Dest->Count += Tail.Count;
     }
     
     return Result;
@@ -2619,7 +2623,7 @@ AppendS32ToString(string* Dest, s32_yd Value)
     
     if (Result)
     {
-        Dest->Count += Tail->Count;
+        Dest->Count += Tail.Count;
     }
     
     return Result;
@@ -2724,7 +2728,7 @@ AppendF32ToString(string* Dest, f32_yd Value, u32_yd MaxPrecision)
     
     if (Result)
     {
-        Dest->Count += Tail->Count;
+        Dest->Count += Tail.Count;
     }
     
     return Result;
@@ -2938,12 +2942,15 @@ HexStringToU32(string Str)
 internal_yd b32_yd
 ColorToHexString(string* Dest, u32_yd Color)
 {
-    
+    // TODO(yuval): Implement This
+    return false;
 }
 
 internal_yd b32_yd
 HexStringToColor(u32_yd* Dest, string Str)
 {
+    // TODO(yuval): Implement This
+    return false;
 }
 
 
@@ -2951,14 +2958,21 @@ HexStringToColor(u32_yd* Dest, string Str)
 // NOTE(yuval): File / Directory strings Management Functions
 //
 
+inline b32_yd
+IsSlash(char C)
+{
+    b32_yd Result = ((C == '/') || (C == '\\'));
+    return Result;
+}
+
 internal_yd size_t
 ReverseSeekSlash(string Str, size_t ShiftFromLastChar)
 {
-    for (size_t Index = Str.size - ShiftFromLastChar - 1;
+    for (size_t Index = Str.Count - ShiftFromLastChar - 1;
          Index >= 0;
          --Index)
     {
-        if (IsSlash(Str[Index]))
+        if (IsSlash(Str.Data[Index]))
         {
             return Index;
         }
@@ -3079,7 +3093,7 @@ internal_yd b32_yd
 RemoveExtension(string* FileName)
 {
     b32_yd Result = false;
-    size_t LastDotIndex = RFind(FileName, '.');
+    size_t LastDotIndex = RFind(*FileName, '.');
     
     if (LastDotIndex != STRING_NOT_FOUND)
     {
@@ -3200,7 +3214,7 @@ IsTXT(string Extension)
 inline b32_yd
 IsCode(string Extension)
 {
-    b32_yd Result = (IsH(Extension) || is_c(Extension) || IsCPP(Extension) ||
+    b32_yd Result = (IsH(Extension) || IsC(Extension) || IsCPP(Extension) ||
                      IsObjectiveC(Extension) || IsShader(Extension) ||
                      IsINL(Extension) || IsJava(Extension) || IsCSharp(Extension) ||
                      IsPython(Extension) || IsSwift(Extension) || IsJavascript(Extension) ||

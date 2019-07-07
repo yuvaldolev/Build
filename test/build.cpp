@@ -3,7 +3,9 @@
 build_internal void
 Build()
 {
-    for (;;)
+    build_b32 Building = true;
+    
+    while (Building)
     {
         build_message Message = BuildWaitForMessage();
         
@@ -17,20 +19,25 @@ Build()
             case BuildMessage_Workspace:
             {
                 printf("Building Workspace: %.*s\n",
-                       (s32)Message.Data.Count, Message.Data.Data);
+                       PrintableString(Message.Data.String));
             } break;
             
             case BuildMessage_File:
             {
-                printf("Building: %.*s\n",
-                       (s32)Message.Data.Count, Message.Data.Data);
-            }
+                printf("Building: %.*s\n", PrintableString(Message.Data.String));
+            } break;
             
             case BuildMessage_Completed:
             {
                 printf("Finished Building With %s\n",
-                       (Message.Success ? "Success" : "Failure"));
-            }
+                       (Message.Data.Bool ? "Success" : "Failure"));
+                
+                Building = false;
+            } break;
+            
+            default:
+            {
+            } break;
         }
     }
 }
@@ -41,7 +48,7 @@ SetupDebug(build_workspace* Workspace)
     build_options* Options = &Workspace->Options;
     
     // NOTE(yuval): Optimization Options
-    BuildSetOptimizationLevel(Options, 0);
+    Options->OptimizationLevel = 0;
     
     // NOTE(yuval): Executable Options
     Options->OutputExecutableName = Lit("test_debug");
@@ -57,22 +64,22 @@ SetupRelease(build_workspace* Workspace)
     build_options* Options = &Workspace->Options;
     
     // NOTE(yuval): Optimization Options
-    BuildSetOptimizationLevel(Options, 3);
+    Options->OptimizationLevel = 3;
     
     // NOTE(yuval): Executable Options
     Options->OutputExecutableName = Lit("test_release");
     Options->OutputPath = Lit("../build");
     
     // NOTE(yuval): Compiler Options
-    Options->Compiler = Compiler_Clang;
+    Options->Compiler = BuildCompiler_Clang;
 }
 
-build_internal workspace
+build_internal build_workspace*
 StartWorkspace(string Name)
 {
     build_workspace* Workspace = BuildCreateWorkspace(Name);
     
-    // TODO(yuval): Flags to indicate whether or not to usemetaprogramming
+    // TODO(yuval): Flags to indicate whether or not to use metaprogramming
     
     BuildAddFile(Workspace, Lit("test.cpp"));
     
@@ -84,6 +91,10 @@ BuildDebug()
 {
     build_workspace* Workspace = StartWorkspace(Lit("Debug"));
     SetupDebug(Workspace);
+    
+    build_workspace* Workspace2 = StartWorkspace(Lit("Debug2"));
+    SetupDebug(Workspace2);
+    
     Build();
 }
 
@@ -93,6 +104,12 @@ BuildRelease()
     build_workspace* Workspace = StartWorkspace(Lit("Release"));
     SetupRelease(Workspace);
     Build();
+}
+
+int main()
+{
+    BuildDebug();
+    return 0;
 }
 
 // TODO(yuval): #build BuildDebug

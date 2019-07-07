@@ -49,7 +49,7 @@ typedef int8_t build_s8;
 typedef int16_t build_s16;
 typedef int32_t build_s32;
 typedef int64_t build_s64;
-typedef s32 build_b32;
+typedef build_s32 build_b32;
 
 typedef uint8_t build_u8;
 typedef uint16_t build_u16;
@@ -61,22 +61,6 @@ typedef double build_f64;
 
 typedef intptr_t build_smm;
 typedef uintptr_t build_umm;
-
-inline size_t
-StringLength(const char* String)
-{
-    size_t Count = 0;
-    
-    if (String)
-    {
-        while(*String++)
-        {
-            ++Count;
-        }
-    }
-    
-    return Count;
-}
 
 #define BUILD_TYPES_H
 #endif
