@@ -68,6 +68,10 @@ global_variable_yd const string NULL_STR = {};
 // NOTE(yuval): Public API Function Declarations
 //
 
+#if 0// !defined()
+#define
+#endif
+
 inline string MakeString(void* Data, size_t Count, size_t MemorySize);
 inline string MakeString(void* Data, size_t Count);
 
@@ -882,7 +886,7 @@ StringSetMatch(string* StrSet, size_t Count, string Str, size_t* OutMatchIndex)
 internal_yd s32_yd
 Compare(const char* A, const char* B)
 {
-    s32_yd Index = 0;
+    size_t Index = 0;
     while (A[Index] && B[Index] &&
            (A[Index] != B[Index]))
     {
@@ -896,7 +900,7 @@ Compare(const char* A, const char* B)
 internal_yd s32_yd
 Compare(string A, const char* B)
 {
-    s32_yd Index = 0;
+    size_t Index = 0;
     while ((Index < A.Count) && B[Index] &&
            (A.Data[Index] == B[Index]))
     {
@@ -939,7 +943,7 @@ Compare(string A, string B)
         MinCount = B.Count;
     }
     
-    s32_yd Index = 0;
+    size_t Index = 0;
     while ((Index < MinCount) && (A.Data[Index] == B.Data[Index]))
     {
         ++Index;
@@ -2046,7 +2050,7 @@ IsUpper(const char* Str)
 inline b32_yd
 IsUpper(string Str)
 {
-    b32_yd Result;
+    b32_yd Result = true;
     
     for (size_t Index = 0; Index < Str.Count; ++Index)
     {
@@ -2676,13 +2680,13 @@ internal_yd b32_yd
 F32ToString(string* Dest, f32_yd Value, u32_yd MaxPrecision)
 {
     s32_yd IntegerPart = (s32_yd)Value;
-    b32_yd Result = S32ToString(Dest, Value);
+    b32_yd Result = S32ToString(Dest, IntegerPart);
     
     if (Result)
     {
         Value -= IntegerPart;
         
-        if (Value != 0)
+        if (Value != 0.0f)
         {
             Append(Dest, '.');
             
@@ -2911,15 +2915,15 @@ HexCharToS32(char C)
 inline char
 S32ToHexChar(s32_yd Value)
 {
-    s32_yd Result;
+    char Result;
     
     if (Value < 10)
     {
-        Result = '0' + Value;
+        Result = '0' + (char)Value;
     }
     else
     {
-        Result = 'A' + (Value - 10);
+        Result = 'A' + (char)(Value - 10);
     }
     
     return Result;

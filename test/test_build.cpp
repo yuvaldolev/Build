@@ -1,4 +1,6 @@
-#include "build.h"
+#include "build_api.h"
+
+#include <stdio.h>
 
 build_internal void
 Build()
@@ -18,8 +20,7 @@ Build()
             
             case BuildMessage_Workspace:
             {
-                printf("Building Workspace: %.*s\n",
-                       PrintableString(Message.Data.String));
+                printf("Building Workspace: %.*s\n", PrintableString(Message.Data.String));
             } break;
             
             case BuildMessage_File:
