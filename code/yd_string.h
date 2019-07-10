@@ -1,5 +1,7 @@
 #if !defined(YD_STRING)
 
+// TODO(yuval): Add a way to initialize a literal string inplace without calling MakeString
+
 // TODO(yuval): UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING
 // UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING  UNIT TESTING
 

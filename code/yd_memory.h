@@ -74,6 +74,10 @@ internal void* ZeroSize(void* Ptr, size_t Size);
 #endif
 
 inline arena_push_params DefaultArenaParams();
+inline arena_push_params ArenaAlignClear(u32_yd Alignment);
+inline arena_push_params ArenaAlignNoClear(u32_yd Alignment);
+inline arena_push_params ArenaAlign(u32_yd Alignment, b32_yd ShouldClear);
+inline arena_push_params ArenaNoClear();
 inline void InitializeArena(memory_arena* Arena, void* Base, size_t Size);
 inline void SubArena(memory_arena* Result, memory_arena* Arena,
                      size_t Size, arena_push_params Params = DefaultArenaParams());
@@ -92,9 +96,14 @@ inline void* PushSize_(memory_arena* Arena, size_t SizeInit,
 # define PushStruct(Arena, Type, ...) (Type*)PushSize_(Arena, sizeof(Type), ## __VA_ARGS__)
 #endif
 
-#if !defined (PushArray)
+#if !defined(PushArray)
 # define PushArray(Arena, Type, Count, ...) (Type*)PushSize_(Arena, (Count) * sizeof(Type), \
 ## __VA_ARGS__)
+#endif
+
+#if !defined(PushCopy)
+# define PushCopy(Arena, Size, Source, ...) Copy(PushSize_(Arena, Size, ## __VA_ARGS__), \
+(Source), Size)
 #endif
 
 inline temporary_memory BeginTemporaryMemory(memory_arena* Arena);
@@ -108,7 +117,7 @@ inline b32_yd ArenaHasRoomFor(memory_arena* Arena, size_t SizeInit,
 #if defined(YD_MEMORY_IMPLEMENTATION)
 
 //
-// NOTE(yuval): Memory Helper Functions
+// NOTE(yuval): Memory Utility Functions
 //
 
 internal void*
@@ -153,6 +162,54 @@ DefaultArenaParams()
     arena_push_params Params;
     Params.Flags = ArenaFlag_ClearToZero;
     Params.Alignment = 4;
+    
+    return Params;
+}
+
+inline arena_push_params
+ArenaAlignClear(u32_yd Alignment)
+{
+    arena_push_params Params = DefaultArenaParams();
+    Params.Flags |= ArenaFlag_ClearToZero;
+    Params.Alignment = Alignment;
+    
+    return Params;
+}
+
+inline arena_push_params
+ArenaAlignNoClear(u32_yd Alignment)
+{
+    arena_push_params Params = DefaultArenaParams();
+    Params.Flags &= ~ArenaFlag_ClearToZero;
+    Params.Alignment = Alignment;
+    
+    return Params;
+}
+
+inline arena_push_params
+ArenaAlign(u32_yd Alignment, b32_yd ShouldClear)
+{
+    arena_push_params Params;
+    
+    if (ShouldClear)
+    {
+        Params = ArenaAlignClear(Alignment);
+    }
+    else
+    {
+        Params = ArenaAlignNoClear(Alignment);
+    }
+    
+    return Params;
+}
+
+inline arena_push_params
+ArenaNoClear()
+{
+    arena_push_params Params = DefaultArenaParams();
+    Params.Flags &= ~ArenaFlag_ClearToZero;
+    
+    return Params.Flags;
 }
 
 
