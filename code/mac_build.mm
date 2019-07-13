@@ -99,7 +99,7 @@ main(int ArgCount, const char* Args[])
 
 @autoreleasepool
     {
-        i (ArgCount > 1)
+        if (ArgCount > 1)
         {
             string Path = MakeStringSlowly(getenv("PATH"));
 
