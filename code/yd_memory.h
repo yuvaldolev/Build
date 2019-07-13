@@ -54,7 +54,7 @@ struct memory_block
     size_t Size;
     size_t Used;
     
-    memory_block* PrevBlock;
+    memory_block* Prev;
 };
 
 struct memory_arena
@@ -73,7 +73,7 @@ struct temporary_memory
     size_t Used;
 };
 
-enum arena_push_flag
+enum arena_push_flags
 {
     ArenaFlag_ClearToZero = 0x1
 };
@@ -313,7 +313,7 @@ GetEffectiveSizeFor(memory_arena* Arena, size_t SizeInit, arena_push_params Para
 // NOTE(yuval): Arena Push
 
 inline yd_b32
-YDArenaIsPow2(yd_u32 Value)
+YDMemoryIsPow2(yd_u32 Value)
 {
     yd_b32 Result = ((Value & ~(Value - 1)) == Value);
     return Result;
@@ -323,25 +323,47 @@ inline void*
 PushSize_(memory_arena* Arena, size_t SizeInit, arena_push_params Params)
 {
     Assert(Params.Alignment <= 128);
-    Assert(YDArenaIsPow2(Params.Alignment));
+    Assert(YDMemoryIsPow2(Params.Alignment));
     
-    size_t Size = GetEffectiveSizeFor(Arena, SizeInit, Params);
-    
-    if ((Arena->Used + Size) > Arena->Size)
+    size_t Size = 0;
+    if (Arena->CurrentBlock)
     {
-        Size = SizeInit; // NOTE(yuval): The base will automatically be aligned now!
-        size_t BlockSize = YDMaximum(Size, MinimumBlockSize);
-        
-        Arena->Size = BlockSize;
-        Arena->Base = ArenaAllocateMemory(BlcokSize);
-        Arena->Used = 0;
+        Size = GetEffectiveSizeFor(Arena, SizeInit, Params);
     }
     
-    YDAssert((Arena->Used + Size) <= Arena->Size);
+    if (!Arena->CurrentBlock ||
+        ((Arena->CurrentBlock->Used + Size) > Arena->CurrentBlock->Size))
+    {
+        Size = SizeInit; // NOTE(yuval): The base will automatically be aligned now!
+        
+        if (Arena->AllocationFlags & (MemoryBlockFlag_OverflowCheck |
+                                      MemoryBlockFlag_UnderflowCheck))
+        {
+            Arena->MinimumBlockSize = 0;
+            Size = YDMemoryAlignPow2(Size, Params.Alignment);
+        }
+        else if (Arena->MinimumBlockSize == 0)
+        {
+            // TODO(yuval): Tune default block size
+            Arena->MinimumBlockSize = 1024 * 1024;
+        }
+        
+        size_t BlockSize = YDMaximum(Size, Arena->MinimumBlockSize);
+        
+        memory_block* NewBlock = AllocateMemory(BlockSize, Arena->AllocationFlags);
+        NewBlock->Prev = Arena->CurrentBlock;
+        Arena->CurrentBlock = NewBlock;
+    }
+    
+    YDAssert((Arena->CurrentBlock->Used + Size) <= Arena->CurrentBlock->Size);
     
     size_t AlignmentOffset = GetAlignmentOffset(Arena, Params.Alignment);
-    void* Result = Arena->Base + Arena->Used + AlignmentOffset;
-    Arena->Used += Size;
+    void* Result = Arena->CurrentBlock->Base + Arena->CurrentBlock->Used + AlignmentOffset;
+    Arena->CurrentBlock->Used += Size;
+    
+    // NOTE(yuval): This is just to guarantee that nobody passed in an alignment
+    // on their first allocation that was _greater_ that than the page alignment
+    Assert(Arena->CurrentBlock->Used <= Arena->CurrentBlock->Size);
     
     if (Params.Flags & ArenaFlag_ClearToZero)
     {
