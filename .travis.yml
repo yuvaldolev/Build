@@ -1,0 +1,16 @@
+language: shell
+install: true
+
+matrix:
+  include:
+    - name: "clang on macOS"
+    os: osx
+    osx_image: xcode10.1
+    env:
+    - CC=clang
+    - CXX=clang++
+    install:
+    - ${CC} --version
+    script:
+    # build & test
+    - ./code/build.sh

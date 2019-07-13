@@ -19,31 +19,31 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define internal_yd static
-#define global_variable_yd static
-#define local_persist_yd static
+#define yd_internal static
+#define yd_global_variable static
+#define yd_local_persist static
 
-typedef int8_t s8_yd;
-typedef int16_t s16_yd;
-typedef int32_t s32_yd;
-typedef int64_t s64_yd;
-typedef s32_yd b32_yd;
+typedef int8_t yd_s8;
+typedef int16_t yd_s16;
+typedef int32_t yd_s32;
+typedef int64_t yd_s64;
+typedef yd_s32 yd_b32;
 
-typedef uint8_t u8_yd;
-typedef uint16_t u16_yd;
-typedef uint32_t u32_yd;
-typedef uint64_t u64_yd;
+typedef uint8_t yd_u8;
+typedef uint16_t yd_u16;
+typedef uint32_t yd_u32;
+typedef uint64_t yd_u64;
 
-typedef float f32_yd;
-typedef double f64_yd;
+typedef float yd_f32;
+typedef double yd_f64;
 
-typedef intptr_t smm_yd;
-typedef uintptr_t umm_yd;
+typedef intptr_t yd_smm;
+typedef uintptr_t yd_umm;
 #define YD_TYPES
 #endif
 
-#if !defined(AssertYD)
-# define AssertYD(Expression) if (!(Expression)) { *(volatile int*)0 = 0; }
+#if !defined(YDAssert)
+# define YDAssert(Expression) if (!(Expression)) { *(volatile int*)0 = 0; }
 #endif
 
 #if !defined(Literal)
@@ -63,8 +63,8 @@ struct string
 // NOTE(yuval): Flags And Constants
 //
 
-global_variable_yd const size_t STRING_NOT_FOUND = -1;
-global_variable_yd const string NULL_STR = {};
+yd_global_variable const size_t STRING_NOT_FOUND = -1;
+yd_global_variable const string NULL_STR = {};
 
 //
 // NOTE(yuval): Public API Function Declarations
@@ -94,210 +94,210 @@ inline string MakeString(void* Data, size_t Count);
 #endif
 
 #if !defined(PrintableString)
-# define PrintableString(Str) ((s32_yd)((Str).Count)), ((Str).Data)
+# define PrintableString(Str) ((yd_s32)((Str).Count)), ((Str).Data)
 #endif
 
 inline size_t StringLength(const char* Str);
 inline string MakeStringSlowly(const void* Str);
 inline string Substr(string Str, size_t Start);
 inline string Substr(string Str, size_t Start, size_t Count);
-internal_yd string SkipWhitespace(string Str);
-internal_yd string SkipWhitespace(string Str, size_t* OutSkipCount);
-internal_yd string ChopWhitespace(string Str);
-internal_yd string SkipChopWhitespace(string Str);
-internal_yd string SkipChopWhitespace(string Str, size_t* OutSkipCount);
+yd_internal string SkipWhitespace(string Str);
+yd_internal string SkipWhitespace(string Str, size_t* OutSkipCount);
+yd_internal string ChopWhitespace(string Str);
+yd_internal string SkipChopWhitespace(string Str);
+yd_internal string SkipChopWhitespace(string Str, size_t* OutSkipCount);
 inline string TailStr(string Str);
-internal_yd b32_yd StringsMatch(const char* A, const char* B);
-internal_yd b32_yd StringsMatch(string A, const char* B);
-inline b32_yd StringsMatch(const char* A, string B);
-internal_yd b32_yd StringsMatch(string A, string B);
-internal_yd b32_yd StringsMatchPart(const char* A, const char* B, size_t* OutCount);
-internal_yd b32_yd StringsMatchPart(string A, const char* B, size_t* OutCount);
-internal_yd b32_yd StringsMatchPart(const char* A, string B, size_t* OutCount);
-internal_yd b32_yd StringsMatchPart(string A, string B, size_t* OutCount);
-inline b32_yd StringsMatchPart(const char* A, const char* B);
-inline b32_yd StringsMatchPart(string A, const char* B);
-inline b32_yd StringsMatchPart(const char* A, string B);
-inline b32_yd StringsMatchPart(string A, string B);
-internal_yd b32_yd StringsMatchInsensitive(const char* A, const char* B);
-internal_yd b32_yd StringsMatchInsensitive(string A, const char* B);
-inline b32_yd StringsMatchInsensitive(const char* A, string B);
-internal_yd b32_yd StringsMatchInsensitive(string A, string B);
-internal_yd b32_yd StringsMatchPartInsensitive(const char* A, const char* B, size_t* OutCount);
-internal_yd b32_yd StringsMatchPartInsensitive(string A, const char* B, size_t* OutCount);
-internal_yd b32_yd StringsMatchPartInsensitive(const char* A, string B, size_t* OutCount);
-internal_yd b32_yd StringsMatchPartInsensitive(string A, string B, size_t* OutCount);
-inline b32_yd StringsMatchPartInsensitive(const char* A, const char* B);
-inline b32_yd StringsMatchPartInsensitive(string A, const char* B);
-inline b32_yd StringsMatchPartInsensitive(const char* A, string B);
-inline b32_yd StringsMatchPartInsensitive(string A, string B);
-internal_yd b32_yd StringSetMatch(void* StrSet, size_t ItemSize, size_t Count,
+yd_internal yd_b32 StringsMatch(const char* A, const char* B);
+yd_internal yd_b32 StringsMatch(string A, const char* B);
+inline yd_b32 StringsMatch(const char* A, string B);
+yd_internal yd_b32 StringsMatch(string A, string B);
+yd_internal yd_b32 StringsMatchPart(const char* A, const char* B, size_t* OutCount);
+yd_internal yd_b32 StringsMatchPart(string A, const char* B, size_t* OutCount);
+yd_internal yd_b32 StringsMatchPart(const char* A, string B, size_t* OutCount);
+yd_internal yd_b32 StringsMatchPart(string A, string B, size_t* OutCount);
+inline yd_b32 StringsMatchPart(const char* A, const char* B);
+inline yd_b32 StringsMatchPart(string A, const char* B);
+inline yd_b32 StringsMatchPart(const char* A, string B);
+inline yd_b32 StringsMatchPart(string A, string B);
+yd_internal yd_b32 StringsMatchInsensitive(const char* A, const char* B);
+yd_internal yd_b32 StringsMatchInsensitive(string A, const char* B);
+inline yd_b32 StringsMatchInsensitive(const char* A, string B);
+yd_internal yd_b32 StringsMatchInsensitive(string A, string B);
+yd_internal yd_b32 StringsMatchPartInsensitive(const char* A, const char* B, size_t* OutCount);
+yd_internal yd_b32 StringsMatchPartInsensitive(string A, const char* B, size_t* OutCount);
+yd_internal yd_b32 StringsMatchPartInsensitive(const char* A, string B, size_t* OutCount);
+yd_internal yd_b32 StringsMatchPartInsensitive(string A, string B, size_t* OutCount);
+inline yd_b32 StringsMatchPartInsensitive(const char* A, const char* B);
+inline yd_b32 StringsMatchPartInsensitive(string A, const char* B);
+inline yd_b32 StringsMatchPartInsensitive(const char* A, string B);
+inline yd_b32 StringsMatchPartInsensitive(string A, string B);
+yd_internal yd_b32 StringSetMatch(void* StrSet, size_t ItemSize, size_t Count,
                                   string Str, size_t* OutMatchIndex);
-inline b32_yd StringSetMatch(string* StrSet, size_t Count, string Str, size_t* OutMatchIndex);
-internal_yd s32_yd Compare(const char* A, const char* B);
-internal_yd s32_yd Compare(string A, const char* B);
-inline s32_yd Compare(const char* A, string B);
-internal_yd s32_yd Compare(string A, string B);
-internal_yd size_t Find(const char* Str, char Character, size_t Start);
-internal_yd size_t Find(string Str, char Character, size_t Start);
-internal_yd size_t Find(const char* Str, string Seek, size_t Start);
-internal_yd size_t Find(string Str, string Seek, size_t Start);
+inline yd_b32 StringSetMatch(string* StrSet, size_t Count, string Str, size_t* OutMatchIndex);
+yd_internal yd_s32 Compare(const char* A, const char* B);
+yd_internal yd_s32 Compare(string A, const char* B);
+inline yd_s32 Compare(const char* A, string B);
+yd_internal yd_s32 Compare(string A, string B);
+yd_internal size_t Find(const char* Str, char Character, size_t Start);
+yd_internal size_t Find(string Str, char Character, size_t Start);
+yd_internal size_t Find(const char* Str, string Seek, size_t Start);
+yd_internal size_t Find(string Str, string Seek, size_t Start);
 inline size_t Find(const char* Str, char Character);
 inline size_t Find(string Str, char Character);
 inline size_t Find(const char* Str, string Seek);
 inline size_t Find(string Str, string Seek);
-internal_yd size_t RFind(string Str, char Character, size_t Start);
-internal_yd size_t RFind(string Str, string Seek, size_t Start);
+yd_internal size_t RFind(string Str, char Character, size_t Start);
+yd_internal size_t RFind(string Str, string Seek, size_t Start);
 inline size_t RFind(string Str, char Character);
 inline size_t RFind(string Str, string Seek);
-internal_yd size_t FindFirstOf(const char* Str, const char* Characters, size_t Start);
-internal_yd size_t FindFirstOf(string Str, const char* Characters,  size_t Start);
+yd_internal size_t FindFirstOf(const char* Str, const char* Characters, size_t Start);
+yd_internal size_t FindFirstOf(string Str, const char* Characters,  size_t Start);
 inline size_t FindFirstOf(const char* Str, const char* Characters);
 inline size_t FindFirstOf(string Str, const char* Characters);
-internal_yd size_t FindInsensitive(const char* Str, char Character, size_t Start);
-internal_yd size_t FindInsensitive(string Str, char Character, size_t Start);
-internal_yd size_t FindInsensitive(const char* Str, string Seek, size_t Start);
-internal_yd size_t FindInsensitive(string Str, string Seek, size_t Start);
+yd_internal size_t FindInsensitive(const char* Str, char Character, size_t Start);
+yd_internal size_t FindInsensitive(string Str, char Character, size_t Start);
+yd_internal size_t FindInsensitive(const char* Str, string Seek, size_t Start);
+yd_internal size_t FindInsensitive(string Str, string Seek, size_t Start);
 inline size_t FindInsensitive(const char* Str, char Character);
 inline size_t FindInsensitive(string Str, char Character);
 inline size_t FindInsensitive(const char* Str, string Seek);
 inline size_t FindInsensitive(string Str, string Seek);
-inline b32_yd HasSubstr(const char* Str, string Seek);
-inline b32_yd HasSubstr(string Str, string Seek);
-inline b32_yd HasSubstrInsensitive(const char* Str, string Seek);
-inline b32_yd HasSubstrInsensitive(string Str, string Seek);
-internal_yd string GetFirstDoubleLine(string Source);
-internal_yd string GetNextDoubleLine(string Source, string Line);
-internal_yd string GetNextWord(string Source, string PrevWord);
+inline yd_b32 HasSubstr(const char* Str, string Seek);
+inline yd_b32 HasSubstr(string Str, string Seek);
+inline yd_b32 HasSubstrInsensitive(const char* Str, string Seek);
+inline yd_b32 HasSubstrInsensitive(string Str, string Seek);
+yd_internal string GetFirstDoubleLine(string Source);
+yd_internal string GetNextDoubleLine(string Source, string Line);
+yd_internal string GetNextWord(string Source, string PrevWord);
 inline string GetFirstWord(string Source);
-internal_yd size_t CopyFastUnsafe(char* Dest, const char* Source);
-internal_yd size_t CopyFastUnsafe(char* Dest, string Source);
-internal_yd b32_yd CopyChecked(string* Dest, string Source);
-internal_yd b32_yd CopyChecked(char* Dest, size_t DestCap, string Source);
-internal_yd b32_yd CopyPartial(string* Dest, const char* Source);
-internal_yd b32_yd CopyPartial(string* Dest, string Source);
-internal_yd b32_yd CopyPartial(char* Dest, size_t DestCap, string Source);
+yd_internal size_t CopyFastUnsafe(char* Dest, const char* Source);
+yd_internal size_t CopyFastUnsafe(char* Dest, string Source);
+yd_internal yd_b32 CopyChecked(string* Dest, string Source);
+yd_internal yd_b32 CopyChecked(char* Dest, size_t DestCap, string Source);
+yd_internal yd_b32 CopyPartial(string* Dest, const char* Source);
+yd_internal yd_b32 CopyPartial(string* Dest, string Source);
+yd_internal yd_b32 CopyPartial(char* Dest, size_t DestCap, string Source);
 inline size_t Copy(char* Dest, const char* Source);
 inline void Copy(string* Dest, string Source);
 inline void Copy(string* Dest, const char* Source);
-internal_yd b32_yd AppendChecked(string* Dest, string Source);
-internal_yd b32_yd AppendPartial(string* Dest, const char* Source);
-internal_yd b32_yd AppendPartial(string* Dest, string Source);
-internal_yd b32_yd Append(string* Dest, char C);
-inline b32_yd Append(string* Dest, const char* Source);
-inline b32_yd Append(string* Dest, string Source);
-internal_yd b32_yd TerminateWithNull(string* Str);
-internal_yd b32_yd AppendPadding(string* Dest, char C, size_t TargetCount);
-internal_yd void ReplaceRange(string* Str, size_t First, size_t OnePastLast, char With);
-internal_yd void ReplaceRange(string* Str, size_t First, size_t OnePastLast, const char* With);
-internal_yd void ReplaceRange(string* Str, size_t First, size_t OnePastLast, string With);
-internal_yd void Replace(string* Str, char ToReplace, char With);
-internal_yd void Replace(string* Str, const char* ToReplace, const char* With);
-internal_yd void Replace(string* Str, const char* ToReplace, string With);
-internal_yd void Replace(string* Str, string ToReplace, const char* With);
-internal_yd void Replace(string* Str, string ToReplace, string With);
-internal_yd void StringInterpretEscapes(char* Dest, string Source);
+yd_internal yd_b32 AppendChecked(string* Dest, string Source);
+yd_internal yd_b32 AppendPartial(string* Dest, const char* Source);
+yd_internal yd_b32 AppendPartial(string* Dest, string Source);
+yd_internal yd_b32 Append(string* Dest, char C);
+inline yd_b32 Append(string* Dest, const char* Source);
+inline yd_b32 Append(string* Dest, string Source);
+yd_internal yd_b32 TerminateWithNull(string* Str);
+yd_internal yd_b32 AppendPadding(string* Dest, char C, size_t TargetCount);
+yd_internal void ReplaceRange(string* Str, size_t First, size_t OnePastLast, char With);
+yd_internal void ReplaceRange(string* Str, size_t First, size_t OnePastLast, const char* With);
+yd_internal void ReplaceRange(string* Str, size_t First, size_t OnePastLast, string With);
+yd_internal void Replace(string* Str, char ToReplace, char With);
+yd_internal void Replace(string* Str, const char* ToReplace, const char* With);
+yd_internal void Replace(string* Str, const char* ToReplace, string With);
+yd_internal void Replace(string* Str, string ToReplace, const char* With);
+yd_internal void Replace(string* Str, string ToReplace, string With);
+yd_internal void StringInterpretEscapes(char* Dest, string Source);
 // TODO(yuval): Think about string push (should require an arena)
-inline b32_yd IsLower(char C);
-inline b32_yd IsLower(const char* Str);
-inline b32_yd IsLower(string Str);
-inline b32_yd IsLowerUTF8(u8_yd C);
+inline yd_b32 IsLower(char C);
+inline yd_b32 IsLower(const char* Str);
+inline yd_b32 IsLower(string Str);
+inline yd_b32 IsLowerUTF8(yd_u8 C);
 inline char ToLower(char C);
-internal_yd void ToLower(char* Str);
-internal_yd void ToLower(string* Str);
-internal_yd void ToLower(char* Dest, const char* Source);
-internal_yd void ToLower(string* Dest, const char* Source);
-internal_yd void ToLower(char* Dest, string Source);
-internal_yd void ToLower(string* Dest, string Source);
-inline b32_yd IsUpper(char C);
-inline b32_yd IsUpper(const char* Str);
-inline b32_yd IsUpper(string Str);
-inline b32_yd IsUpperUTF8(u8_yd C);
+yd_internal void ToLower(char* Str);
+yd_internal void ToLower(string* Str);
+yd_internal void ToLower(char* Dest, const char* Source);
+yd_internal void ToLower(string* Dest, const char* Source);
+yd_internal void ToLower(char* Dest, string Source);
+yd_internal void ToLower(string* Dest, string Source);
+inline yd_b32 IsUpper(char C);
+inline yd_b32 IsUpper(const char* Str);
+inline yd_b32 IsUpper(string Str);
+inline yd_b32 IsUpperUTF8(yd_u8 C);
 inline char ToUpper(char C);
-internal_yd void ToUpper(char* Str);
-internal_yd void ToUpper(string* Str);
-internal_yd void ToUpper(char* Dest, const char* Source);
-internal_yd void ToUpper(string* Dest, const char* Source);
-internal_yd void ToUpper(char* Dest, string Source);
-internal_yd void ToUpper(string* Dest, string Source);
-internal_yd void ToCamel(char* Str);
-internal_yd void ToCamel(string* Str);
-internal_yd void ToCamel(char* Dest, const char* Source);
-internal_yd void ToCamel(string* Dest, const char* Source);
-internal_yd void ToCamel(char* Dest, string Source);
-internal_yd void ToCamel(string* Dest, string Source);
-inline b32_yd IsSpacing(char C);
-inline b32_yd IsEndOfLine(char C);
-inline b32_yd IsWhitespace(char C);
-inline b32_yd IsAlphaTrue(char C);
-inline b32_yd IsAlphaTrue(const char* Str);
-inline b32_yd IsAlphaTrue(string Str);
-inline b32_yd IsAlphaTrueUTF8(u8_yd C);
-inline b32_yd IsAlpha(char C);
-inline b32_yd IsAlpha(const char* Str);
-inline b32_yd IsAlpha(string Str);
-inline b32_yd IsAlphaUTF8(u8_yd C);
-inline b32_yd IsNumeric(char C);
-inline b32_yd IsNumeric(const char* Str);
-inline b32_yd IsNumeric(string Str);
-inline b32_yd IsNumericUTF8(u8_yd C);
-internal_yd size_t U64ToStringCount(u64_yd Value);
-internal_yd b32_yd U64ToString(string* Dest, u64_yd Value);
-internal_yd b32_yd AppendU64ToString(string* Dest, u64_yd Value);
-internal_yd size_t S32ToStringCount(s32_yd Value);
-internal_yd b32_yd S32ToString(string* Dest, s32_yd Value);
-internal_yd b32_yd AppendS32ToString(string* Dest, s32_yd Value);
-internal_yd size_t F32ToStringCount(f32_yd Value, u32_yd MaxPrecision);
-inline size_t F32ToStringCount(f32_yd Value);
-internal_yd b32_yd F32ToString(string* Dest, f32_yd Value, u32_yd MaxPrecision);
-inline b32_yd F32ToString(string* Dest, f32_yd Value);
-internal_yd b32_yd AppendF32ToString(string* Dest, f32_yd Value, u32_yd MaxPrecision);
-inline b32_yd AppendF32ToString(string* Dest, f32_yd Value);
-inline b32_yd IsAlphaNumeric(char C);
-inline b32_yd IsAlphaNumeric(const char* Str);
-inline b32_yd IsAlphaNumeric(string Str);
-inline b32_yd IsAlphaNumericUTF8(u8_yd C);
-inline b32_yd IsAlphaNumericTrue(char C);
-inline b32_yd IsAlphaNumericTrue(const char* Str);
-inline b32_yd IsAlphaNumericTrue(string Str);
-inline b32_yd IsAlphaNumericTrueUTF8(u8_yd C);
-inline b32_yd IsHex(char C);
-inline b32_yd IsHex(const char* Str);
-inline b32_yd IsHex(string Str);
-inline b32_yd IsHexUTF8(u8_yd C);
-inline s32_yd HexCharToS32(char C);
-inline char S32ToHexChar(s32_yd Value);
-internal_yd u32_yd HexStringToU32(string Str);
-internal_yd b32_yd ColorToHexString(string* Dest, u32_yd Color);
-internal_yd b32_yd HexStringToColor(u32_yd* Dest, string Str);
-inline b32_yd IsSlash(char C);
-internal_yd size_t ReverseSeekSlash(string Str, size_t ShiftFromLastChar);
-internal_yd size_t ReverseSeekSlash(string Str);
+yd_internal void ToUpper(char* Str);
+yd_internal void ToUpper(string* Str);
+yd_internal void ToUpper(char* Dest, const char* Source);
+yd_internal void ToUpper(string* Dest, const char* Source);
+yd_internal void ToUpper(char* Dest, string Source);
+yd_internal void ToUpper(string* Dest, string Source);
+yd_internal void ToCamel(char* Str);
+yd_internal void ToCamel(string* Str);
+yd_internal void ToCamel(char* Dest, const char* Source);
+yd_internal void ToCamel(string* Dest, const char* Source);
+yd_internal void ToCamel(char* Dest, string Source);
+yd_internal void ToCamel(string* Dest, string Source);
+inline yd_b32 IsSpacing(char C);
+inline yd_b32 IsEndOfLine(char C);
+inline yd_b32 IsWhitespace(char C);
+inline yd_b32 IsAlphaTrue(char C);
+inline yd_b32 IsAlphaTrue(const char* Str);
+inline yd_b32 IsAlphaTrue(string Str);
+inline yd_b32 IsAlphaTrueUTF8(yd_u8 C);
+inline yd_b32 IsAlpha(char C);
+inline yd_b32 IsAlpha(const char* Str);
+inline yd_b32 IsAlpha(string Str);
+inline yd_b32 IsAlphaUTF8(yd_u8 C);
+inline yd_b32 IsNumeric(char C);
+inline yd_b32 IsNumeric(const char* Str);
+inline yd_b32 IsNumeric(string Str);
+inline yd_b32 IsNumericUTF8(yd_u8 C);
+yd_internal size_t U64ToStringCount(yd_u64 Value);
+yd_internal yd_b32 U64ToString(string* Dest, yd_u64 Value);
+yd_internal yd_b32 AppendU64ToString(string* Dest, yd_u64 Value);
+yd_internal size_t S32ToStringCount(yd_s32 Value);
+yd_internal yd_b32 S32ToString(string* Dest, yd_s32 Value);
+yd_internal yd_b32 AppendS32ToString(string* Dest, yd_s32 Value);
+yd_internal size_t F32ToStringCount(yd_f32 Value, yd_u32 MaxPrecision);
+inline size_t F32ToStringCount(yd_f32 Value);
+yd_internal yd_b32 F32ToString(string* Dest, yd_f32 Value, yd_u32 MaxPrecision);
+inline yd_b32 F32ToString(string* Dest, yd_f32 Value);
+yd_internal yd_b32 AppendF32ToString(string* Dest, yd_f32 Value, yd_u32 MaxPrecision);
+inline yd_b32 AppendF32ToString(string* Dest, yd_f32 Value);
+inline yd_b32 IsAlphaNumeric(char C);
+inline yd_b32 IsAlphaNumeric(const char* Str);
+inline yd_b32 IsAlphaNumeric(string Str);
+inline yd_b32 IsAlphaNumericUTF8(yd_u8 C);
+inline yd_b32 IsAlphaNumericTrue(char C);
+inline yd_b32 IsAlphaNumericTrue(const char* Str);
+inline yd_b32 IsAlphaNumericTrue(string Str);
+inline yd_b32 IsAlphaNumericTrueUTF8(yd_u8 C);
+inline yd_b32 IsHex(char C);
+inline yd_b32 IsHex(const char* Str);
+inline yd_b32 IsHex(string Str);
+inline yd_b32 IsHexUTF8(yd_u8 C);
+inline yd_s32 HexCharToS32(char C);
+inline char S32ToHexChar(yd_s32 Value);
+yd_internal yd_u32 HexStringToU32(string Str);
+yd_internal yd_b32 ColorToHexString(string* Dest, yd_u32 Color);
+yd_internal yd_b32 HexStringToColor(yd_u32* Dest, string Str);
+inline yd_b32 IsSlash(char C);
+yd_internal size_t ReverseSeekSlash(string Str, size_t ShiftFromLastChar);
+yd_internal size_t ReverseSeekSlash(string Str);
 inline string FrontOfDirectory(string Dir);
 inline string PathOfDirectory(string Dir);
-internal_yd b32_yd SetLastFolder(string* Dir, const char* FolderName, char Slash);
-internal_yd b32_yd SetLastFolder(string* Dir, string FolderName, char Slash);
-internal_yd b32_yd RemoveLastFolder(string* Dir);
-internal_yd string FileExtension(string FileName);
-internal_yd b32_yd RemoveExtension(string* FileName);
-inline b32_yd IsH(string Extension);
-inline b32_yd IsC(string Extension);
-inline b32_yd IsCPP(string Extension);
-inline b32_yd IsObjectiveC(string Extension);
-inline b32_yd IsShader(string Extension);
-inline b32_yd IsINL(string Extension);
-inline b32_yd IsJava(string Extension);
-inline b32_yd IsCSharp(string Extension);
-inline b32_yd IsPython(string Extension);
-inline b32_yd IsSwift(string Extension);
-inline b32_yd IsJavascript(string Extension);
-inline b32_yd IsBAT(string Extension);
-inline b32_yd IsBash(string Extension);
-inline b32_yd IsTXT(string Extension);
-inline b32_yd IsCode(string Extension);
-inline b32_yd IsDoc(string Extension);
-inline b32_yd IsCodeFile(string FileName);
-inline b32_yd IsDocFile(string FileName);
+yd_internal yd_b32 SetLastFolder(string* Dir, const char* FolderName, char Slash);
+yd_internal yd_b32 SetLastFolder(string* Dir, string FolderName, char Slash);
+yd_internal yd_b32 RemoveLastFolder(string* Dir);
+yd_internal string FileExtension(string FileName);
+yd_internal yd_b32 RemoveExtension(string* FileName);
+inline yd_b32 IsH(string Extension);
+inline yd_b32 IsC(string Extension);
+inline yd_b32 IsCPP(string Extension);
+inline yd_b32 IsObjectiveC(string Extension);
+inline yd_b32 IsShader(string Extension);
+inline yd_b32 IsINL(string Extension);
+inline yd_b32 IsJava(string Extension);
+inline yd_b32 IsCSharp(string Extension);
+inline yd_b32 IsPython(string Extension);
+inline yd_b32 IsSwift(string Extension);
+inline yd_b32 IsJavascript(string Extension);
+inline yd_b32 IsBAT(string Extension);
+inline yd_b32 IsBash(string Extension);
+inline yd_b32 IsTXT(string Extension);
+inline yd_b32 IsCode(string Extension);
+inline yd_b32 IsDoc(string Extension);
+inline yd_b32 IsCodeFile(string FileName);
+inline yd_b32 IsDocFile(string FileName);
 
 #if defined(YD_STRING_IMPLEMENTATION)
 
@@ -312,7 +312,7 @@ MakeString(void* Data, size_t Count, size_t MemorySize)
     Result.Data = (char*)Data;
     Result.Count = Count;
     Result.MemorySize = MemorySize;
-    
+
     return Result;
 }
 
@@ -327,12 +327,12 @@ inline size_t
 StringLength(const char* Str)
 {
     size_t Count = 0;
-    
+
     if (Str)
     {
         for (; Str[Count]; ++Count);
     }
-    
+
     return Count;
 }
 
@@ -343,7 +343,7 @@ MakeStringSlowly(const void* Str)
     Result.Data = (char*)Str;
     Result.Count = StringLength((const char*)Str);
     Result.MemorySize = Result.Count + 1;
-    
+
     return Result;
 }
 
@@ -354,45 +354,45 @@ MakeStringSlowly(const void* Str)
 inline string
 Substr(string Str, size_t Start)
 {
-    AssertYD((Start >= 0) && (Start <= Str.Count));
-    
+    YDAssert((Start >= 0) && (Start <= Str.Count));
+
     string Result;
     Result.Data = Str.Data + Start;
     Result.Count = Str.Count - Start;
     Result.MemorySize = 0;
-    
+
     return Result;
 }
 
 inline string
 Substr(string Str, size_t Start, size_t Count)
 {
-    AssertYD((Start >= 0) && (Start <= Str.Count));
-    
+    YDAssert((Start >= 0) && (Start <= Str.Count));
+
     string Result;
     Result.Data = Str.Data + Start;
-    
+
     Result.Count = Count;
     // TODO(yuval): Verify that this works
     if (Start + Count > Str.Count)
     {
         Result.Count = Str.Count - Start;
     }
-    
+
     Result.MemorySize = 0;
-    
+
     return Result;
 }
 
-internal_yd string
+yd_internal string
 SkipWhitespace(string Str, size_t* OutSkipCount)
 {
     size_t SkipCount = 0;
     for (; SkipCount < Str.Count && IsWhitespace(Str.Data[SkipCount]); ++SkipCount);
-    
+
     *OutSkipCount = SkipCount;
     string Result = Substr(Str, SkipCount);
-    
+
     return Result;
 }
 
@@ -404,17 +404,17 @@ SkipWhitespace(string Str)
     return Result;
 }
 
-internal_yd string
+yd_internal string
 ChopWhitespace(string Str)
 {
     size_t ChopIndex = Str.Count;
     for (; ChopIndex > 0 && IsWhitespace(Str.Data[ChopIndex - 1]); --ChopIndex);
-    
+
     string Result = Substr(Str, 0, ChopIndex);
     return Result;
 }
 
-internal_yd string
+yd_internal string
 SkipChopWhitespace(string Str, size_t* OutSkipCount)
 {
     string Result = SkipWhitespace(Str, OutSkipCount);
@@ -422,7 +422,7 @@ SkipChopWhitespace(string Str, size_t* OutSkipCount)
     return Result;
 }
 
-internal_yd string
+yd_internal string
 SkipChopWhitespace(string Str)
 {
     size_t Ignored;
@@ -437,7 +437,7 @@ TailStr(string Str)
     Result.Data = Str.Data + Str.Count;
     Result.Count = 0;
     Result.MemorySize = Str.MemorySize - Str.Count;
-    
+
     return Result;
 }
 
@@ -445,11 +445,11 @@ TailStr(string Str)
 // NOTE(yuval): String Comparison Functions
 //
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatch(const char* A, const char* B)
 {
-    b32_yd Result = (A == B);
-    
+    yd_b32 Result = (A == B);
+
     if (A && B)
     {
         while (*A && *B && (*A == *B))
@@ -457,23 +457,23 @@ StringsMatch(const char* A, const char* B)
             ++A;
             ++B;
         }
-        
+
         Result = ((*A == 0) && (*B == 0));
     }
-    
+
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatch(string A, const char* B)
 {
-    b32_yd Result = false;
-    
+    yd_b32 Result = false;
+
     if (B)
-    
+
     {
         const char* At = B;
-        
+
         for (size_t Index = 0;
              Index < A.Count;
              ++Index, ++At)
@@ -483,29 +483,29 @@ StringsMatch(string A, const char* B)
                 return false;
             }
         }
-        
+
         Result = (*At == 0);
     }
     else
     {
         Result = (A.Count == 0);
     }
-    
+
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 StringsMatch(const char* A, string B)
 {
-    b32_yd Result = StringsMatch(B, A);
+    yd_b32 Result = StringsMatch(B, A);
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatch(string A, string B)
 {
-    b32_yd Result = (A.Count == B.Count);
-    
+    yd_b32 Result = (A.Count == B.Count);
+
     if (Result)
     {
         for (size_t Index = 0; Index < A.Count; ++Index)
@@ -517,16 +517,16 @@ StringsMatch(string A, string B)
             }
         }
     }
-    
+
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatchPart(const char* A, const char* B, size_t* OutCount)
 {
-    b32_yd Result = (*A == *B);
+    yd_b32 Result = (*A == *B);
     size_t MatchCount = 0;
-    
+
     if (*A && *B)
     {
         while (*B && (*A == *B))
@@ -535,20 +535,20 @@ StringsMatchPart(const char* A, const char* B, size_t* OutCount)
             ++B;
             ++MatchCount;
         }
-        
+
         Result = (*B == 0);
     }
-    
+
     *OutCount = MatchCount;
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatchPart(string A, const char* B, size_t* OutCount)
 {
-    b32_yd Result = false;
+    yd_b32 Result = false;
     size_t Index = 0;
-    
+
     if (B)
     {
         for (; B[Index]; ++Index)
@@ -559,24 +559,24 @@ StringsMatchPart(string A, const char* B, size_t* OutCount)
                 return false;
             }
         }
-        
+
         Result = true;
     }
     else
     {
         Result = (A.Count == 0);
     }
-    
+
     *OutCount = Index;
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatchPart(const char* A, string B, size_t* OutCount)
 {
-    b32_yd Result = false;
+    yd_b32 Result = false;
     size_t Index = 0;
-    
+
     if (A)
     {
         for (; Index < B.Count; ++Index)
@@ -586,78 +586,78 @@ StringsMatchPart(const char* A, string B, size_t* OutCount)
                 return false;
             }
         }
-        
+
         Result = true;
     }
     else
     {
         Result = (B.Count == 0);
     }
-    
+
     *OutCount = Index;
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatchPart(string A, string B, size_t* OutCount)
 {
-    b32_yd Result = (A.Count >= B.Count);
+    yd_b32 Result = (A.Count >= B.Count);
     size_t Index = 0;
-    
+
     if (Result)
     {
         for (; Index < B.Count; ++Index)
         {
             if (A.Data[Index] != B.Data[Index])
-            
+
             {
                 Result = false;
                 break;
             }
         }
     }
-    
+
     *OutCount = Index;
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 StringsMatchPart(const char* A, const char* B)
 {
     size_t Ignored;
-    b32_yd Result = StringsMatchPart(A, B, &Ignored);
+    yd_b32 Result = StringsMatchPart(A, B, &Ignored);
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 StringsMatchPart(string A, const char* B)
 {
     size_t Ignored;
-    b32_yd Result = StringsMatchPart(A, B, &Ignored);
+    yd_b32 Result = StringsMatchPart(A, B, &Ignored);
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 StringsMatchPart(const char* A, string B)
 {
     size_t Ignored;
-    b32_yd Result = StringsMatchPart(A, B, &Ignored);
+    yd_b32 Result = StringsMatchPart(A, B, &Ignored);
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 StringsMatchPart(string A, string B)
 {
     size_t Ignored;
-    b32_yd Result = StringsMatchPart(A, B, &Ignored);
+    yd_b32 Result = StringsMatchPart(A, B, &Ignored);
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatchInsensitive(const char* A, const char* B)
 {
-    b32_yd Result = (A == B);
-    
+    yd_b32 Result = (A == B);
+
     if (A && B)
     {
         while (*A && *B && (ToLower(*A) == ToLower(*B)))
@@ -665,53 +665,53 @@ StringsMatchInsensitive(const char* A, const char* B)
             ++A;
             ++B;
         }
-        
+
         Result = ((*A == 0) && (*B == 0));
     }
-    
+
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatchInsensitive(string A, const char* B)
 {
-    b32_yd Result = false;
-    
+    yd_b32 Result = false;
+
     if (B)
     {
         const char* At = B;
-        
+
         for (size_t Index = 0; Index < A.Count; ++Index, ++At)
         {
             if ((*At == 0) || (ToLower(A.Data[Index]) != ToLower(*At)))
-            
+
             {
                 return false;
             }
         }
-        
+
         Result = (*At == 0);
     }
     else
     {
         Result = (A.Count == 0);
     }
-    
+
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 StringsMatchInsensitive(const char* A, string B)
 {
-    b32_yd Result = StringsMatchInsensitive(B, A);
+    yd_b32 Result = StringsMatchInsensitive(B, A);
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatchInsensitive(string A, string B)
 {
-    b32_yd Result = (A.Count == B.Count);
-    
+    yd_b32 Result = (A.Count == B.Count);
+
     if (Result)
     {
         for (size_t Index = 0; Index < A.Count; ++Index)
@@ -723,16 +723,16 @@ StringsMatchInsensitive(string A, string B)
             }
         }
     }
-    
+
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatchPartInsensitive(const char* A, const char* B, size_t* OutCount)
 {
-    b32_yd Result = (*A == *B);
+    yd_b32 Result = (*A == *B);
     size_t MatchCount = 0;
-    
+
     if (*A && *B)
     {
         while (*B && (ToLower(*A) == ToLower(*B)))
@@ -741,20 +741,20 @@ StringsMatchPartInsensitive(const char* A, const char* B, size_t* OutCount)
             ++B;
             ++MatchCount;
         }
-        
+
         Result = (*B == 0);
     }
-    
+
     *OutCount = MatchCount;
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatchPartInsensitive(string A, const char* B, size_t* OutCount)
 {
-    b32_yd Result = false;
+    yd_b32 Result = false;
     size_t Index = 0;
-    
+
     if (B)
     {
         for (; B[Index]; ++Index)
@@ -765,23 +765,23 @@ StringsMatchPartInsensitive(string A, const char* B, size_t* OutCount)
                 return false;
             }
         }
-        
+
         Result = true;
     }
     else
     {
         Result = (A.Count == 0);
     }
-    
+
     *OutCount = Index;
     return Result;
 }
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatchPartInsensitive(const char* A, string B, size_t* OutCount)
 {
-    b32_yd Result = false;
+    yd_b32 Result = false;
     size_t Index = 0;
-    
+
     if (A)
     {
         for (; Index < B.Count; ++Index)
@@ -791,24 +791,24 @@ StringsMatchPartInsensitive(const char* A, string B, size_t* OutCount)
                 return false;
             }
         }
-        
+
         Result = true;
     }
     else
     {
         Result = (B.Count == 0);
     }
-    
+
     *OutCount = Index;
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringsMatchPartInsensitive(string A, string B, size_t* OutCount)
 {
-    b32_yd Result = (A.Count >= B.Count);
+    yd_b32 Result = (A.Count >= B.Count);
     size_t Index = 0;
-    
+
     if (Result)
     {
         for (; Index < B.Count; ++Index)
@@ -820,50 +820,50 @@ StringsMatchPartInsensitive(string A, string B, size_t* OutCount)
             }
         }
     }
-    
+
     *OutCount = Index;
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 StringsMatchPartInsensitive(const char* A, const char* B)
 {
     size_t Ignored;
-    b32_yd Result = StringsMatchPartInsensitive(A, B, &Ignored);
+    yd_b32 Result = StringsMatchPartInsensitive(A, B, &Ignored);
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 StringsMatchPartInsensitive(string A, const char* B)
 {
     size_t Ignored;
-    b32_yd Result = StringsMatchPartInsensitive(A, B, &Ignored);
+    yd_b32 Result = StringsMatchPartInsensitive(A, B, &Ignored);
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 StringsMatchPartInsensitive(const char* A, string B)
 {
     size_t Ignored;
-    b32_yd Result = StringsMatchPartInsensitive(A, B, &Ignored);
+    yd_b32 Result = StringsMatchPartInsensitive(A, B, &Ignored);
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 StringsMatchPartInsensitive(string A, string B)
 {
     size_t Ignored;
-    b32_yd Result = StringsMatchPartInsensitive(A, B, &Ignored);
+    yd_b32 Result = StringsMatchPartInsensitive(A, B, &Ignored);
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 StringSetMatch(void* StrSet, size_t ItemSize, size_t Count,
                string Str, size_t* OutMatchIndex)
 {
-    b32_yd Result = false;
-    u8_yd* At = (u8_yd*)StrSet;
-    
+    yd_b32 Result = false;
+    yd_u8* At = (yd_u8*)StrSet;
+
     for (size_t Index = 0; Index < Count; ++Index, At += ItemSize)
     {
         if (StringsMatch(*((string*)At), Str))
@@ -873,19 +873,19 @@ StringSetMatch(void* StrSet, size_t ItemSize, size_t Count,
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 StringSetMatch(string* StrSet, size_t Count, string Str, size_t* OutMatchIndex)
 {
-    b32_yd Result = StringSetMatch(StrSet, sizeof(string), Count,
+    yd_b32 Result = StringSetMatch(StrSet, sizeof(string), Count,
                                    Str, OutMatchIndex);
     return Result;
 }
 
-internal_yd s32_yd
+yd_internal yd_s32
 Compare(const char* A, const char* B)
 {
     size_t Index = 0;
@@ -894,12 +894,12 @@ Compare(const char* A, const char* B)
     {
         ++Index;
     }
-    
-    s32_yd Result = (A[Index] > B[Index]) - (A[Index] < B[Index]);
+
+    yd_s32 Result = (A[Index] > B[Index]) - (A[Index] < B[Index]);
     return Result;
 }
 
-internal_yd s32_yd
+yd_internal yd_s32
 Compare(string A, const char* B)
 {
     size_t Index = 0;
@@ -908,9 +908,9 @@ Compare(string A, const char* B)
     {
         ++Index;
     }
-    
-    s32_yd Result = 0;
-    
+
+    yd_s32 Result = 0;
+
     if (Index < A.Count)
     {
         Result = (A.Data[Index] > B[Index]) - (A.Data[Index] < B[Index]);
@@ -925,18 +925,18 @@ Compare(string A, const char* B)
             Result = -1;
         }
     }
-    
+
     return Result;
 }
 
-inline s32_yd
+inline yd_s32
 Compare(const char* A, string B)
 {
-    s32_yd Result = -Compare(B, A);
+    yd_s32 Result = -Compare(B, A);
     return Result;
 }
 
-internal_yd s32_yd
+yd_internal yd_s32
 Compare(string A, string B)
 {
     size_t MinCount = A.Count;
@@ -944,14 +944,14 @@ Compare(string A, string B)
     {
         MinCount = B.Count;
     }
-    
+
     size_t Index = 0;
     while ((Index < MinCount) && (A.Data[Index] == B.Data[Index]))
     {
         ++Index;
     }
-    
-    s32_yd Result = 0;
+
+    yd_s32 Result = 0;
     if (Index < MinCount)
     {
         Result = (A.Data[Index] > B.Data[Index]) - (A.Data[Index] < B.Data[Index]);
@@ -960,7 +960,7 @@ Compare(string A, string B)
     {
         Result = (A.Count > B.Count) - (A.Count < B.Count);
     }
-    
+
     return Result;
 }
 
@@ -968,11 +968,11 @@ Compare(string A, string B)
 // NOTE(yuval): Functions For Finding Characters And Substrings
 //
 
-internal_yd size_t
+yd_internal size_t
 Find(const char* Str, char Character, size_t Start)
 {
-    AssertYD(Start >= 0);
-    
+    YDAssert(Start >= 0);
+
     for (size_t Index = Start; Str[Index]; ++Index)
     {
         if (Str[Index] == Character)
@@ -980,15 +980,15 @@ Find(const char* Str, char Character, size_t Start)
             return Index;
         }
     }
-    
+
     return STRING_NOT_FOUND;
 }
 
-internal_yd size_t
+yd_internal size_t
 Find(string Str, char Character, size_t Start)
 {
-    AssertYD((Start >= 0) && (Start < Str.Count));
-    
+    YDAssert((Start >= 0) && (Start < Str.Count));
+
     for (size_t Index = Start; Index < Str.Count; ++Index)
     {
         if (Str.Data[Index] == Character)
@@ -996,25 +996,25 @@ Find(string Str, char Character, size_t Start)
             return Index;
         }
     }
-    
+
     return STRING_NOT_FOUND;
 }
 
-internal_yd size_t
+yd_internal size_t
 Find(const char* Str, string Seek, size_t Start)
 {
-    AssertYD(Start >= 0);
-    
+    YDAssert(Start >= 0);
+
     if (Seek.Count == 0)
     {
         return STRING_NOT_FOUND;
     }
-    
+
     for (size_t Index = Start; Str[Index]; ++Index)
     {
-        b32_yd Hit = true;
+        yd_b32 Hit = true;
         size_t StrIndex = Index;
-        
+
         for (size_t SeekIndex = 0;
              SeekIndex < Seek.Count;
              ++SeekIndex, ++StrIndex)
@@ -1022,40 +1022,40 @@ Find(const char* Str, string Seek, size_t Start)
             if (!(Str[StrIndex])) {
                 return STRING_NOT_FOUND;
             }
-            
+
             if (Str[StrIndex] != Seek.Data[SeekIndex])
             {
                 Hit = false;
                 break;
             }
         }
-        
+
         if (Hit)
         {
             return Index;
         }
     }
-    
+
     return STRING_NOT_FOUND;
 }
 
-internal_yd size_t
+yd_internal size_t
 Find(string Str, string Seek, size_t Start)
 {
-    AssertYD((Start >= 0) && (Start < Str.Count));
-    
+    YDAssert((Start >= 0) && (Start < Str.Count));
+
     if (Seek.Count == 0)
     {
         return STRING_NOT_FOUND;
     }
-    
+
     size_t StopAt = Str.Count - Seek.Count + 1;
-    
+
     for (size_t Index = Start; Index < StopAt; ++Index)
     {
-        b32_yd Hit = true;
+        yd_b32 Hit = true;
         size_t StrIndex = Index;
-        
+
         for (size_t SeekIndex = 0;
              SeekIndex < Seek.Count;
              ++SeekIndex, ++StrIndex)
@@ -1066,13 +1066,13 @@ Find(string Str, string Seek, size_t Start)
                 break;
             }
         }
-        
+
         if (Hit)
         {
             return Index;
         }
     }
-    
+
     return STRING_NOT_FOUND;
 }
 
@@ -1104,11 +1104,11 @@ Find(string Str, string Seek)
     return Result;
 }
 
-internal_yd size_t
+yd_internal size_t
 RFind(string Str, char Character, size_t Start)
 {
-    AssertYD((Start >= 0) && (Start < Str.Count));
-    
+    YDAssert((Start >= 0) && (Start < Str.Count));
+
     size_t Index = Start + 1;
     while (Index--)
     {
@@ -1117,31 +1117,31 @@ RFind(string Str, char Character, size_t Start)
             return Index;
         }
     }
-    
+
     return STRING_NOT_FOUND;
 }
 
-internal_yd size_t
+yd_internal size_t
 RFind(string Str, string Seek, size_t Start)
 {
-    AssertYD((Start >= 0) && (Start < Str.Count));
-    
+    YDAssert((Start >= 0) && (Start < Str.Count));
+
     if (Seek.Count == 0)
     {
         return STRING_NOT_FOUND;
     }
-    
+
     if (Start + Seek.Count > Str.Count)
     {
         Start = Str.Count - Seek.Count;
     }
-    
+
     size_t Index = Start + 1;
     while (Index--)
     {
-        b32_yd Hit = true;
+        yd_b32 Hit = true;
         size_t StrIndex = Index;
-        
+
         for (size_t SeekIndex = 0;
              SeekIndex < Seek.Count;
              ++SeekIndex, ++StrIndex)
@@ -1152,13 +1152,13 @@ RFind(string Str, string Seek, size_t Start)
                 break;
             }
         }
-        
+
         if (Hit)
         {
             return Index;
         }
     }
-    
+
     return STRING_NOT_FOUND;
 }
 
@@ -1176,16 +1176,16 @@ RFind(string Str, string Seek)
     return Result;
 }
 
-internal_yd size_t
+yd_internal size_t
 FindFirstOf(const char* Str, const char* Characters, size_t Start)
 {
-    AssertYD(Start >= 0);
-    
+    YDAssert(Start >= 0);
+
     if (!(*Characters))
     {
         return STRING_NOT_FOUND;
     }
-    
+
     for (size_t Index = Start; Str[Index]; ++Index)
     {
         for (const char* At = Characters; *At; ++At)
@@ -1196,20 +1196,20 @@ FindFirstOf(const char* Str, const char* Characters, size_t Start)
             }
         }
     }
-    
+
     return STRING_NOT_FOUND;
 }
 
-internal_yd size_t
+yd_internal size_t
 FindFirstOf(string Str, const char* Characters, size_t Start)
 {
-    AssertYD((Start >= 0) && (Start < Str.Count));
-    
+    YDAssert((Start >= 0) && (Start < Str.Count));
+
     if (!(*Characters))
     {
         return STRING_NOT_FOUND;
     }
-    
+
     for (size_t Index = Start; Index < Str.Count; ++Index)
     {
         for (const char* At = Characters; *At; ++At)
@@ -1220,7 +1220,7 @@ FindFirstOf(string Str, const char* Characters, size_t Start)
             }
         }
     }
-    
+
     return STRING_NOT_FOUND;
 }
 
@@ -1238,11 +1238,11 @@ FindFirstOf(string Str, const char* Characters)
     return Result;
 }
 
-internal_yd size_t
+yd_internal size_t
 FindInsensitive(const char* Str, char Character, size_t Start)
 {
-    AssertYD(Start >= 0);
-    
+    YDAssert(Start >= 0);
+
     for (size_t Index = Start; Str[Index]; ++Index)
     {
         if (ToLower(Str[Index]) == ToLower(Character))
@@ -1250,15 +1250,15 @@ FindInsensitive(const char* Str, char Character, size_t Start)
             return Index;
         }
     }
-    
+
     return STRING_NOT_FOUND;
 }
 
-internal_yd size_t
+yd_internal size_t
 FindInsensitive(string Str, char Character, size_t Start)
 {
-    AssertYD((Start >= 0) && (Start < Str.Count));
-    
+    YDAssert((Start >= 0) && (Start < Str.Count));
+
     for (size_t Index = Start; Index < Str.Count; ++Index)
     {
         if (ToLower(Str.Data[Index]) == ToLower(Character))
@@ -1266,25 +1266,25 @@ FindInsensitive(string Str, char Character, size_t Start)
             return Index;
         }
     }
-    
+
     return STRING_NOT_FOUND;
 }
 
-internal_yd size_t
+yd_internal size_t
 FindInsensitive(const char* Str, string Seek, size_t Start)
 {
-    AssertYD(Start >= 0);
-    
+    YDAssert(Start >= 0);
+
     if (Seek.Count == 0)
     {
         return STRING_NOT_FOUND;
     }
-    
+
     for (size_t Index = Start; Str[Index]; ++Index)
     {
-        b32_yd Hit = true;
+        yd_b32 Hit = true;
         size_t StrIndex = Index;
-        
+
         for (size_t SeekIndex = 0;
              SeekIndex < Seek.Count;
              ++SeekIndex, ++StrIndex)
@@ -1295,33 +1295,33 @@ FindInsensitive(const char* Str, string Seek, size_t Start)
                 break;
             }
         }
-        
+
         if (Hit)
         {
             return Index;
         }
     }
-    
+
     return STRING_NOT_FOUND;
 }
 
-internal_yd size_t
+yd_internal size_t
 FindInsensitive(string Str, string Seek, size_t Start)
 {
-    AssertYD((Start >= 0) && (Start < Str.Count));
-    
+    YDAssert((Start >= 0) && (Start < Str.Count));
+
     if (Seek.Count == 0)
     {
         return STRING_NOT_FOUND;
     }
-    
+
     size_t StopAt = Str.Count - Seek.Count + 1;
-    
+
     for (size_t Index = Start; Index < StopAt; ++Index)
     {
-        b32_yd Hit = true;
+        yd_b32 Hit = true;
         size_t StrIndex = Index;
-        
+
         for (size_t SeekIndex = 0;
              SeekIndex < Seek.Count;
              ++SeekIndex, ++StrIndex)
@@ -1332,13 +1332,13 @@ FindInsensitive(string Str, string Seek, size_t Start)
                 break;
             }
         }
-        
+
         if (Hit)
         {
             return Index;
         }
     }
-    
+
     return STRING_NOT_FOUND;
 }
 
@@ -1370,66 +1370,66 @@ FindInsensitive(string Str, string Seek)
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 HasSubstr(const char* Str, string Seek)
 {
-    b32_yd Result = (Find(Str, Seek) != STRING_NOT_FOUND);
+    yd_b32 Result = (Find(Str, Seek) != STRING_NOT_FOUND);
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 HasSubstr(string Str, string Seek)
 {
-    b32_yd Result = (Find(Str, Seek) != STRING_NOT_FOUND);
+    yd_b32 Result = (Find(Str, Seek) != STRING_NOT_FOUND);
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 HasSubstrInsensitive(const char* Str, string Seek)
 {
-    b32_yd Result = (FindInsensitive(Str, Seek) != STRING_NOT_FOUND);
+    yd_b32 Result = (FindInsensitive(Str, Seek) != STRING_NOT_FOUND);
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 HasSubstrInsensitive(string Str, string Seek)
 {
-    b32_yd Result = (FindInsensitive(Str, Seek) != STRING_NOT_FOUND);
+    yd_b32 Result = (FindInsensitive(Str, Seek) != STRING_NOT_FOUND);
     return Result;
 }
 
-internal_yd string
+yd_internal string
 GetFirstDoubleLine(string Source)
 {
     string Result = {};
-    
+
     size_t Pos = Find(Source, MakeLitString("\n\n"));
     if (Pos == STRING_NOT_FOUND)
     {
         Pos = Find(Source, MakeLitString("\r\n\r\n"));
     }
-    
+
     if (Pos != STRING_NOT_FOUND)
     {
         Result = Substr(Source, 0, Pos);
     }
-    
+
     return Result;
 }
 
-internal_yd string
+yd_internal string
 GetNextDoubleLine(string Source, string Line)
 {
     string Result = {};
-    
+
     size_t LineEndIndex = (size_t)(Line.Data - Source.Data) + Line.Count;
-    AssertYD((Source.Data[LineEndIndex] == '\n') || (Source.Data[LineEndIndex] == '\r'));
-    
+    YDAssert((Source.Data[LineEndIndex] == '\n') || (Source.Data[LineEndIndex] == '\r'));
+
     ++LineEndIndex;
-    AssertYD((Source.Data[LineEndIndex] == '\n') || (Source.Data[LineEndIndex] == '\r'));
-    
+    YDAssert((Source.Data[LineEndIndex] == '\n') || (Source.Data[LineEndIndex] == '\r'));
+
     size_t Start = LineEndIndex + 1;
-    
+
     if (Start < Source.Count)
     {
         size_t Pos = Find(Source, MakeLitString("\n\n"), Start);
@@ -1437,22 +1437,22 @@ GetNextDoubleLine(string Source, string Line)
         {
             Pos = Find(Source, MakeLitString("\r\n\r\n"), Start);
         }
-        
+
         if (Pos != STRING_NOT_FOUND)
         {
             Result = Substr(Source, Start, Pos - Start);
         }
     }
-    
+
     return Result;
 }
 
-internal_yd string
+yd_internal string
 GetNextWord(string Source, string PrevWord)
 {
     string Result = {};
     size_t Pos0 = (size_t)(PrevWord.Data - Source.Data) + PrevWord.Count;
-    
+
     for (; Pos0 < Source.Count; ++Pos0)
     {
         char C = Source.Data[Pos0];
@@ -1461,11 +1461,11 @@ GetNextWord(string Source, string PrevWord)
             break;
         }
     }
-    
+
     if (Pos0 < Source.Count)
     {
         size_t Pos1 = Pos0;
-        
+
         for (; Pos1 < Source.Count; ++Pos1)
         {
             char C = Source.Data[Pos1];
@@ -1474,10 +1474,10 @@ GetNextWord(string Source, string PrevWord)
                 break;
             }
         }
-        
+
         Result = Substr(Source, Pos0, Pos1 - Pos0);
     }
-    
+
     return Result;
 }
 
@@ -1494,75 +1494,75 @@ GetFirstWord(string Source)
 // NOTE(yuval): string Copy And Append Functions
 //
 
-internal_yd size_t
+yd_internal size_t
 CopyFastUnsafe(char* Dest, const char* Source)
 {
     char* DestAt = Dest;
     const char* SourceAt = Source;
-    
+
     while (*SourceAt)
     {
         *DestAt++ = *SourceAt++;
     }
-    
+
     *DestAt = 0;
-    
+
     size_t Result = (DestAt - Dest);
     return Result;
 }
 
-internal_yd size_t
+yd_internal size_t
 CopyFastUnsafe(char* Dest, string Source)
 {
     for (size_t Index = 0; Index < Source.Count; ++Index)
     {
         Dest[Index] = Source.Data[Index];
     }
-    
+
     Dest[Source.Count] = 0;
     return Source.Count;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 CopyChecked(string* Dest, string Source)
 {
     if (Dest->MemorySize < Source.Count)
     {
         return false;
     }
-    
+
     for (size_t Index = 0; Index < Source.Count; ++Index)
     {
         Dest->Data[Index] = Source.Data[Index];
     }
-    
+
     Dest->Count = Source.Count;
     return true;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 CopyChecked(char* Dest, size_t DestCap, string Source)
 {
     if (DestCap < Source.Count + 1)
     {
         return false;
     }
-    
+
     for (size_t Index = 0; Index < Source.Count; ++Index)
     {
         Dest[Index] = Source.Data[Index];
     }
-    
+
     Dest[Source.Count] = 0;
     return true;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 CopyPartial(string* Dest, const char* Source)
 {
-    b32_yd Result = true;
+    yd_b32 Result = true;
     size_t Index = 0;
-    
+
     for (; Source[Index]; ++Index)
     {
         if (Index >= Dest->MemorySize)
@@ -1570,20 +1570,20 @@ CopyPartial(string* Dest, const char* Source)
             Result = false;
             break;
         }
-        
+
         Dest->Data[Index] = Source[Index];
     }
-    
+
     Dest->Count = Index;
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 CopyPartial(string* Dest, string Source)
 {
-    b32_yd Result = true;
+    yd_b32 Result = true;
     size_t Index = 0;
-    
+
     for (; Index < Source.Count; ++Index)
     {
         if (Index >= Dest->MemorySize)
@@ -1591,20 +1591,20 @@ CopyPartial(string* Dest, string Source)
             Result = false;
             break;
         }
-        
+
         Dest->Data[Index] = Source.Data[Index];
     }
-    
+
     Dest->Count = Index;
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 CopyPartial(char* Dest, size_t DestCap, string Source)
 {
-    b32_yd Result = true;
+    yd_b32 Result = true;
     size_t Index = 0;
-    
+
     for (; Index < Source.Count; ++Index)
     {
         if (Index >= DestCap - 1)
@@ -1612,10 +1612,10 @@ CopyPartial(char* Dest, size_t DestCap, string Source)
             Result = false;
             break;
         }
-        
+
         Dest[Index] = Source.Data[Index];
     }
-    
+
     Dest[Index] = 0;
     return Result;
 }
@@ -1639,80 +1639,80 @@ Copy(string* Dest, const char* Source)
     CopyPartial(Dest, Source);
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 AppendChecked(string* Dest, string Source)
 {
     string End = TailStr(*Dest);
-    b32_yd Result = CopyChecked(&End, Source);
+    yd_b32 Result = CopyChecked(&End, Source);
     Dest->Count += End.Count;
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 AppendPartial(string* Dest, const char* Source)
 {
     string End = TailStr(*Dest);
-    b32_yd Result = CopyPartial(&End, Source);
+    yd_b32 Result = CopyPartial(&End, Source);
     Dest->Count += End.Count;
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 AppendPartial(string* Dest, string Source)
 {
     string End = TailStr(*Dest);
-    b32_yd Result = CopyPartial(&End, Source);
+    yd_b32 Result = CopyPartial(&End, Source);
     Dest->Count += End.Count;
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 Append(string* Dest, char C)
 {
-    b32_yd Result = false;
-    
+    yd_b32 Result = false;
+
     if (Dest->Count < Dest->MemorySize)
     {
         Dest->Data[Dest->Count++] = C;
         Result = true;
     }
-    
+
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 Append(string* Dest, const char* Source)
 {
-    b32_yd Result = AppendPartial(Dest, Source);
+    yd_b32 Result = AppendPartial(Dest, Source);
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 Append(string* Dest, string Source)
 {
-    b32_yd Result = AppendPartial(Dest, Source);
+    yd_b32 Result = AppendPartial(Dest, Source);
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 TerminateWithNull(string* Str)
 {
-    b32_yd Result = false;
-    
+    yd_b32 Result = false;
+
     if (Str->Count < Str->MemorySize)
     {
         Str->Data[Str->Count] = 0;
         Result = true;
     }
-    
+
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 AppendPadding(string* Dest, char C, size_t TargetCount)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (size_t Count = Dest->Count; Count < TargetCount; ++Count)
     {
         if (!Append(Dest, C))
@@ -1721,7 +1721,7 @@ AppendPadding(string* Dest, char C, size_t TargetCount)
             break;
         }
     }
-    
+
     return Result;
 }
 
@@ -1729,20 +1729,20 @@ AppendPadding(string* Dest, char C, size_t TargetCount)
 // NOTE(yuval): Other string Editing Functions
 //
 
-internal_yd void
+yd_internal void
 ReplaceRange(string* Str, size_t First, size_t OnePastLast, char With)
 {
-    AssertYD((First >= 0) && (First < Str->Count));
-    AssertYD((OnePastLast > 0) && (OnePastLast <= Str->Count));
-    AssertYD(First < OnePastLast);
-    
+    YDAssert((First >= 0) && (First < Str->Count));
+    YDAssert((OnePastLast > 0) && (OnePastLast <= Str->Count));
+    YDAssert(First < OnePastLast);
+
     for (size_t Index = First; Index < OnePastLast; ++Index)
     {
         Str->Data[Index] = With;
     }
 }
 
-internal_yd void
+yd_internal void
 ReplaceRange(string* Str, size_t First, size_t OnePastLast, const char* With)
 {
     string WithStr = MakeStringSlowly(With);
@@ -1750,14 +1750,14 @@ ReplaceRange(string* Str, size_t First, size_t OnePastLast, const char* With)
 }
 
 // TODO(yuval): Maybe rename to block_copy?
-internal_yd void
+yd_internal void
 block_move_yds(void* Dest_init, const void* Source_init, size_t size)
 {
     if (Dest_init && Source_init)
     {
-        const u8_yd* Source = (const u8_yd*)Source_init;
-        u8_yd* Dest = (u8_yd*)Dest_init;
-        
+        const yd_u8* Source = (const yd_u8*)Source_init;
+        yd_u8* Dest = (yd_u8*)Dest_init;
+
         if (Dest < Source)
         {
             while (size--)
@@ -1768,7 +1768,7 @@ block_move_yds(void* Dest_init, const void* Source_init, size_t size)
         {
             Source += size - 1;
             Dest += size - 1;
-            
+
             while (size--)
             {
                 *Dest-- = *Source--;
@@ -1777,16 +1777,16 @@ block_move_yds(void* Dest_init, const void* Source_init, size_t size)
     }
 }
 
-internal_yd void
+yd_internal void
 ReplaceRange(string* Str, size_t First, size_t OnePastLast, string With)
 {
-    AssertYD((First >= 0) && (First < Str->Count));
-    AssertYD((OnePastLast > 0) && (OnePastLast <= Str->Count));
-    AssertYD(First < OnePastLast);
-    
-    s64_yd shift = With.Count - (OnePastLast - First);
+    YDAssert((First >= 0) && (First < Str->Count));
+    YDAssert((OnePastLast > 0) && (OnePastLast <= Str->Count));
+    YDAssert(First < OnePastLast);
+
+    yd_s64 shift = With.Count - (OnePastLast - First);
     size_t new_Count = Str->Count + shift;
-    
+
     if (new_Count <= Str->MemorySize)
     {
         if (shift != 0)
@@ -1796,13 +1796,13 @@ ReplaceRange(string* Str, size_t First, size_t OnePastLast, string With)
             // TODO(yuval): Verify that this has no bugs!!!!!!!!!
             block_move_yds(new_tail_Pos, tail, Str->Count - OnePastLast);
         }
-        
+
         block_move_yds(Str->Data + First, With.Data, With.Count);
         Str->Count += shift;
     }
 }
 
-internal_yd void
+yd_internal void
 Replace(string* Str, char ToReplace, char With)
 {
     for (size_t Index = 0; Index < Str->Count; ++Index)
@@ -1814,29 +1814,29 @@ Replace(string* Str, char ToReplace, char With)
     }
 }
 
-internal_yd void
+yd_internal void
 Replace(string* Str, const char* ToReplace, const char* With)
 {
     Replace(Str, MakeStringSlowly(ToReplace), MakeStringSlowly(With));
 }
 
-internal_yd void
+yd_internal void
 Replace(string* Str, const char* ToReplace, string With)
 {
     Replace(Str, MakeStringSlowly(ToReplace), With);
 }
 
-internal_yd void
+yd_internal void
 Replace(string* Str, string ToReplace, const char* With)
 {
     Replace(Str, ToReplace, MakeStringSlowly(With));
 }
 
-internal_yd void
+yd_internal void
 Replace(string* Str, string ToReplace, string With)
 {
     size_t Index = 0;
-    
+
     for (;;)
     {
         Index = Find(*Str, ToReplace, Index);
@@ -1844,18 +1844,18 @@ Replace(string* Str, string ToReplace, string With)
         {
             break;
         }
-        
+
         ReplaceRange(Str, Index, Index + ToReplace.Count, With);
         Index += With.Count;
     }
 }
 
-internal_yd void
+yd_internal void
 StringInterpretEscapes(char* Dest, string Source)
 {
-    s32_yd Mode = 0;
+    yd_s32 Mode = 0;
     size_t DestIndex = 0;
-    
+
     for (size_t SourceIndex = 0; SourceIndex < Source.Count; ++SourceIndex)
     {
         switch (Mode)
@@ -1870,7 +1870,7 @@ StringInterpretEscapes(char* Dest, string Source)
                     Dest[DestIndex++] = Source.Data[SourceIndex];
                 }
             } break;
-            
+
             case 1:
             {
                 char C = Source.Data[SourceIndex];
@@ -1883,12 +1883,12 @@ StringInterpretEscapes(char* Dest, string Source)
                     case '0': { Dest[DestIndex++] = '\0'; } break;
                     default: { Dest[DestIndex++] = '\\'; Dest[DestIndex++] = C; } break;
                 }
-                
+
                 Mode = 0;
             } break;
         }
     }
-    
+
     Dest[DestIndex] = 0;
 }
 
@@ -1896,18 +1896,18 @@ StringInterpretEscapes(char* Dest, string Source)
 // NOTE(yuval): Case / Numeric Checking And Conversion Functions
 //
 
-inline b32_yd
+inline yd_b32
 IsLower(char C)
 {
-    b32_yd Result = ((C >= 'A') && (C <= 'z'));
+    yd_b32 Result = ((C >= 'A') && (C <= 'z'));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsLower(const char* Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (const char* At = Str; *At; ++At)
     {
         if (!IsLower(*At))
@@ -1916,15 +1916,15 @@ IsLower(const char* Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsLower(string Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (size_t Index = 0; Index < Str.Count; ++Index)
     {
         if (!IsLower(Str.Data[Index]))
@@ -1933,14 +1933,14 @@ IsLower(string Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
-IsLowerUTF8(u8_yd C)
+inline yd_b32
+IsLowerUTF8(yd_u8 C)
 {
-    b32_yd Result = (IsLower((char)C) || (C >= 128));
+    yd_b32 Result = (IsLower((char)C) || (C >= 128));
     return Result;
 }
 
@@ -1948,16 +1948,16 @@ inline char
 ToLower(char C)
 {
     char Result = C;
-    
+
     if (IsUpper(Result))
     {
         Result += 'A' - 'A';
     }
-    
+
     return Result;
 }
 
-internal_yd void
+yd_internal void
 ToLower(char* Str)
 {
     for (char* At = Str; *At; ++At)
@@ -1966,7 +1966,7 @@ ToLower(char* Str)
     }
 }
 
-internal_yd void
+yd_internal void
 ToLower(string* Str)
 {
     for (size_t Index = 0; Index < Str->Count; ++Index)
@@ -1975,45 +1975,45 @@ ToLower(string* Str)
     }
 }
 
-internal_yd void
+yd_internal void
 ToLower(char* Dest, const char* Source)
 {
     const char* SourceAt = Source;
     char* DestAt = Dest;
-    
+
     while (*SourceAt)
     {
         *DestAt++ = ToLower(*SourceAt++);
     }
-    
+
     *DestAt = 0;
 }
 
-internal_yd void
+yd_internal void
 ToLower(string* Dest, const char* Source)
 {
     size_t Index = 0;
-    
+
     for (; Source[Index]; ++Index)
     {
         Dest->Data[Index] = ToLower(Source[Index]);
     }
-    
+
     Dest->Count = Index;
 }
 
-internal_yd void
+yd_internal void
 ToLower(char* Dest, string Source)
 {
     for (size_t Index = 0; Index < Source.Count; ++Index)
     {
         Dest[Index] = ToLower(Source.Data[Index]);
     }
-    
+
     Dest[Source.Count] = 0;
 }
 
-internal_yd void
+yd_internal void
 ToLower(string* Dest, string Source)
 {
     if (Dest->MemorySize >= Source.Count)
@@ -2022,23 +2022,23 @@ ToLower(string* Dest, string Source)
         {
             Dest->Data[Index] = ToLower(Source.Data[Index]);
         }
-        
+
         Dest->Count = Source.Count;
     }
 }
 
-inline b32_yd
+inline yd_b32
 IsUpper(char C)
 {
-    b32_yd Result = ((C >= 'A') && (C <= 'Z'));
+    yd_b32 Result = ((C >= 'A') && (C <= 'Z'));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsUpper(const char* Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (const char* At = Str; *At; ++At)
     {
         if (!IsUpper(*At))
@@ -2047,15 +2047,15 @@ IsUpper(const char* Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsUpper(string Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (size_t Index = 0; Index < Str.Count; ++Index)
     {
         if (!IsUpper(Str.Data[Index]))
@@ -2064,14 +2064,14 @@ IsUpper(string Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
-IsUpperUTF8(u8_yd C)
+inline yd_b32
+IsUpperUTF8(yd_u8 C)
 {
-    b32_yd Result = (IsUpper((char)C) || (C >= 128));
+    yd_b32 Result = (IsUpper((char)C) || (C >= 128));
     return Result;
 }
 
@@ -2079,16 +2079,16 @@ inline char
 ToUpper(char C)
 {
     char Result = C;
-    
+
     if (IsLower(Result))
     {
         Result -= 'A' - 'A';
     }
-    
+
     return Result;
 }
 
-internal_yd void
+yd_internal void
 ToUpper(char* Str)
 {
     for (char* At = Str; *At; ++At)
@@ -2097,7 +2097,7 @@ ToUpper(char* Str)
     }
 }
 
-internal_yd void
+yd_internal void
 ToUpper(string* Str)
 {
     for (size_t Index = 0; Index < Str->Count; ++Index)
@@ -2106,45 +2106,45 @@ ToUpper(string* Str)
     }
 }
 
-internal_yd void
+yd_internal void
 ToUpper(char* Dest, const char* Source)
 {
     const char* SourceAt = Source;
     char* DestAt = Dest;
-    
+
     while (*SourceAt)
     {
         *DestAt++ = ToUpper(*SourceAt++);
     }
-    
+
     *DestAt = 0;
 }
 
-internal_yd void
+yd_internal void
 ToUpper(string* Dest, const char* Source)
 {
     size_t Index = 0;
-    
+
     for (; Source[Index]; ++Index)
     {
         Dest->Data[Index] = ToUpper(Source[Index]);
     }
-    
+
     Dest->Count = Index;
 }
 
-internal_yd void
+yd_internal void
 ToUpper(char* Dest, string Source)
 {
     for (size_t Index = 0; Index < Source.Count; ++Index)
     {
         Dest[Index] = ToUpper(Source.Data[Index]);
     }
-    
+
     Dest[Source.Count] = 0;
 }
 
-internal_yd void
+yd_internal void
 ToUpper(string* Dest, string Source)
 {
     if (Dest->MemorySize >= Source.Count)
@@ -2153,16 +2153,16 @@ ToUpper(string* Dest, string Source)
         {
             Dest->Data[Index] = ToUpper(Source.Data[Index]);
         }
-        
+
         Dest->Count = Source.Count;
     }
 }
 
-internal_yd void
+yd_internal void
 ToCamel(char* Str)
 {
-    b32_yd IsFirst = true;
-    
+    yd_b32 IsFirst = true;
+
     for (char* At = Str; *At; ++At)
     {
         if (IsAlphaNumericTrue(*At))
@@ -2182,11 +2182,11 @@ ToCamel(char* Str)
     }
 }
 
-internal_yd void
+yd_internal void
 ToCamel(string* Str)
 {
-    b32_yd IsFirst = true;
-    
+    yd_b32 IsFirst = true;
+
     for (size_t Index = 0; Index < Str->Count; ++Index)
     {
         if (IsAlphaNumericTrue(Str->Data[Index]))
@@ -2206,17 +2206,17 @@ ToCamel(string* Str)
     }
 }
 
-internal_yd void
+yd_internal void
 ToCamel(char* Dest, const char* Source)
 {
     const char* SourceAt = Source;
     char* DestAt = Dest;
-    b32_yd IsFirst = false;
-    
+    yd_b32 IsFirst = false;
+
     for (; *SourceAt; ++SourceAt, ++DestAt)
     {
         char C = *SourceAt;
-        
+
         if (IsAlphaNumericTrue(C))
         {
             if (IsFirst)
@@ -2231,23 +2231,23 @@ ToCamel(char* Dest, const char* Source)
         {
             IsFirst = true;
         }
-        
+
         *DestAt = C;
     }
-    
+
     *DestAt = 0;
 }
 
-internal_yd void
+yd_internal void
 ToCamel(string* Dest, const char* Source)
 {
     size_t Index = 0;
-    b32_yd IsFirst = true;
-    
+    yd_b32 IsFirst = true;
+
     for (; Source[Index]; ++Index)
     {
         char C = Source[Index];
-        
+
         if (IsAlphaNumericTrue(C))
         {
             if (IsFirst)
@@ -2264,22 +2264,22 @@ ToCamel(string* Dest, const char* Source)
         {
             IsFirst = true;
         }
-        
+
         Dest->Data[Index] = C;
     }
-    
+
     Dest->Count = Index;
 }
 
-internal_yd void
+yd_internal void
 ToCamel(char* Dest, string Source)
 {
-    b32_yd IsFirst = true;
-    
+    yd_b32 IsFirst = true;
+
     for (size_t Index = 0; Index < Source.Count; ++Index)
     {
         char C = Source.Data[Index];
-        
+
         if (IsAlphaNumericTrue(C))
         {
             if (IsFirst)
@@ -2296,24 +2296,24 @@ ToCamel(char* Dest, string Source)
         {
             IsFirst = true;
         }
-        
+
         Dest[Index] = C;
     }
-    
+
     Dest[Source.Count] = 0;
 }
 
-internal_yd void
+yd_internal void
 ToCamel(string* Dest, string Source)
 {
     if (Dest->MemorySize >= Source.Count)
     {
-        b32_yd IsFirst = true;
-        
+        yd_b32 IsFirst = true;
+
         for (size_t Index = 0; Index < Source.Count; ++Index)
         {
             char C = Source.Data[Index];
-            
+
             if (IsAlphaNumericTrue(C))
             {
                 if (IsFirst)
@@ -2328,48 +2328,48 @@ ToCamel(string* Dest, string Source)
             {
                 IsFirst = true;
             }
-            
+
             Dest->Data[Index] = C;
         }
-        
+
         Dest->Count = Source.Count;
     }
 }
 
-inline b32_yd
+inline yd_b32
 IsSpacing(char C)
 {
-    b32_yd Result = ((C == ' ') || (C == '\t') ||
+    yd_b32 Result = ((C == ' ') || (C == '\t') ||
                      (C == '\v') || (C == '\f'));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsEndOfLine(char C)
 {
-    b32_yd Result = ((C == '\n') || (C == '\r'));
+    yd_b32 Result = ((C == '\n') || (C == '\r'));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsWhitespace(char C)
 {
-    b32_yd Result = (IsSpacing(C) || IsEndOfLine(C));
+    yd_b32 Result = (IsSpacing(C) || IsEndOfLine(C));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsAlphaTrue(char C)
 {
-    b32_yd Result = (IsLower(C) || IsUpper(C));
+    yd_b32 Result = (IsLower(C) || IsUpper(C));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsAlphaTrue(const char* Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (const char* At = Str; *At; ++At)
     {
         if (!IsAlphaTrue(*At))
@@ -2378,15 +2378,15 @@ IsAlphaTrue(const char* Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsAlphaTrue(string Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (size_t Index = 0; Index < Str.Count; ++Index)
     {
         if (!IsAlphaTrue(Str.Data[Index]))
@@ -2395,29 +2395,29 @@ IsAlphaTrue(string Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
-IsAlphaTrueUTF8(u8_yd C)
+inline yd_b32
+IsAlphaTrueUTF8(yd_u8 C)
 {
-    b32_yd Result = (IsAlphaTrue((char)C) || (C >= 128));
+    yd_b32 Result = (IsAlphaTrue((char)C) || (C >= 128));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsAlpha(char C)
 {
-    b32_yd Result = (IsAlphaTrue(C) || (C == '_'));
+    yd_b32 Result = (IsAlphaTrue(C) || (C == '_'));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsAlpha(const char* Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (const char* At = Str; *At; ++At)
     {
         if (!IsAlpha(*At))
@@ -2426,15 +2426,15 @@ IsAlpha(const char* Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsAlpha(string Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (size_t Index = 0; Index < Str.Count; ++Index)
     {
         if (!IsAlpha(Str.Data[Index]))
@@ -2443,29 +2443,29 @@ IsAlpha(string Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
-IsAlphaUTF8(u8_yd C)
+inline yd_b32
+IsAlphaUTF8(yd_u8 C)
 {
-    b32_yd Result = (IsAlpha((char)C) || (C >= 128));
+    yd_b32 Result = (IsAlpha((char)C) || (C >= 128));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsNumeric(char C)
 {
-    b32_yd Result = ((C >= '0') && (C <= '9'));
+    yd_b32 Result = ((C >= '0') && (C <= '9'));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsNumeric(const char* Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (const char* At = Str; *At; ++At)
     {
         if (!IsNumeric(*At))
@@ -2474,15 +2474,15 @@ IsNumeric(const char* Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsNumeric(string Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (size_t Index = 0; Index < Str.Count; ++Index)
     {
         if (!IsNumeric(Str.Data[Index]))
@@ -2491,38 +2491,38 @@ IsNumeric(string Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
-IsNumericUTF8(u8_yd C)
+inline yd_b32
+IsNumericUTF8(yd_u8 C)
 {
-    b32_yd Result = (IsNumeric((char)C) || (C >= 128));
+    yd_b32 Result = (IsNumeric((char)C) || (C >= 128));
     return Result;
 }
 
-internal_yd size_t
-U64ToStringCount(u64_yd Value)
+yd_internal size_t
+U64ToStringCount(yd_u64 Value)
 {
     size_t Count = 1;
-    
+
     Value /= 10;
     while (Value != 0)
     {
         ++Count;
         Value /= 10;
     }
-    
+
     return Count;
 }
 
-internal_yd b32_yd
-U64ToString(string* Dest, u64_yd Value)
+yd_internal yd_b32
+U64ToString(string* Dest, yd_u64 Value)
 {
-    b32_yd Result = false;
+    yd_b32 Result = false;
     size_t Count = 0;
-    
+
     do
     {
         if (Count == Dest->MemorySize)
@@ -2530,15 +2530,15 @@ U64ToString(string* Dest, u64_yd Value)
             Result = false;
             break;
         }
-        
+
         // TODO(yuval): Replace Hard-Coded Base
-        u64_yd Digit = Value % 10;
+        yd_u64 Digit = Value % 10;
         char DigitChar = (char)('0' + Digit);
         Dest->Data[Count++] = DigitChar;
         Value /= 10;
     }
     while (Value != 0);
-    
+
     if (Result)
     {
         for (size_t StartIndex = 0, EndIndex = Count - 1;
@@ -2549,59 +2549,59 @@ U64ToString(string* Dest, u64_yd Value)
             Dest->Data[EndIndex] = Dest->Data[StartIndex];
             Dest->Data[StartIndex] = Temp;
         }
-        
+
         Dest->Count = Count;
     }
     else
     {
         Dest->Count = 0;
     }
-    
+
     return Result;
 }
 
-internal_yd b32_yd
-AppendU64ToString(string* Dest, u64_yd Value)
+yd_internal yd_b32
+AppendU64ToString(string* Dest, yd_u64 Value)
 {
     string Tail = TailStr(*Dest);
-    b32_yd Result = U64ToString(&Tail, Value);
-    
+    yd_b32 Result = U64ToString(&Tail, Value);
+
     if (Result)
     {
         Dest->Count += Tail.Count;
     }
-    
+
     return Result;
 }
 
 
-internal_yd size_t
-S32ToStringCount(s32_yd Value)
+yd_internal size_t
+S32ToStringCount(yd_s32 Value)
 {
     size_t Count = 1;
-    
+
     if (Value < 0)
     {
         Count = 2;
     }
-    
+
     Value /= 10;
     while (Value != 0)
     {
         ++Count;
         Value /= 10;
     }
-    
+
     return Value;
 }
 
-internal_yd b32_yd
-S32ToString(string* Dest, s32_yd Value)
+yd_internal yd_b32
+S32ToString(string* Dest, yd_s32 Value)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     Dest->Count = 0;
-    
+
     if (Value < 0)
     {
         if (Dest->MemorySize > 0)
@@ -2614,46 +2614,46 @@ S32ToString(string* Dest, s32_yd Value)
             Result = false;
         }
     }
-    
+
     if (Result)
     {
-        Result = AppendU64ToString(Dest, (u64_yd)Value);
+        Result = AppendU64ToString(Dest, (yd_u64)Value);
     }
-    
+
     return Result;
 }
 
-internal_yd b32_yd
-AppendS32ToString(string* Dest, s32_yd Value)
+yd_internal yd_b32
+AppendS32ToString(string* Dest, yd_s32 Value)
 {
     string Tail = TailStr(*Dest);
-    b32_yd Result = S32ToString(&Tail, Value);
-    
+    yd_b32 Result = S32ToString(&Tail, Value);
+
     if (Result)
     {
         Dest->Count += Tail.Count;
     }
-    
+
     return Result;
 }
 
-internal_yd size_t
-F32ToStringCount(f32_yd Value, u32_yd MaxPrecision)
+yd_internal size_t
+F32ToStringCount(yd_f32 Value, yd_u32 MaxPrecision)
 {
     size_t Count = 0;
-    
+
     if (Value < 0)
     {
         Count = 1;
         Value = -Value;
     }
-    
-    u64_yd IntegerPart = (u64_yd)Value;
+
+    yd_u64 IntegerPart = (yd_u64)Value;
     Count += U64ToStringCount(IntegerPart);
-    
+
     Value -= IntegerPart;
-    
-    for (u32_yd PrecisionIndex = 0;
+
+    for (yd_u32 PrecisionIndex = 0;
          PrecisionIndex < MaxPrecision;
          ++PrecisionIndex)
     {
@@ -2661,40 +2661,40 @@ F32ToStringCount(f32_yd Value, u32_yd MaxPrecision)
         {
             break;
         }
-        
+
         Value *= 10.0f;
-        
-        u32_yd Integer = (u32_yd)Value;
+
+        yd_u32 Integer = (yd_u32)Value;
         Value -= Integer;
-        
+
         ++Count;
     }
-    
+
     return Count;
 }
 
 inline size_t
-F32ToStringCount(f32_yd Value)
+F32ToStringCount(yd_f32 Value)
 {
     size_t Result = F32ToStringCount(Value, 8);
     return Result;
 }
 
-internal_yd b32_yd
-F32ToString(string* Dest, f32_yd Value, u32_yd MaxPrecision)
+yd_internal yd_b32
+F32ToString(string* Dest, yd_f32 Value, yd_u32 MaxPrecision)
 {
-    s32_yd IntegerPart = (s32_yd)Value;
-    b32_yd Result = S32ToString(Dest, IntegerPart);
-    
+    yd_s32 IntegerPart = (yd_s32)Value;
+    yd_b32 Result = S32ToString(Dest, IntegerPart);
+
     if (Result)
     {
         Value -= IntegerPart;
-        
+
         if (Value != 0.0f)
         {
             Append(Dest, '.');
-            
-            for (u32_yd PrecisionIndex = 0;
+
+            for (yd_u32 PrecisionIndex = 0;
                  PrecisionIndex < MaxPrecision;
                  ++PrecisionIndex)
             {
@@ -2702,65 +2702,65 @@ F32ToString(string* Dest, f32_yd Value, u32_yd MaxPrecision)
                 {
                     break;
                 }
-                
+
                 Value *= 10.0f;
-                
-                u64_yd Integer = (u64_yd)Value;
+
+                yd_u64 Integer = (yd_u64)Value;
                 Result = AppendU64ToString(Dest, Integer);
-                
+
                 if (!Result)
                 {
                     break;
                 }
-                
+
                 Value -= Integer;
             }
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
-F32ToString(string* Dest, f32_yd Value)
+inline yd_b32
+F32ToString(string* Dest, yd_f32 Value)
 {
-    b32_yd Result = F32ToString(Dest, Value, 8);
+    yd_b32 Result = F32ToString(Dest, Value, 8);
     return Result;
 }
 
-internal_yd b32_yd
-AppendF32ToString(string* Dest, f32_yd Value, u32_yd MaxPrecision)
+yd_internal yd_b32
+AppendF32ToString(string* Dest, yd_f32 Value, yd_u32 MaxPrecision)
 {
     string Tail = TailStr(*Dest);
-    b32_yd Result = F32ToString(&Tail, Value, MaxPrecision);
-    
+    yd_b32 Result = F32ToString(&Tail, Value, MaxPrecision);
+
     if (Result)
     {
         Dest->Count += Tail.Count;
     }
-    
+
     return Result;
 }
 
-inline b32_yd
-AppendF32ToString(string* Dest, f32_yd Value)
+inline yd_b32
+AppendF32ToString(string* Dest, yd_f32 Value)
 {
-    b32_yd Result = AppendF32ToString(Dest, Value, 8);
+    yd_b32 Result = AppendF32ToString(Dest, Value, 8);
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsAlphaNumeric(char C)
 {
-    b32_yd Result = (IsAlpha(C) || IsNumeric(C));
+    yd_b32 Result = (IsAlpha(C) || IsNumeric(C));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsAlphaNumeric(const char* Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (const char* At = Str; *At; ++At)
     {
         if (!IsAlphaNumeric(*At))
@@ -2769,15 +2769,15 @@ IsAlphaNumeric(const char* Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsAlphaNumeric(string Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (size_t Index = 0; Index < Str.Count; ++Index)
     {
         if (!IsAlphaNumeric(Str.Data[Index]))
@@ -2786,29 +2786,29 @@ IsAlphaNumeric(string Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
-IsAlphaNumericUTF8(u8_yd C)
+inline yd_b32
+IsAlphaNumericUTF8(yd_u8 C)
 {
-    b32_yd Result = (IsAlphaNumeric((char)C) || (C >= 128));
+    yd_b32 Result = (IsAlphaNumeric((char)C) || (C >= 128));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsAlphaNumericTrue(char C)
 {
-    b32_yd Result = (IsAlphaTrue(C) || IsNumeric(C));
+    yd_b32 Result = (IsAlphaTrue(C) || IsNumeric(C));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsAlphaNumericTrue(const char* Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (const char* At = Str; *At; ++At)
     {
         if (!IsAlphaNumericTrue(*At))
@@ -2817,15 +2817,15 @@ IsAlphaNumericTrue(const char* Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsAlphaNumericTrue(string Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (size_t Index = 0; Index < Str.Count; ++Index)
     {
         if (!IsAlphaNumericTrue(Str.Data[Index]))
@@ -2834,31 +2834,31 @@ IsAlphaNumericTrue(string Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
-IsAlphaNumericTrueUTF8(u8_yd C)
+inline yd_b32
+IsAlphaNumericTrueUTF8(yd_u8 C)
 {
-    b32_yd Result = (IsAlphaNumericTrue((char)C) || (C >= 128));
+    yd_b32 Result = (IsAlphaNumericTrue((char)C) || (C >= 128));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsHex(char C)
 {
-    b32_yd Result = (((C >= '0') && (C <= '9')) ||
+    yd_b32 Result = (((C >= '0') && (C <= '9')) ||
                      ((C >= 'A') && (C <= 'F')) ||
                      ((C >= 'a') && (C <= 'f')));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsHex(const char* Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (const char* At = Str; *At; ++At)
     {
         if (!IsHex(*At))
@@ -2867,15 +2867,15 @@ IsHex(const char* Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsHex(string Str)
 {
-    b32_yd Result = true;
-    
+    yd_b32 Result = true;
+
     for (size_t Index = 0; Index < Str.Count; ++Index)
     {
         if (!IsHex(Str.Data[Index]))
@@ -2884,22 +2884,22 @@ IsHex(string Str)
             break;
         }
     }
-    
+
     return Result;
 }
 
-inline b32_yd
-IsHexUTF8(u8_yd C)
+inline yd_b32
+IsHexUTF8(yd_u8 C)
 {
-    b32_yd Result = (IsHex((char)C) || (C >= 128));
+    yd_b32 Result = (IsHex((char)C) || (C >= 128));
     return Result;
 }
 
-inline s32_yd
+inline yd_s32
 HexCharToS32(char C)
 {
-    s32_yd Result;
-    
+    yd_s32 Result;
+
     if (IsNumeric(C))
     {
         Result = C - '0';
@@ -2912,15 +2912,15 @@ HexCharToS32(char C)
     {
         Result = 10 + (C - 'A');
     }
-    
+
     return Result;
 }
 
 inline char
-S32ToHexChar(s32_yd Value)
+S32ToHexChar(yd_s32 Value)
 {
     char Result;
-    
+
     if (Value < 10)
     {
         Result = '0' + (char)Value;
@@ -2929,33 +2929,33 @@ S32ToHexChar(s32_yd Value)
     {
         Result = 'A' + (char)(Value - 10);
     }
-    
+
     return Result;
 }
 
-internal_yd u32_yd
+yd_internal yd_u32
 HexStringToU32(string Str)
 {
-    u32_yd Result = 0;
-    
+    yd_u32 Result = 0;
+
     for (size_t Index = 0; Index < Str.Count; ++Index)
     {
         Result += HexCharToS32(Str.Data[Index]);
         Result *= 0x10;
     }
-    
+
     return Result;
 }
 
-internal_yd b32_yd
-ColorToHexString(string* Dest, u32_yd Color)
+yd_internal yd_b32
+ColorToHexString(string* Dest, yd_u32 Color)
 {
     // TODO(yuval): Implement This
     return false;
 }
 
-internal_yd b32_yd
-HexStringToColor(u32_yd* Dest, string Str)
+yd_internal yd_b32
+HexStringToColor(yd_u32* Dest, string Str)
 {
     // TODO(yuval): Implement This
     return false;
@@ -2966,14 +2966,14 @@ HexStringToColor(u32_yd* Dest, string Str)
 // NOTE(yuval): File / Directory strings Management Functions
 //
 
-inline b32_yd
+inline yd_b32
 IsSlash(char C)
 {
-    b32_yd Result = ((C == '/') || (C == '\\'));
+    yd_b32 Result = ((C == '/') || (C == '\\'));
     return Result;
 }
 
-internal_yd size_t
+yd_internal size_t
 ReverseSeekSlash(string Str, size_t ShiftFromLastChar)
 {
     size_t Index = Str.Count - ShiftFromLastChar - 1;
@@ -2984,11 +2984,11 @@ ReverseSeekSlash(string Str, size_t ShiftFromLastChar)
             return Index;
         }
     }
-    
+
     return STRING_NOT_FOUND;
 }
 
-internal_yd size_t
+yd_internal size_t
 ReverseSeekSlash(string Str)
 {
     size_t Result = ReverseSeekSlash(Str, 0);
@@ -3009,17 +3009,17 @@ PathOfDirectory(string Dir)
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 SetLastFolder(string* Dir, const char* FolderName, char Slash)
 {
-    b32_yd Result = false;
+    yd_b32 Result = false;
     size_t LastSlashIndex = ReverseSeekSlash(*Dir);
-    
+
     if (LastSlashIndex != STRING_NOT_FOUND)
     {
         size_t Count = LastSlashIndex + 1;
         Dir->Count = Count;
-        
+
         if (Append(Dir, FolderName))
         {
             if (Append(Dir, Slash))
@@ -3027,27 +3027,27 @@ SetLastFolder(string* Dir, const char* FolderName, char Slash)
                 Result = true;
             }
         }
-        
+
         if (!Result)
         {
             Dir->Count = Count;
         }
     }
-    
+
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 SetLastFolder(string* Dir, string FolderName, char Slash)
 {
-    b32_yd Result = false;
+    yd_b32 Result = false;
     size_t LastSlashIndex = ReverseSeekSlash(*Dir);
-    
+
     if (LastSlashIndex != STRING_NOT_FOUND)
     {
         size_t Count = LastSlashIndex + 1;
         Dir->Count = Count;
-        
+
         if (Append(Dir, FolderName))
         {
             if (Append(Dir, Slash))
@@ -3055,99 +3055,99 @@ SetLastFolder(string* Dir, string FolderName, char Slash)
                 Result = true;
             }
         }
-        
+
         if (!Result)
         {
             Dir->Count = Count;
         }
     }
-    
+
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 RemoveLastFolder(string* path)
 {
-    b32_yd Result = false;
+    yd_b32 Result = false;
     size_t LastSlashIndex = ReverseSeekSlash(*path, 1);
-    
+
     if (LastSlashIndex != STRING_NOT_FOUND)
     {
         Result = true;
         path->Count = LastSlashIndex + 1;
     }
-    
+
     return Result;
 }
 
-internal_yd string
+yd_internal string
 FileExtension(string FileName)
 {
     string Result =
     {};
     size_t DotIndex = RFind(FileName, '.');
-    
+
     if (DotIndex != STRING_NOT_FOUND)
     {
         Result = MakeString(FileName.Data + DotIndex + 1,
                             FileName.Count - DotIndex - 1);
     }
-    
+
     return Result;
 }
 
-internal_yd b32_yd
+yd_internal yd_b32
 RemoveExtension(string* FileName)
 {
-    b32_yd Result = false;
+    yd_b32 Result = false;
     size_t LastDotIndex = RFind(*FileName, '.');
-    
+
     if (LastDotIndex != STRING_NOT_FOUND)
     {
         Result = true;
         FileName->Count = LastDotIndex + 1;
     }
-    
+
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsH(string Extension)
 {
-    b32_yd Result = (StringsMatch(Extension, "h") ||
+    yd_b32 Result = (StringsMatch(Extension, "h") ||
                      StringsMatch(Extension, "hpp") ||
                      StringsMatch(Extension, "hin"));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsC(string Extension)
 {
-    b32_yd Result = StringsMatch(Extension, "C");
+    yd_b32 Result = StringsMatch(Extension, "C");
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsCPP(string Extension)
 {
-    b32_yd Result = (StringsMatch(Extension, "cpp") ||
+    yd_b32 Result = (StringsMatch(Extension, "cpp") ||
                      StringsMatch(Extension, "cc") ||
                      StringsMatch(Extension, "cin"));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsObjectiveC(string Extension)
 {
-    b32_yd Result = (StringsMatch(Extension, "m") ||
+    yd_b32 Result = (StringsMatch(Extension, "m") ||
                      StringsMatch(Extension, "mm"));
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsShader(string Extension)
 {
-    b32_yd Result = (StringsMatch(Extension, "ps") ||
+    yd_b32 Result = (StringsMatch(Extension, "ps") ||
                      StringsMatch(Extension, "vs") ||
                      StringsMatch(Extension, "cs") ||
                      StringsMatch(Extension, "ts") ||
@@ -3155,73 +3155,73 @@ IsShader(string Extension)
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsINL(string Extension)
 {
-    b32_yd Result = StringsMatch(Extension, "inl");
+    yd_b32 Result = StringsMatch(Extension, "inl");
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsJava(string Extension)
 {
-    b32_yd Result = StringsMatch(Extension, "java");
+    yd_b32 Result = StringsMatch(Extension, "java");
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsCSharp(string Extension)
 {
-    b32_yd Result = StringsMatch(Extension, "cs");
+    yd_b32 Result = StringsMatch(Extension, "cs");
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsPython(string Extension)
 {
-    b32_yd Result = StringsMatch(Extension, "py");
+    yd_b32 Result = StringsMatch(Extension, "py");
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsSwift(string Extension)
 {
-    b32_yd Result = StringsMatch(Extension, "swift");
+    yd_b32 Result = StringsMatch(Extension, "swift");
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsJavascript(string Extension)
 {
-    b32_yd Result = StringsMatch(Extension, "js");
+    yd_b32 Result = StringsMatch(Extension, "js");
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsBAT(string Extension)
 {
-    b32_yd Result = StringsMatch(Extension, "bat");
+    yd_b32 Result = StringsMatch(Extension, "bat");
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsBash(string Extension)
 {
-    b32_yd Result = StringsMatch(Extension, "sh");
+    yd_b32 Result = StringsMatch(Extension, "sh");
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsTXT(string Extension)
 {
-    b32_yd Result = StringsMatch(Extension, "txt");
+    yd_b32 Result = StringsMatch(Extension, "txt");
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsCode(string Extension)
 {
-    b32_yd Result = (IsH(Extension) || IsC(Extension) || IsCPP(Extension) ||
+    yd_b32 Result = (IsH(Extension) || IsC(Extension) || IsCPP(Extension) ||
                      IsObjectiveC(Extension) || IsShader(Extension) ||
                      IsINL(Extension) || IsJava(Extension) || IsCSharp(Extension) ||
                      IsPython(Extension) || IsSwift(Extension) || IsJavascript(Extension) ||
@@ -3229,26 +3229,26 @@ IsCode(string Extension)
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsDoc(string Extension)
 {
-    b32_yd Result = IsTXT(Extension);
+    yd_b32 Result = IsTXT(Extension);
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsCodeFile(string FileName)
 {
     string Extension = FileExtension(FileName);
-    b32_yd Result = IsCode(Extension);
+    yd_b32 Result = IsCode(Extension);
     return Result;
 }
 
-inline b32_yd
+inline yd_b32
 IsDocFile(string FileName)
 {
     string Extension = FileExtension(FileName);
-    b32_yd Result = IsDoc(Extension);
+    yd_b32 Result = IsDoc(Extension);
     return Result;
 }
 
