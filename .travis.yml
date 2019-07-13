@@ -3,18 +3,18 @@ install: true
 
 matrix:
   include:
-
-  - name: "clang on macOS"
-  os: osx
-  osx_image: xcode10.1
-  env:
-  - CC=clang
-  - CXX=clang++
-  install:
-  - ${CC} --version
-  script:
-  # build & test
-  - echo Starting Build...
-  - pushd build
-  - ./build.sh
-  - popd
+    - name: "clang on macOS"
+      os: osx
+      osx_image: xcode10.1
+      env:
+        - CC=clang
+        - CXX=clang++
+      install:
+        - ${CC} --version
+        - ${CXX} --version
+      script:
+        # build & test
+        - echo Starting Build...
+        - pushd build
+        - bash build.sh
+        - popd
