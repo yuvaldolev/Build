@@ -29,13 +29,13 @@ SetupCrashpad()
     CrashpadClient Client;
     
     Annotations["format"] = "minidump";
-    Annotations["token"] = "93cec153dd81ff726c0100beae8ea68c2da34d88a9f21b35d0179cfda4275df4";
+    Annotations["token"] = "b82a6196b7e80dab321f0f414edfe1084b70e5a6cb53b93206c0c8732692e705";
     
     Arguments.push_back("--no-rate-limit");
     Client.StartHandler(base::FilePath{"../crashpad/crashpad/out/Default/crashpad_handler"},
                         base::FilePath{"../crashpad/meta_crashpad_db"},
                         base::FilePath{"../crashpad/meta_crashpad_db"},
-                        "https://submit.backtrace.io/yuvaldolev/93cec153dd81ff726c0100beae8ea68c2da34d88a9f21b35d0179cfda4275df4/minidump",
+                        "https://submit.backtrace.io/yuvaldolev/b82a6196b7e80dab321f0f414edfe1084b70e5a6cb53b93206c0c8732692e705/minidump",
                         Annotations,
                         Arguments,
                         true,
@@ -90,6 +90,9 @@ int
 main(int ArgCount, const char* Args[])
 {
     SetupCrashpad();
+    
+    int* p = 0;
+    *p = 5;
     
     @autoreleasepool
     {

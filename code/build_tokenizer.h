@@ -125,7 +125,6 @@ PPKeywordTokenType(PP_Undef, "UNDEF") \
 PPKeywordTokenType(PP_Error, "ERROR") \
 PPKeywordTokenType(PP_Using, "USING")
 
-
 enum token_type
 {
 #define TokenType(Type) MetaJoin2(Token_, Type),

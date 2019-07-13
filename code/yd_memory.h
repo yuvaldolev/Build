@@ -31,18 +31,45 @@ typedef uintptr_t umm_yd;
 # define AssertYD(Expression) if (!(Expression)) { *(volatile int*)0 = 0; }
 #endif
 
-struct memory_arena
+#if !defined(MinimumYD)
+#define MinimumYD(A, B) (((A) < (B)) ? (A) : (B))
+#endif
+
+#if !defined(MaximumYD)
+# define MaximumYD(A, B) (((A) > (B)) ? (A) : (B))
+#endif
+
+enum memory_block_flags
 {
+    MemoryBlockFlag_NotRestored = 0x1,
+    MemoryBlockFlag_OverflowCheck = 0x2,
+    MemoryBlockFlag_UnderflowCheck = 0x4
+};
+
+struct memory_block
+{
+    u64_yd Flags;
+    
     u8_yd* Base;
     size_t Size;
     size_t Used;
     
+    memory_block* PrevBlock;
+};
+
+struct memory_arena
+{
+    memory_block* CurrentBlock;
+    size_t MinimumBlockSize;
+    
+    u64_yd AllocationFlags;
     s32_yd TempCount;
 };
 
 struct temporary_memory
 {
     memory_arena* Arena;
+    memory_block* Block;
     size_t Used;
 };
 
@@ -56,6 +83,23 @@ struct arena_push_params
     u32_yd Flags;
     u32_yd Alignment;
 };
+
+//
+// NOTE(yuval): Memory Blocks & Allocation / Deallocation
+//
+
+#define ALLOCATE_MEMORY(Name) memory_block* Name(size_t Size, u64 Flags)
+typedef ALLOCATE_MEMORY(arena_allocate_memory);
+
+#define DEALLOCATE_MEMORY(Name) void Name(memory_block* Block)
+typedef DEALLOCATE_MEMORY(arena_deallocate_memory);
+
+global_variable_yd allocate_memory* AllocateMemory = 0;
+global_variable_yd deallocate_memory* DeallocateMemory = 0;
+
+//
+// NOTE(yuval): Public API Function Declarations
+//
 
 internal void* Copy(void* DestInit, const void* SourceInit, size_t Size);
 
@@ -153,7 +197,7 @@ ZeroSize(void* Ptr, size_t Size)
 }
 
 //
-// NOTE(yuval): Arena Push Parameters
+// NOTE(yuval): Arena & Memory Parameters
 //
 
 inline arena_push_params
@@ -275,6 +319,16 @@ inline void*
 PushSize_(memory_arena* Arena, size_t SizeInit, arena_push_params Params)
 {
     size_t Size = GetEffectiveSizeFor(Arena, SizeInit, Params);
+    
+    if ((Arena->Used + Size) > Arena->Size)
+    {
+        Size = SizeInit; // NOTE(yuval): The base will automatically be aligned now!
+        size_t BlockSize = MaximumYD(Size, MinimumBlockSize);
+        
+        Arena->Size = BlockSize;
+        Arena->Base = ArenaAllocateMemory(BlcokSize);
+        Arena->Used = 0;
+    }
     
     AssertYD((Arena->Used + Size) <= Arena->Size);
     

@@ -1109,7 +1109,8 @@ RFind(string Str, char Character, size_t Start)
 {
     AssertYD((Start >= 0) && (Start < Str.Count));
     
-    for (size_t Index = Start; Index >= 0; --Index)
+    size_t Index = Start + 1;
+    while (Index--)
     {
         if (Str.Data[Index] == Character)
         {
@@ -1135,7 +1136,8 @@ RFind(string Str, string Seek, size_t Start)
         Start = Str.Count - Seek.Count;
     }
     
-    for (size_t Index = Start; Index >= 0; --Index)
+    size_t Index = Start + 1;
+    while (Index--)
     {
         b32_yd Hit = true;
         size_t StrIndex = Index;
@@ -2974,9 +2976,8 @@ IsSlash(char C)
 internal_yd size_t
 ReverseSeekSlash(string Str, size_t ShiftFromLastChar)
 {
-    for (size_t Index = Str.Count - ShiftFromLastChar - 1;
-         Index >= 0;
-         --Index)
+    size_t Index = Str.Count - ShiftFromLastChar - 1;
+    while (Index--)
     {
         if (IsSlash(Str.Data[Index]))
         {
