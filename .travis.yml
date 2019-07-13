@@ -15,6 +15,6 @@ matrix:
       script:
         # build & test
         - echo Starting Build...
-        - pushd build
+        - pushd code
         - bash build.sh
         - popd
