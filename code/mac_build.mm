@@ -1,10 +1,12 @@
 #include <Cocoa/Cocoa.h>
 
-#include <iostream>
-#include <base/files/file_path.h>
-#include <client/crash_report_database.h>
-#include <client/settings.h>
-#include <client/crashpad_client.h>
+#if !defined(BUILD_TRAVIS)
+# include <iostream>
+# include <base/files/file_path.h>
+# include <client/crash_report_database.h>
+# include <client/settings.h>
+# include <client/crashpad_client.h>
+#endif
 
 #include "build.h"
 
@@ -19,6 +21,7 @@
  - Platform specific message boxes.
 */
 
+#if !defined(BUILD_TRAVIS)
 static void
 SetupCrashpad()
 {
@@ -41,6 +44,7 @@ SetupCrashpad()
                         true,
                         true);
 }
+#endif
 
 internal b32
 BuildWorkspace()
@@ -89,12 +93,11 @@ GetCompilerPath(string EnvPath, string CompilerName, char* OutPath)
 int
 main(int ArgCount, const char* Args[])
 {
+#if !defined(BUILD_TRAVIS)
     SetupCrashpad();
+#endif
     
-    int* p = 0;
-    *p = 5;
-    
-    @autoreleasepool
+@autoreleasepool
     {
         if (ArgCount > 1)
         {
