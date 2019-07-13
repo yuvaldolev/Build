@@ -362,7 +362,7 @@ PushSize_(memory_arena* Arena, size_t SizeInit, arena_push_params Params)
     Arena->CurrentBlock->Used += Size;
     
     // NOTE(yuval): This is just to guarantee that nobody passed in an alignment
-    // on their first allocation that was _greater_ that than the page alignment
+    // on their first allocation that was _greater_ than the page alignment
     Assert(Arena->CurrentBlock->Used <= Arena->CurrentBlock->Size);
     
     if (Params.Flags & ArenaFlag_ClearToZero)
