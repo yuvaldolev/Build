@@ -6,7 +6,7 @@
 # include <client/crash_report_database.h>
 # include <client/settings.h>
 # include <client/crashpad_client.h>
-#endif
+#endif // #if !defined(BUILD_TRAVIS)
 
 #include "build.h"
 
@@ -26,14 +26,14 @@ static void
 SetupCrashpad()
 {
     using namespace crashpad;
-
+    
     std::map<std::string, std::string> Annotations;
     std::vector<std::string> Arguments;
     CrashpadClient Client;
-
+    
     Annotations["format"] = "minidump";
     Annotations["token"] = "b82a6196b7e80dab321f0f414edfe1084b70e5a6cb53b93206c0c8732692e705";
-
+    
     Arguments.push_back("--no-rate-limit");
     Client.StartHandler(base::FilePath{"../crashpad/crashpad/out/Default/crashpad_handler"},
                         base::FilePath{"../crashpad/meta_crashpad_db"},
@@ -58,19 +58,19 @@ GetCompilerPath(string EnvPath, string CompilerName, char* OutPath)
     b32 Result = false;
     char CurrPath[512] = {}; // TODO(yuval): Use Max Path Length
     char* CurrPathAt = CurrPath;
-
+    
     for (size_t Index = 0; Index <= EnvPath.Count; ++Index)
     {
         if ((Index == EnvPath.Count) ||
             (EnvPath.Data[Index] == ':'))
         {
             *CurrPathAt++ = '/';
-
+            
             string CurrPathTail = MakeString(CurrPathAt, 0,
                                              ArrayCount(CurrPath) - (CurrPathAt - CurrPath));
             Append(&CurrPathTail, CompilerName);
             *(CurrPathAt + CurrPathTail.Count) = 0;
-
+            
             struct stat CompilerStat;
             if ((stat(CurrPath, &CompilerStat) != -1) &&
                 S_ISREG(CompilerStat.st_mode))
@@ -78,7 +78,7 @@ GetCompilerPath(string EnvPath, string CompilerName, char* OutPath)
                 Result = true;
                 break;
             }
-
+            
             CurrPathAt = CurrPath;
         }
         else
@@ -86,7 +86,7 @@ GetCompilerPath(string EnvPath, string CompilerName, char* OutPath)
             *CurrPathAt++ = EnvPath.Data[Index];
         }
     }
-
+    
     return Result;
 }
 
@@ -95,14 +95,14 @@ main(int ArgCount, const char* Args[])
 {
 #if !defined(BUILD_TRAVIS)
     SetupCrashpad();
-#endif
-
-@autoreleasepool
+#endif // #if !defined(BUILD_TRAVIS)
+    
+    @autoreleasepool
     {
         if (ArgCount > 1)
         {
             string Path = MakeStringSlowly(getenv("PATH"));
-
+            
 #if 0
             if (CompilerInstalled(Path, Lit("clang")))
             {
@@ -110,7 +110,7 @@ main(int ArgCount, const char* Args[])
                 if (pipe(PipeEnds) != -1)
                 {
                     int ChildPID = fork();
-
+                    
                     switch (ChildPID)
                     {
                         // NOTE(yuval): Fork Failed
@@ -118,7 +118,7 @@ main(int ArgCount, const char* Args[])
                         {
                             printf("Fork Failed!\n");
                         } break;
-
+                        
                         // NOTE(yuval): Child Process
                         case 0:
                         {
@@ -127,36 +127,36 @@ main(int ArgCount, const char* Args[])
                             while ((dup2(PipeEnds[1], STDERR_FILENO) == -1) && (errno == EINTR));
                             close(PipeEnds[0]);
                             close(PipeEnds[1]);
-
+                            
                             const char* ClangArgs[5] = {"clang", "-c", Args[1], "-I", "../code"};
-
+                            
                             execv("/usr/bin/clang", (char**)ClangArgs);
                         } break;
-
+                        
                         // NOTE(yuval): Parent Process
                         default:
                         {
                             close(PipeEnds[1]);
-
+                            
                             b32 Flag = true;
                             char Buffer[4096] = {};
                             int Status;
-
+                            
                             size_t Count = 0;
-
+                            
                             do
                             {
                                 Count = read(PipeEnds[0], Buffer, sizeof(Buffer));
-
+                                
                                 if (Count != 0)
                                 {
                                     printf("Parent Process Read From Child Process: %.*s\n", (s32)Count, Buffer);
                                 }
                             }
                             while (waitpid(ChildPID, &Status, WNOHANG) == 0);
-
+                            
                             close(PipeEnds[0]);
-
+                            
                             printf("Parent Process: The Clang Process Has Exited With: %s\n",
                                    (WIFEXITED(Status) ? "Success" : "Failure"));
                         } break;

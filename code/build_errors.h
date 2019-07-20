@@ -143,4 +143,4 @@ AstError(ast* Ast, const char* Format, ...)
 }
 
 #define BUILD_ERRORS_H
-#endif
+#endif // #if !defined(BUILD_ERRORS_H)

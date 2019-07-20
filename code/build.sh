@@ -23,25 +23,32 @@ pushd "../build" > /dev/null
 echo "Compiling Using: $CXX"
 
 # Mac Build
-CommonFlags+=" -DBUILD_MAC=1"
+CommonFlags+=" -DBUILD_MACOS=1"
 MacFlags="-framework Cocoa -framework IOKit -framework Security" #-framework OpenGL -framework AudioToolbox"
 CrashpadIncludeFlags="-I../crashpad/crashpad -I../crashpad/crashpad/third_party/mini_chromium/mini_chromium" CrashpadLinkerFlags="-L../crashpad/crashpad/out/Default -lclient -lhandler -lutil -lbase -lbsm"
 $CXX $CommonFlags $CrashpadIncludeFlags ../code/mac_build.mm -o mac_build -ldl $MacFlags $CrashpadLinkerFlags $PathFlags
 
-# Crashpad Debug Symbols Upload
-echo
-zip -r mac_build.dSYM.zip mac_build.dSYM
-morgue put Build mac_build.dSYM.zip --format=symbols
+# Getting the compilation exit code
+CompilationExitCode=$?
 
-popd > /dev/null
-
-# Tests
-RunTests=0
-if [ $RunTests -eq 1 ]
+# Checking if the compilation was successful
+if [ $CompilationExitCode -eq 0 ]
 then
-pushd "../test" > /dev/null
-echo
-echo "Running Build Tests:"
-../build/mac_build
-popd > /dev/null
+  # Crashpad Debug Symbols Upload
+  echo
+  zip -r mac_build.dSYM.zip mac_build.dSYM
+  morgue put Build mac_build.dSYM.zip --format=symbols
+
+  # Tests
+  RunTests=0
+  if [ $RunTests -eq 1 ]
+  then
+    pushd "../test" > /dev/null
+    echo
+    echo "Running Build Tests:"
+    ../build/mac_build
+    popd > /dev/null
+  fi
 fi
+
+popd > /dev/null

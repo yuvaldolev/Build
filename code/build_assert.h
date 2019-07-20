@@ -1,4 +1,4 @@
-#if !defined(BUILD_ASSERT_H)
+#if defined(BUILD_ASSERT_H)
 
 #if BUILD_SLOW
 // TODO(yuval): Temporary
@@ -34,7 +34,7 @@ if (!(Expression)) \
         *(volatile int*)0 = 0; \
     } \
 }
-#endif
+#endif // #if 0
 
 #define Assert(Expression) Assert_((Expression), true)
 #define SoftAssert(Expression) Assert_((Expression), false)
@@ -42,7 +42,7 @@ if (!(Expression)) \
 #else
 #define Assert(Expression)
 #define SoftAssert(Expression)
-#endif
+#endif // #if BUILD_SLOW
 
 #define BUILD_ASSERT_H
-#endif
+#endif // #if defined(BUILD_ASSERT_H)
