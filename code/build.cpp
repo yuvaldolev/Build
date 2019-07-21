@@ -1,5 +1,8 @@
 #include "build.h"
 
+#define YD_STRING_IMPLEMENTATION
+#include "yd/yd_string.h"
+
 #include "build_tokenizer.cpp"
 #include "build_parser.cpp"
 

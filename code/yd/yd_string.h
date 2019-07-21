@@ -615,6 +615,7 @@ IsLowerUTF8(yd_u8 C)
     return Result;
 }
 
+yd_internal inline yd_b32 IsUpper(char C);
 
 yd_internal inline char
 ToLower(char C)

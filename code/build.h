@@ -9,8 +9,7 @@
 #include "build_for.h"
 #include "build_assert.h"
 
-#define YD_STRING_IMPLEMENTATION
-#include "yd_string.h"
+#include "yd/yd_string.h"
 
 #if 0
 #include "build_shared.h"
