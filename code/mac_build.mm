@@ -8,7 +8,7 @@
 # include <client/crashpad_client.h>
 #endif // #if !defined(BUILD_TRAVIS)
 
-#include "build.h"
+#include "build.cpp"
 
 #include <sys/stat.h>
 
@@ -46,28 +46,23 @@ SetupCrashpad()
 }
 #endif
 
-internal b32
-BuildWorkspace()
+internal string
+GetCompilerPath(memory_arena* Arena, string EnvPath, string CompilerName)
 {
-    return true;
-}
-
-internal b32
-GetCompilerPath(string EnvPath, string CompilerName, char* OutPath)
-{
-    b32 Result = false;
-    char CurrPath[512] = {}; // TODO(yuval): Use Max Path Length
-    char* CurrPathAt = CurrPath;
+    // // TODO(yuval): Make this platform independent (use the max path define for the corrent platform)
+    string Result = NULL_STRING;
+    
+    char CompilerPath[PATH_MAX] = {};
+    char* PathAt = CompilerPath;
     
     for (size_t Index = 0; Index <= EnvPath.Count; ++Index)
     {
-        if ((Index == EnvPath.Count) ||
-            (EnvPath.Data[Index] == ':'))
+        if ((Index == EnvPath.Count) || (EnvPath.Data[Index] == ':'))
         {
             *CurrPathAt++ = '/';
             
             string CurrPathTail = MakeString(CurrPathAt, 0,
-                                             ArrayCount(CurrPath) - (CurrPathAt - CurrPath));
+                                             sizeof(CompilerPath) - (CurrPathAt - CurrPath));
             Append(&CurrPathTail, CompilerName);
             *(CurrPathAt + CurrPathTail.Count) = 0;
             
@@ -75,6 +70,7 @@ GetCompilerPath(string EnvPath, string CompilerName, char* OutPath)
             if ((stat(CurrPath, &CompilerStat) != -1) &&
                 S_ISREG(CompilerStat.st_mode))
             {
+                Result = StringPushCopy(Arena, CompilerPath);
                 Result = true;
                 break;
             }
@@ -88,6 +84,12 @@ GetCompilerPath(string EnvPath, string CompilerName, char* OutPath)
     }
     
     return Result;
+}
+
+internal b32
+BuildWorkspace()
+{
+    return true;
 }
 
 int

@@ -5,7 +5,7 @@
 Custom Memory Allocation & Deallocation Functions Can Be
 Specified To Be Used With This Library!!!
 
-By Default The Library Uses A Straight Forward Memory Allocation Function
+By Default The Library Uses A Straightforward Memory Allocation Function
 That Just Allocates A New Memory Block And Sets Its Flags.
 
 You can specify a memory allocation function by initializing
@@ -200,7 +200,7 @@ void* ZeroSize(void* Ptr, yd_umm Size);
 #endif // #if !defined(ZeroArray)
 
 void* PushSize_(memory_arena* Arena, yd_umm SizeInit,
-                arena_push_params Params = DefaultArenaParams())
+                arena_push_params Params = DefaultArenaParams());
 
 #if !defined(PushSize)
 # define PushSize(Arena, Size, ...) PushSize_(Arena, Size, ## __VA_ARGS__)
@@ -216,7 +216,7 @@ void* PushSize_(memory_arena* Arena, yd_umm SizeInit,
 #endif // #if !defined(PushArray)
 
 #if !defined(PushCopy)
-# define PushCopy(Arena, Size, Source, ...) Copy(PushSize_(Arena, Size, ## __VA_ARGS__), \
+# define PushCopy(Arena, Source, Size, ...) Copy(PushSize_(Arena, Size, ## __VA_ARGS__), \
 (Source), Size)
 #endif // #if !defined(PushCopy)
 
@@ -283,7 +283,7 @@ ArenaNoClear()
     arena_push_params Params = DefaultArenaParams();
     Params.Flags &= ~ArenaFlag_ClearToZero;
     
-    return Params.Flags;
+    return Params;
 }
 
 yd_internal inline arena_bootstrap_params
@@ -310,7 +310,7 @@ yd_internal inline yd_umm
 GetAlignmentOffset(memory_arena* Arena, yd_umm Alignment)
 {
     yd_umm AlignmentOffset = 0;
-    yd_umm TailPointer = (yd_umm)Arena->Base + Arena->Used;
+    yd_umm TailPointer = (yd_umm)Arena->CurrentBlock->Base + Arena->CurrentBlock->Used;
     yd_umm AlignmentMask = Alignment - 1;
     
     if (TailPointer & AlignmentMask)
@@ -356,7 +356,7 @@ YDMemoryFreeLastBlock(memory_arena* Arena)
     Arena->CurrentBlock = ToFree->Prev;
     
     YDAssert(YDDeallocateMemory);
-    YDDeallocateMemory(Free);
+    YDDeallocateMemory(ToFree);
 }
 
 yd_internal inline void
@@ -366,7 +366,7 @@ EndTemporaryMemory(temporary_memory TempMem)
     
     while (Arena->CurrentBlock != TempMem.Block)
     {
-        YDMemoryFreeLastBlock(TempMem);
+        YDMemoryFreeLastBlock(Arena);
     }
     
     if (Arena->CurrentBlock)
@@ -444,7 +444,7 @@ ALLOCATE_MEMORY(YDAllocateMemory_)
     }
     else if (Flags & MemoryBlockFlag_OverflowCheck)
     {
-        yd_umm SizeRoundedUp = AlignPow2(Size, PageSize);
+        yd_umm SizeRoundedUp = YDAlignPow2(Size, PageSize);
         TotalSize = SizeRoundedUp + 2 * PageSize;
         BaseOffset = PageSize + SizeRoundedUp - Size;
         ProtectOffset = PageSize + SizeRoundedUp;

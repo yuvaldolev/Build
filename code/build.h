@@ -9,6 +9,7 @@
 #include "build_for.h"
 #include "build_assert.h"
 
+#include "yd/yd_memory.h"
 #include "yd/yd_string.h"
 
 #if 0

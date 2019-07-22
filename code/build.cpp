@@ -1,14 +1,17 @@
 #include "build.h"
 
+#define YD_MEMORY_IMPLEMENTATION
+#include "yd/yd_memory.h"
+
 #define YD_STRING_IMPLEMENTATION
 #include "yd/yd_string.h"
 
+#if 0
 #include "build_tokenizer.cpp"
 #include "build_parser.cpp"
 
 global_variable b32 MetaToolIsInitialized = false;
 
-#if 0
 struct FunctionVariable
 {
     String type;
@@ -188,7 +191,6 @@ FunctionMeta(Tokenizer* tokenizer)
         }
     }
 }
-#endif
 
 internal string
 ReadEntireFileIntoMemory(string FileName)
@@ -231,3 +233,5 @@ MetaToolProcessFile(string FileName)
     ast_file* File = ParseFile(FileName, FileContents);
     DumpAstFile(File);
 }
+
+#endif // #if 0

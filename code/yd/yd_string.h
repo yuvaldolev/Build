@@ -63,8 +63,9 @@ struct string
 // NOTE(yuval): Flags And Constants
 //
 
+yd_global_variable const string NULL_STRING = {};
 yd_global_variable const yd_umm STRING_NOT_FOUND = -1;
-yd_global_variable const string NULL_STR = {};
+
 
 //
 // NOTE(yuval): Public API Function Declarations
@@ -137,6 +138,11 @@ void Replace(string* Str, const char* ToReplace, string With);
 void Replace(string* Str, string ToReplace, const char* With);
 void Replace(string* Str, string ToReplace, string With);
 void StringInterpretEscapes(char* Dest, string Source);
+
+#if defined(YD_MEMORY)
+void StringPush(memory_arena* Arena, yd_umm Count);
+void StringPushCopy(memory_arena* Arena, yd_umm Source);
+#endif // #if defined(YD_MEMORY)
 
 void ToLower(char* Str);
 void ToLower(string* Str);
@@ -2482,6 +2488,50 @@ StringInterpretEscapes(char* Dest, string Source)
     
     Dest[DestIndex] = 0;
 }
+
+//
+// NOTE(yuval): String Arena Allocation Functions
+//
+
+#if defined(YD_MEMORY)
+string
+PushString(memory_arena* Arena, yd_umm MemorySize, arena_push_params Params)
+{
+    string Result;
+    Result.Data = PushArray(Arena, char, MemorySize, Params);
+    Result.Count = 0;
+    
+    if (Result.Data)
+    {
+        Result.MemorySize = MemorySize;
+    }
+    
+    return Result;
+}
+
+void
+PushCopyString(memory_arena* Arena, const char* Source)
+{
+    string Result;
+    Result.Count = 0;
+    
+    yd_umm Size = StringLength(Source);
+    Result.Data = (char*)PushCopy(Arena, Source, Size);
+    
+    if (Result.Data)
+    {
+        Result.MemorySize = Size;
+    }
+    
+    return Result;
+}
+
+void
+PushCopyString(memory_arena* Arena, string Source)
+{
+    
+}
+#endif // #if defined(YD_MEMORY)
 
 //
 // NOTE(yuval): Case / Numeric Checking And Conversion Functions
