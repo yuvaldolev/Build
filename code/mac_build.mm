@@ -44,14 +44,12 @@ SetupCrashpad()
                         true,
                         true);
 }
-#endif
+#endif // #if !defined(BUILD_TRAVIS)
 
-internal string
-GetCompilerPath(memory_arena* Arena, string EnvPath, string CompilerName)
+internal b32
+GetCompilerPath(memory_arena* Arena, string EnvPath, string CompilerName, string* OutCompilerPath)
 {
-    // // TODO(yuval): Make this platform independent (use the max path define for the corrent platform)
-    string Result = NULL_STRING;
-    
+    // TODO(yuval): Make this platform independent (use the max path define for the corrent platform)
     char CompilerPath[PATH_MAX] = {};
     char* PathAt = CompilerPath;
     
@@ -59,31 +57,34 @@ GetCompilerPath(memory_arena* Arena, string EnvPath, string CompilerName)
     {
         if ((Index == EnvPath.Count) || (EnvPath.Data[Index] == ':'))
         {
-            *CurrPathAt++ = '/';
+            *PathAt++ = '/';
             
-            string CurrPathTail = MakeString(CurrPathAt, 0,
-                                             sizeof(CompilerPath) - (CurrPathAt - CurrPath));
-            Append(&CurrPathTail, CompilerName);
-            *(CurrPathAt + CurrPathTail.Count) = 0;
+            string CompilerPathTail = MakeString(PathAt, 0,
+                                                 sizeof(CompilerPath) - (PathAt - CompilerPath));
+            Append(&CompilerPathTail, CompilerName);
+            *(PathAt + CompilerPathTail.Count) = 0;
             
             struct stat CompilerStat;
-            if ((stat(CurrPath, &CompilerStat) != -1) &&
+            if ((stat(CompilerPath, &CompilerStat) != -1) &&
                 S_ISREG(CompilerStat.st_mode))
             {
-                Result = StringPushCopy(Arena, CompilerPath);
-                Result = true;
-                break;
+                umm CompilerPathCount = PathAt + CompilerPathTail.Count - CompilerPath;
+                *OutCompilerPath =
+                    PushCopyString(Arena, MakeString(CompilerPath, CompilerPathCount));
+                
+                return true;
             }
             
-            CurrPathAt = CurrPath;
+            PathAt = CompilerPath;
         }
         else
         {
-            *CurrPathAt++ = EnvPath.Data[Index];
+            *PathAt++ = EnvPath.Data[Index];
         }
     }
     
-    return Result;
+    *OutCompilerPath = NULL_STRING;
+    return false;
 }
 
 internal b32
@@ -103,9 +104,28 @@ main(int ArgCount, const char* Args[])
     {
         if (ArgCount > 1)
         {
-            string Path = MakeStringSlowly(getenv("PATH"));
+            memory_arena Arena = {};
             
+            string EnvPath = MakeStringSlowly(getenv("PATH"));
+            string CompilerPath;
+            
+            if (GetCompilerPath(&Arena, EnvPath, Lit("clang"), &CompilerPath))
+            {
+                printf("Clang Path: %.*s\n", PrintableString(CompilerPath));
+            }
+            else if (GetCompilerPath(&Arena, EnvPath, Lit("g++"), &CompilerPath))
+            {
+                
+            }
+            else if (GetCompilerPath(&Arena, EnvPath, Lit("cl"), &CompilerPath))
+            {
+            }
+            else
+            {
+                // TODO(yuval): Diagnostic
+            }
 #if 0
+            
             if (CompilerInstalled(Path, Lit("clang")))
             {
                 int PipeEnds[2];
@@ -177,7 +197,7 @@ main(int ArgCount, const char* Args[])
             else
             {
             }
-#endif
+#endif // #if 0
         }
         else
         {

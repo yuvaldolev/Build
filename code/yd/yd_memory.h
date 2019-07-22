@@ -189,7 +189,7 @@ void* Copy(void* DestInit, const void* SourceInit, yd_umm Size);
 # define CopyArray(Dest, Source, Count) Copy((Dest), (Source), (Count) * sizeof(*(Source)))
 #endif // #if !defined(CopyArray)
 
-void* ZeroSize(void* Ptr, yd_umm Size);
+void ZeroSize(void* Ptr, yd_umm Size);
 
 #if !defined(ZeroStruct)
 # define ZeroStruct(Instance) ZeroSize(&(Instance), sizeof(Instance))
@@ -198,6 +198,10 @@ void* ZeroSize(void* Ptr, yd_umm Size);
 #if !defined(ZeroArray)
 # define ZeroArray(Pointer, Count) ZeroSize(Pointer, (Count) * sizeof(*(Pointer)))
 #endif // #if !defined(ZeroArray)
+
+// NOTE(yuval): This function declaration is an inline function and it's declared here only
+// because PushSize_'s declaration uses it
+yd_internal inline arena_push_params DefaultArenaParams();
 
 void* PushSize_(memory_arena* Arena, yd_umm SizeInit,
                 arena_push_params Params = DefaultArenaParams());
@@ -528,7 +532,7 @@ Copy(void* DestInit, const void* SourceInit, yd_umm Size)
     return Result;
 }
 
-void*
+void
 ZeroSize(void* Ptr, yd_umm Size)
 {
     yd_u8* Byte = (yd_u8*)Ptr;

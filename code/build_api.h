@@ -30,7 +30,7 @@ typedef double build_f64;
 typedef intptr_t build_smm;
 typedef uintptr_t build_umm;
 #define BUILD_API_TYPES
-#endif
+#endif // #if !defined(BUILD_API_TYPES)
 
 #define YD_STRING_IMPLEMENTATION
 #include "yd_string.h"
@@ -133,7 +133,7 @@ BuildWaitForMessage()
     printf("Started: %d, ", Started);
     printf("Workspace Index: %lu/%lu, ", WorkspaceIndex, GlobalWorkspaces.Count - 1);
     printf("File Index: %lu)\n", FileIndex);
-#endif
+#endif // #if 0
     
     build_message Message = {};
     
@@ -180,4 +180,4 @@ BuildWaitForMessage()
 }
 
 #define BUILD_API_H
-#endif
+#endif // #if !defined(BUILD_API_H)

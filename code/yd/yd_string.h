@@ -46,10 +46,6 @@ typedef uintptr_t yd_umm;
 # define YDAssert(Expression) if (!(Expression)) { *(volatile int*)0 = 0; }
 #endif // #if !defined(YDAssert)
 
-#if !defined(Literal)
-# define Literal(Str) (Str), (sizeof(Str) - 1)
-#endif // #if !defined(Literal)
-
 struct string
 {
     char* Data;
@@ -59,13 +55,24 @@ struct string
 
 // TODO(yuval): Maybe create A UTF8 string struct
 
+#if !defined(Literal)
+# define Literal(Str) (Str), (sizeof(Str) - 1)
+#endif // #if !defined(Literal)
+
+#if !defined(ExpandString)
+# define ExpandString(Str) ((Str).Data), ((Str).Count)
+#endif // #if !defined(ExpandString)
+
+#if !defined(PrintableString)
+# define PrintableString(Str) ((yd_s32)((Str).Count)), ((Str).Data)
+#endif // #if !defined(PrintableString)
+
 //
 // NOTE(yuval): Flags And Constants
 //
 
 yd_global_variable const string NULL_STRING = {};
 yd_global_variable const yd_umm STRING_NOT_FOUND = -1;
-
 
 //
 // NOTE(yuval): Public API Function Declarations
@@ -140,8 +147,12 @@ void Replace(string* Str, string ToReplace, string With);
 void StringInterpretEscapes(char* Dest, string Source);
 
 #if defined(YD_MEMORY)
-void StringPush(memory_arena* Arena, yd_umm Count);
-void StringPushCopy(memory_arena* Arena, yd_umm Source);
+string PushString(memory_arena* Arena, yd_umm MemorySize,
+                  arena_push_params Params = DefaultArenaParams());
+string PushCopyString(memory_arena* Arena, const char* Source,
+                      arena_push_params Params = DefaultArenaParams());
+string PushCopyString(memory_arena* Arena, string Source,
+                      arena_push_params Params = DefaultArenaParams());
 #endif // #if defined(YD_MEMORY)
 
 void ToLower(char* Str);
@@ -244,14 +255,6 @@ MakeStringSlowly(const void* Str)
 #if !defined(MakeFixedWidthString)
 # define MakeFixedWidthString(Str) (MakeString((char*)(Str), 0, sizeof(Str)))
 #endif // #if !defined(MakeFixedWidthString)
-
-#if !defined(ExpandString)
-# define ExpandString(Str) ((Str).Data), ((Str).Count)
-#endif // #if !defined(ExpandString)
-
-#if !defined(PrintableString)
-# define PrintableString(Str) ((yd_s32)((Str).Count)), ((Str).Data)
-#endif // #if !defined(PrintableString)
 
 //
 // NOTE(yuval): String Slicing Functions
@@ -2497,7 +2500,7 @@ StringInterpretEscapes(char* Dest, string Source)
 string
 PushString(memory_arena* Arena, yd_umm MemorySize, arena_push_params Params)
 {
-    string Result;
+    string Result = {};
     Result.Data = PushArray(Arena, char, MemorySize, Params);
     Result.Count = 0;
     
@@ -2509,27 +2512,36 @@ PushString(memory_arena* Arena, yd_umm MemorySize, arena_push_params Params)
     return Result;
 }
 
-void
-PushCopyString(memory_arena* Arena, const char* Source)
+string
+PushCopyString(memory_arena* Arena, const char* Source, arena_push_params Params)
 {
-    string Result;
-    Result.Count = 0;
+    string Result = {};
     
     yd_umm Size = StringLength(Source);
-    Result.Data = (char*)PushCopy(Arena, Source, Size);
+    Result.Data = (char*)PushCopy(Arena, Source, Size, Params);
     
     if (Result.Data)
     {
+        Result.Count = Size;
         Result.MemorySize = Size;
     }
     
     return Result;
 }
 
-void
-PushCopyString(memory_arena* Arena, string Source)
+string
+PushCopyString(memory_arena* Arena, string Source, arena_push_params Params)
 {
+    string Result = {};
+    Result.Data = (char*)PushCopy(Arena, Source.Data, Source.Count, Params);
     
+    if (Result.Data)
+    {
+        Result.Count = Source.Count;
+        Result.MemorySize = Source.Count;
+    }
+    
+    return Result;
 }
 #endif // #if defined(YD_MEMORY)
 
