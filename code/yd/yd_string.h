@@ -248,13 +248,23 @@ MakeStringSlowly(const void* Str)
 # define MakeLitString(Str) (MakeString((char*)(Str), sizeof(Str) - 1, sizeof(Str)))
 #endif // #if !defined(MakeLitString)
 
-#if !defined(Lit)
-# define Lit(Str) MakeLitString(Str)
-#endif // #if !defined(Lit)
-
 #if !defined(MakeFixedWidthString)
 # define MakeFixedWidthString(Str) (MakeString((char*)(Str), 0, sizeof(Str)))
 #endif // #if !defined(MakeFixedWidthString)
+
+//
+// NOTE(yuval): Utility String Functions
+//
+
+yd_internal inline yd_b32
+IsNullString(string Str)
+{
+    yd_b32 Result = ((Str.Data = NULL_STRING.Data) &&
+                     (Str.Count == NULL_STRING.Count) &&
+                     (Str.MemorySize == NULL_STRING.MemorySize));
+    
+    return Result;
+}
 
 //
 // NOTE(yuval): String Slicing Functions

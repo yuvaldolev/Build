@@ -32,29 +32,43 @@ typedef uintptr_t build_umm;
 #define BUILD_API_TYPES
 #endif // #if !defined(BUILD_API_TYPES)
 
-#define YD_STRING_IMPLEMENTATION
-#include "yd_string.h"
+#include "yd/yd_memory.h"
+#include "yd/yd_string.h"
 
 #define BUILD_FUNC
 
 struct build_file_array
 {
     string Paths[4096];
-    size_t Count;
+    build_umm Count;
+};
+
+enum build_output_type
+{
+    BuildOutput_Executable,
+    BuildOutput_StaticLibrary,
+    BuildOutput_SharedLibrary
 };
 
 enum build_compiler_type
 {
+    // NOTE(yuval): Used for automatic compiler detection (this is the default compiler type)
+    BuildCompiler_Auto,
+    
     BuildCompiler_Clang,
+    BuildCompiler_GPP,
     BuildCompiler_GCC,
-    BuildCompiler_MSVC
+    BuildCompiler_MSVC,
+    
+    BuildCompiler_Count
 };
 
 struct build_options
 {
     build_u32 OptimizationLevel;
     
-    string OutputExecutableName;
+    build_output_type OutputType;
+    string OutputName;
     string OutputPath;
     
     build_compiler_type Compiler;
@@ -70,7 +84,7 @@ struct build_workspace
 struct build_workspace_array
 {
     build_workspace Workspaces[8];
-    size_t Count;
+    build_umm Count;
 };
 
 enum build_message_type
@@ -125,8 +139,8 @@ BuildWaitForMessage()
     // TODO(yuval): Create a proper messaging system and dequeue messages here.
     build_local_persist build_b32 Started = false;
     build_local_persist build_b32 WorkspacesBuildShouldStart = false;
-    build_local_persist size_t WorkspaceIndex = 0;
-    build_local_persist size_t FileIndex = 0;
+    build_local_persist build_umm WorkspaceIndex = 0;
+    build_local_persist build_umm FileIndex = 0;
     
 #if 0
     printf("Waiting For Message: (");

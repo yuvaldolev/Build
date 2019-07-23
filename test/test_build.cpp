@@ -52,7 +52,7 @@ SetupDebug(build_workspace* Workspace)
     Options->OptimizationLevel = 0;
     
     // NOTE(yuval): Executable Options
-    Options->OutputExecutableName = Lit("test_debug");
+    Options->OutputName = Lit("test_debug");
     Options->OutputPath = Lit("../build");
     
     // NOTE(yuval): Compiler Options

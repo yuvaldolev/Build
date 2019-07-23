@@ -1,16 +1,15 @@
 #if !defined(BUILD_H)
 
-#define BuildDoJoin2(Arg1, Arg2) Arg1 ## Arg2
-#define BuildJoin2(Arg1, Arg2) BuildDoJoin2(Arg1, Arg2)
-#define BuildJoin3(Arg1, Arg2, Arg3) BuildJoin2(BuildJoin2(Arg1, Arg2), Arg3)
-#define BuildJoin4(Arg1, Arg2, Arg3, Arg4) BuildJoin2(BuildJoin3(Arg1, Arg2, Arg3), Arg4)
+#define DoJoin2(Arg1, Arg2) Arg1 ## Arg2
+#define Join2(Arg1, Arg2) DoJoin2(Arg1, Arg2)
+#define Join3(Arg1, Arg2, Arg3) Join2(Join2(Arg1, Arg2), Arg3)
+#define Join4(Arg1, Arg2, Arg3, Arg4) Join2(Join3(Arg1, Arg2, Arg3), Arg4)
+
+#include "build_api.h"
 
 #include "build_types.h"
 #include "build_for.h"
 #include "build_assert.h"
-
-#include "yd/yd_memory.h"
-#include "yd/yd_string.h"
 
 #if 0
 #include "build_shared.h"
@@ -19,7 +18,7 @@
 #include "build_tokenizer.h"
 #include "build_parser.h"
 #include "build_errors.h"
-#endif
+#endif // #if 0
 
 #define BUILD_H
-#endif
+#endif // #if !defined(BUILD_H)

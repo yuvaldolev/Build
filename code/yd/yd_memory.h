@@ -170,7 +170,7 @@ struct arena_bootstrap_params
 // NOTE(yuval): Memory Block Allocation & Deallocation Function Types
 //
 
-#define ALLOCATE_MEMORY(Name) memory_block* Name(yd_umm Size, u64 Flags)
+#define ALLOCATE_MEMORY(Name) memory_block* Name(yd_umm Size, yd_u64 Flags)
 typedef ALLOCATE_MEMORY(allocate_memory);
 
 #define DEALLOCATE_MEMORY(Name) void Name(memory_block* Block)
