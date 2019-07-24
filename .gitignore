@@ -40,10 +40,11 @@ crashpad/.gclient_entries
 
 # Directories
 .build/
-run_tree/
+run_tree/*
 .vs/
 crashpad/buildtools/
 crashpad/crashpad/
 crashpad/meta_crashpad_db/
 
-
+# Unignored Directories
+!run_tree/code/

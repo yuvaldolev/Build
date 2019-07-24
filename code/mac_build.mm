@@ -102,6 +102,7 @@ GetCompilerPath(memory_arena* Arena, string EnvPath, const char* CompilerName)
 internal b32
 BuildWorkspace(memory_arena* Arena, build_workspace* Workspace)
 {
+    
     build_options* BuildOptions = &Workspace->Options;
     
     compiler_info* CompilerInfo = 0;
