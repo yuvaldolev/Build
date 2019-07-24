@@ -39,7 +39,8 @@ crashpad/.gclient
 crashpad/.gclient_entries
 
 # Directories
-build/
+.build/
+run_tree/
 .vs/
 crashpad/buildtools/
 crashpad/crashpad/

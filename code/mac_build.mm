@@ -11,6 +11,8 @@
 #include "build.cpp"
 
 #include <sys/stat.h>
+#include <unistd.h>
+#include <libproc.h>
 
 #include <stdio.h> // TODO(yuval): Temporary
 
@@ -25,8 +27,8 @@
 struct compiler_info
 {
     build_compiler_type Type;
-    string Name; // TODO(yuval): Should the compiler name be a const char*???
-    string Path;
+    const char* Name;
+    const char* Path;
 };
 
 global_variable compiler_info GlobalCompilers[BuildCompiler_Count - 1];
@@ -56,10 +58,10 @@ SetupCrashpad()
 }
 #endif // #if !defined(BUILD_TRAVIS)
 
-internal string
-GetCompilerPath(memory_arena* Arena, string EnvPath, string CompilerName)
+internal char*
+GetCompilerPath(memory_arena* Arena, string EnvPath, const char* CompilerName)
 {
-    string Result = NULL_STRING;
+    char* Result = 0;
     
     // TODO(yuval): Make this platform independent (use the max path define for the corrent platform)
     char CompilerPath[PATH_MAX] = {};
@@ -81,7 +83,7 @@ GetCompilerPath(memory_arena* Arena, string EnvPath, string CompilerName)
                 S_ISREG(CompilerStat.st_mode))
             {
                 umm CompilerPathCount = PathAt + CompilerPathTail.Count - CompilerPath;
-                Result = PushCopyString(Arena, MakeString(CompilerPath, CompilerPathCount));
+                Result = PushCopyZ(Arena, MakeString(CompilerPath, CompilerPathCount));
                 
                 break;
             }
@@ -98,7 +100,7 @@ GetCompilerPath(memory_arena* Arena, string EnvPath, string CompilerName)
 }
 
 internal b32
-BuildWorkspace(build_workspace* Workspace)
+BuildWorkspace(memory_arena* Arena, build_workspace* Workspace)
 {
     build_options* BuildOptions = &Workspace->Options;
     
@@ -107,28 +109,116 @@ BuildWorkspace(build_workspace* Workspace)
     {
         if (((It.Type == BuildOptions->Compiler) ||
              BuildOptions->Compiler == BuildCompiler_Auto) &&
-            !IsNullString(It.Path))
+            It.Path)
         {
             CompilerInfo = &It;
-            break;
+            Break;
         }
     }
     
     if (CompilerInfo)
     {
-        printf("Compiling Using: %.*s\n", PrintableString(CompilerInfo->Name));
+        pid_t PID = getpid();
+        char BuildAppPathZ[PATH_MAX] = {};
+        s32 BuildAppPathCount = proc_pidpath(PID, BuildAppPathZ, sizeof(BuildAppPathZ));
         
-        const char* CompilerArgs[512] = {};
-        CompilerArgs[0] = CompilerInfo->Name;
-        CompilerArgs[2] = "-o";
-        CompilerArgs[3] = "test"; // TODO(yuval): Use the workspace's output name & path
-        
-        for (umm Index = 0;
-             Index < Workspace->Files.Count;
-             ++Index)
+        if (BuildAppPathCount > 0)
         {
-            printf("Building: %.*s\n", PrintableString(Workspace->Files.Paths[Index]));
-            // TODO(yuval): Append the file as an argument to the compiler
+            string BuildAppPath = MakeString(BuildAppPathZ,
+                                             BuildAppPathCount,
+                                             sizeof(BuildAppPathZ));
+            SetLastFolder(&BuildAppPath, "code", '/');
+            TerminateWithNull(&BuildAppPath);
+            
+            const char* CompilerArgs[512] = {};
+            CompilerArgs[0] = CompilerInfo->Name;
+            CompilerArgs[1] = "-I";
+            CompilerArgs[2] = BuildAppPath.Data;
+            CompilerArgs[Workspace->Files.Count + 3] = "-o";
+            CompilerArgs[Workspace->Files.Count + 4] = "test"; // TODO(yuval): Use the workspace's output name & path
+            
+            temporary_memory TempMem = BeginTemporaryMemory(Arena);
+            
+            // TODO(yuval): Maybe build each file to an object file and like after all files are built?
+            for (umm Index = 0;
+                 Index < Workspace->Files.Count;
+                 ++Index)
+            {
+                // printf("Building: %.*s\n", PrintableString(Workspace->Files.Paths[Index]));
+                CompilerArgs[Index + 3] = PushCopyZ(Arena, Workspace->Files.Paths[Index]);
+            }
+            
+            printf("Running Compiler: ");
+            for (const char** Arg = CompilerArgs; *Arg; ++Arg)
+            {
+                printf("%s ", *Arg);
+            }
+            printf("\n\n");
+            
+            int PipeEnds[2];
+            if (pipe(PipeEnds) != -1)
+            {
+                int ChildPID = fork();
+                
+                switch (ChildPID)
+                {
+                    // NOTE(yuval): Fork Failed
+                    case -1:
+                    {
+                        printf("Fork Failed!\n");
+                    } break;
+                    
+                    // NOTE(yuval): Child Process
+                    case 0:
+                    {
+                        // NOTE(yuval): Routing the standard output to the pipe
+                        while ((dup2(PipeEnds[1], STDOUT_FILENO) == -1) && (errno == EINTR));
+                        while ((dup2(PipeEnds[1], STDERR_FILENO) == -1) && (errno == EINTR));
+                        close(PipeEnds[0]);
+                        close(PipeEnds[1]);
+                        
+                        execv(CompilerInfo->Path, (char**)CompilerArgs);
+                    } break;
+                    
+                    // NOTE(yuval): Parent Process
+                    default:
+                    {
+                        close(PipeEnds[1]);
+                        
+                        b32 Flag = true;
+                        char Buffer[4096] = {};
+                        int Status;
+                        
+                        size_t Count = 0;
+                        
+                        do
+                        {
+                            Count = read(PipeEnds[0], Buffer, sizeof(Buffer));
+                            
+                            if (Count != 0)
+                            {
+                                printf("%.*s", (s32)Count, Buffer);
+                            }
+                        }
+                        while (waitpid(ChildPID, &Status, WNOHANG) == 0);
+                        
+                        close(PipeEnds[0]);
+                        
+                        int CompilerExitCode =  WEXITSTATUS(Status);
+                        printf("\nThe Compiler Has Exited With Exit Code: %d\n", CompilerExitCode);
+                    } break;
+                }
+            }
+            else
+            {
+                // TODO(yuval): Diagnostic
+            }
+            
+            EndTemporaryMemory(TempMem);
+        }
+        else
+        {
+            // TODO(yuval): Diagnostic
         }
     }
     else
@@ -157,22 +247,22 @@ main(int ArgCount, const char* Args[])
             
             compiler_info* Compiler = GlobalCompilers;
             Compiler->Type = BuildCompiler_Clang;
-            Compiler->Name = MakeLitString("clang");
+            Compiler->Name = "clang";
             Compiler->Path = GetCompilerPath(&Arena, EnvPath, Compiler->Name);
             ++Compiler;
             
             Compiler->Type = BuildCompiler_GPP;
-            Compiler->Name = MakeLitString("g++");
+            Compiler->Name = "g++";
             Compiler->Path = GetCompilerPath(&Arena, EnvPath, Compiler->Name);
             ++Compiler;
             
             Compiler->Type = BuildCompiler_GCC;
-            Compiler->Name = MakeLitString("gcc");
+            Compiler->Name = "gcc";
             Compiler->Path = GetCompilerPath(&Arena, EnvPath, Compiler->Name);
             ++Compiler;
             
             Compiler->Type = BuildCompiler_MSVC;
-            Compiler->Name = MakeLitString("cl");
+            Compiler->Name = "cl";
             Compiler->Path = GetCompilerPath(&Arena, EnvPath, Compiler->Name);
             
             // NOTE(yuval): Build File Workspace Setup
@@ -190,71 +280,13 @@ main(int ArgCount, const char* Args[])
             BuildAddFile(&BuildFileWorkspace, MakeStringSlowly(Args[1]));
             
             // NOTE(yuval): Build File Workspace Building
-            BuildWorkspace(&BuildFileWorkspace);
+            BuildWorkspace(&Arena, &BuildFileWorkspace);
             
 #if 0
             
             if (CompilerInstalled(Path, MakeLitString("clang")))
             {
-                int PipeEnds[2];
-                if (pipe(PipeEnds) != -1)
-                {
-                    int ChildPID = fork();
-                    
-                    switch (ChildPID)
-                    {
-                        // NOTE(yuval): Fork Failed
-                        case -1:
-                        {
-                            printf("Fork Failed!\n");
-                        } break;
-                        
-                        // NOTE(yuval): Child Process
-                        case 0:
-                        {
-                            // NOTE(yuval): Routing the standard output to the pipe
-                            while ((dup2(PipeEnds[1], STDOUT_FILENO) == -1) && (errno == EINTR));
-                            while ((dup2(PipeEnds[1], STDERR_FILENO) == -1) && (errno == EINTR));
-                            close(PipeEnds[0]);
-                            close(PipeEnds[1]);
-                            
-                            const char* ClangArgs[5] = {"clang", "-c", Args[1], "-I", "../code"};
-                            
-                            execv("/usr/bin/clang", (char**)ClangArgs);
-                        } break;
-                        
-                        // NOTE(yuval): Parent Process
-                        default:
-                        {
-                            close(PipeEnds[1]);
-                            
-                            b32 Flag = true;
-                            char Buffer[4096] = {};
-                            int Status;
-                            
-                            size_t Count = 0;
-                            
-                            do
-                            {
-                                Count = read(PipeEnds[0], Buffer, sizeof(Buffer));
-                                
-                                if (Count != 0)
-                                {
-                                    printf("Parent Process Read From Child Process: %.*s\n", (s32)Count, Buffer);
-                                }
-                            }
-                            while (waitpid(ChildPID, &Status, WNOHANG) == 0);
-                            
-                            close(PipeEnds[0]);
-                            
-                            printf("Parent Process: The Clang Process Has Exited With: %s\n",
-                                   (WIFEXITED(Status) ? "Success" : "Failure"));
-                        } break;
-                    }
-                }
-                else
-                {
-                }
+                
             }
             else if (CompilerInstalled(Path, MakeLitString("g++")))
             {

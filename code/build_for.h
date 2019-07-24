@@ -4,13 +4,17 @@
 //       Array Foreach       //
 ///////////////////////////////
 #define ArrayForeach_(Array) \
-for (u32 Index = 0; Index < ArrayCount(Array); ++Index) \
+for (u32 Index = 0, For__ShouldBreak = 0; \
+Index < ArrayCount(Array) && !For__ShouldBreak; \
+++Index) \
 for (b32 Join2(B, __LINE__) = true; \
 Join2(B, __LINE__); \
 Join2(B, __LINE__) = false) \
 for (auto& It = (Array)[Index]; \
 Join2(B, __LINE__); \
 Join2(B, __LINE__) = false)
+
+#define Break For__ShouldBreak = 1
 
 #if 0
 ///////////////////////////////

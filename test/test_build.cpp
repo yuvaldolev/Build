@@ -52,8 +52,8 @@ SetupDebug(build_workspace* Workspace)
     Options->OptimizationLevel = 0;
     
     // NOTE(yuval): Executable Options
-    Options->OutputName = Lit("test_debug");
-    Options->OutputPath = Lit("../build");
+    Options->OutputName = MakeLitString("test_debug");
+    Options->OutputPath = MakeLitString("../build");
     
     // NOTE(yuval): Compiler Options
     Options->Compiler = BuildCompiler_Clang;
@@ -68,8 +68,8 @@ SetupRelease(build_workspace* Workspace)
     Options->OptimizationLevel = 3;
     
     // NOTE(yuval): Executable Options
-    Options->OutputExecutableName = Lit("test_release");
-    Options->OutputPath = Lit("../build");
+    Options->OutputName = MakeLitString("test_release");
+    Options->OutputPath = MakeLitString("../build");
     
     // NOTE(yuval): Compiler Options
     Options->Compiler = BuildCompiler_Clang;
@@ -82,7 +82,7 @@ StartWorkspace(string Name)
     
     // TODO(yuval): Flags to indicate whether or not to use metaprogramming
     
-    BuildAddFile(Workspace, Lit("test.cpp"));
+    BuildAddFile(Workspace, MakeLitString("test.cpp"));
     
     return Workspace;
 }
@@ -90,10 +90,10 @@ StartWorkspace(string Name)
 BUILD_FUNC void
 BuildDebug()
 {
-    build_workspace* Workspace = StartWorkspace(Lit("Debug"));
+    build_workspace* Workspace = StartWorkspace(MakeLitString("Debug"));
     SetupDebug(Workspace);
     
-    build_workspace* Workspace2 = StartWorkspace(Lit("Debug2"));
+    build_workspace* Workspace2 = StartWorkspace(MakeLitString("Debug2"));
     SetupDebug(Workspace2);
     
     Build();
@@ -102,7 +102,7 @@ BuildDebug()
 BUILD_FUNC void
 BuildRelease()
 {
-    build_workspace* Workspace = StartWorkspace(Lit("Release"));
+    build_workspace* Workspace = StartWorkspace(MakeLitString("Release"));
     SetupRelease(Workspace);
     Build();
 }
