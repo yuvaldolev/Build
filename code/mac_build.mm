@@ -196,6 +196,7 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena)
             
             temporary_memory TempMem = BeginTemporaryMemory(Arena);
             
+            u64 CompilationStartCounter = mach_absolute_time();
             for (umm Index = 0;
                  Index < Workspace->Files.Count;
                  ++Index)
@@ -216,7 +217,7 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena)
                     // TODO(yuval): Diagnostic
                 }
                 
-                printf("Compiling: ");
+                printf("Compiling File: ");
                 for (const char** Arg = CompilerArgs; *Arg; ++Arg)
                 {
                     printf("%s ", *Arg);
@@ -225,18 +226,40 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena)
                 
                 ExecProcessAndWait(CompilerInfo->Path, (char**)CompilerArgs, Arena);
             }
+            u64 CompilationEndCounter = mach_absolute_time();
             
-            
+            u64 LinkageStartCounter = mach_absolute_time();
             printf("Linking: ");
             for (const char** Arg = LinkerArgs; *Arg; ++Arg)
             {
                 printf("%s ", *Arg);
             }
             printf("\n\n");
+            u64 LinkageEndCounter = mach_absolute_time();
             
             ExecProcessAndWait(CompilerInfo->Path, (char**)LinkerArgs, Arena);
             
             EndTemporaryMemory(TempMem);
+            
+            u64 BuildEndCounter = mach_absolute_time();
+            
+            // NOTE(yuval): Workspace Build Stats
+            f32 FrontendTime = MacGetSecondsElapsed(BuildStartCounter, CompilationStartCounter) +
+                MacGetSecondsElapsed(CompilationEndCounter, LinkageStartCounter) +
+                MacGetSecondsElapsed(LinkageEndCounter, BuildEndCounter);
+            printf("Front-end Time: %f seconds\n", FrontendTime);
+            
+            f32 CompilationTime = MacGetSecondsElapsed(CompilationStartCounter, CompilationEndCounter);
+            printf("    Compilation Time: %f seconds\n", CompilationTime);
+            
+            f32 LinkageTime = MacGetSecondsElapsed(LinkageStartCounter, LinkageEndCounter);
+            printf("    Linkage Time: %f seconds\n", LinkageTime);
+            
+            f32 BackendTime = MacGetSecondsElapsed(CompilationStartCounter, LinkageEndCounter);
+            printf("Back-end Time: %f seconds\n", BackendTime);
+            
+            f32 TotalBuildTime = MacGetSecondsElapsed(BuildStartCounter, BuildEndCounter);
+            printf("Total Build Time: %f seconds\n", TotalBuildTime);
         }
         else
         {
@@ -247,9 +270,6 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena)
     {
         // TODO(yuval): Diagnostic
     }
-    
-    u64 BuildEndCounter = mach_absolute_time();
-    printf("Build Time: %f\n", MacGetSecondsElapsed(BuildStartCounter, BuildEndCounter));
     
     return true;
 }
