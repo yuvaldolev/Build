@@ -200,6 +200,8 @@ yd_b32 SetLastFolder(string* Dir, const char* FolderName, char Slash);
 yd_b32 SetLastFolder(string* Dir, string FolderName, char Slash);
 yd_b32 RemoveLastFolder(string* Dir);
 string FileExtension(string FileName);
+yd_b32 SetExtension(string* FileName, const char* Extension);
+yd_b32 SetExtension(string* FileName, string Extension);
 yd_b32 RemoveExtension(string* FileName);
 
 //
@@ -2590,6 +2592,8 @@ StringInterpretEscapes(char* Dest, string Source)
 // NOTE(yuval): String Arena Allocation Functions
 //
 
+// TODO(yuval): This functions should all be inline!
+
 #if defined(YD_MEMORY)
 char*
 PushZ(memory_arena* Arena, yd_umm Count, arena_push_params Params)
@@ -3352,14 +3356,63 @@ RemoveLastFolder(string* path)
 string
 FileExtension(string FileName)
 {
-    string Result =
-    {};
+    string Result = {};
     yd_umm DotIndex = RFind(FileName, '.');
     
     if (DotIndex != STRING_NOT_FOUND)
     {
         Result = MakeString(FileName.Data + DotIndex + 1,
                             FileName.Count - DotIndex - 1);
+    }
+    
+    return Result;
+}
+
+yd_b32
+SetExtension(string* FileName, const char* Extension)
+{
+    yd_b32 Result = false;
+    yd_umm LastDotIndex = RFind(*FileName, '.');
+    
+    if (LastDotIndex != STRING_NOT_FOUND)
+    {
+        yd_umm Count = LastDotIndex;
+        FileName->Count = Count;
+        
+        if (Append(FileName, Extension))
+        {
+            Result = true;
+        }
+        
+        if (!Result)
+        {
+            FileName->Count = Count;
+        }
+    }
+    
+    return Result;
+}
+
+yd_b32
+SetExtension(string* FileName, string Extension)
+{
+    yd_b32 Result = false;
+    yd_umm LastDotIndex = RFind(*FileName, '.');
+    
+    if (LastDotIndex != STRING_NOT_FOUND)
+    {
+        yd_umm Count = LastDotIndex + 1;
+        FileName->Count = Count;
+        
+        if (Append(FileName, Extension))
+        {
+            Result = true;
+        }
+        
+        if (!Result)
+        {
+            FileName->Count = Count - 1;
+        }
     }
     
     return Result;
@@ -3374,7 +3427,7 @@ RemoveExtension(string* FileName)
     if (LastDotIndex != STRING_NOT_FOUND)
     {
         Result = true;
-        FileName->Count = LastDotIndex + 1;
+        FileName->Count = LastDotIndex;
     }
     
     return Result;

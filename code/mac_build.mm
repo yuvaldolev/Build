@@ -10,10 +10,11 @@
 
 #include "build.cpp"
 
+#include <mach/mach_time.h>
+
 #include <sys/stat.h>
 #include <unistd.h>
 #include <libproc.h>
-
 #include <stdio.h> // TODO(yuval): Temporary
 
 /*
@@ -31,10 +32,23 @@ struct compiler_info
     const char* Path;
 };
 
+#if 0
+struct compiler_message_queue
+{
+    string CompiledFileName;
+    
+    string Messages[512];
+    yd_umm ReadIndex;
+    yd_umm WriteIndex;
+};
+#endif // #if 0
+
+global_variable mach_timebase_info_data_t GlobalTimebaseInfo;
 global_variable compiler_info GlobalCompilers[BuildCompiler_Count - 1];
+//global_variable process_message_queue GlobalProcessMessageQueue = {};
 
 #if !defined(BUILD_TRAVIS)
-static void
+internal void
 SetupCrashpad()
 {
     using namespace crashpad;
@@ -58,8 +72,190 @@ SetupCrashpad()
 }
 #endif // #if !defined(BUILD_TRAVIS)
 
+internal f32
+MacGetSecondsElapsed(u64 Start, u64 End)
+{
+    // NOTE(yuval): Elapsed nanoseconds calculation
+    f32 Result = ((f32)(End - Start) *
+                  ((f32)GlobalTimebaseInfo.numer) /
+                  ((f32)GlobalTimebaseInfo.denom));
+    
+    // NOTE(yuval): Conversion to seconds
+    Result *= (f32)1.0E-9;
+    
+    return Result;
+}
+
+internal s32
+ExecProcessAndWait(const char* Path, char** Args, memory_arena* Arena)
+{
+    s32 ExitCode = -1;
+    
+    s32 PipeEnds[2];
+    if (pipe(PipeEnds) != -1)
+    {
+        int ChildPID = fork();
+        
+        switch (ChildPID)
+        {
+            // NOTE(yuval): Fork Failed
+            case -1:
+            {
+                printf("Fork Failed!\n");
+            } break;
+            
+            // NOTE(yuval): Child Process
+            case 0:
+            {
+                // NOTE(yuval): Routing the standard output to the pipe
+                while ((dup2(PipeEnds[1], STDOUT_FILENO) == -1) && (errno == EINTR));
+                while ((dup2(PipeEnds[1], STDERR_FILENO) == -1) && (errno == EINTR));
+                close(PipeEnds[0]);
+                close(PipeEnds[1]);
+                
+                execv(Path, Args);
+            } break;
+            
+            // NOTE(yuval): Parent Process
+            default:
+            {
+                close(PipeEnds[1]);
+                
+                int Status;
+                
+                do
+                {
+                    // NOTE(yuval): Pushing the message string because later it
+                    // will be added to a messsage queue
+                    string Message = PushString(Arena, 4096);
+                    Message.Count = read(PipeEnds[0], Message.Data, Message.MemorySize);
+                    
+                    if (Message.Count != 0)
+                    {
+                        printf("%.*s", PrintableString(Message));
+                    }
+                } while (waitpid(ChildPID, &Status, WNOHANG) == 0);
+                
+                close(PipeEnds[0]);
+                
+                ExitCode = WEXITSTATUS(Status);
+            } break;
+        }
+    }
+    else
+    {
+        // TODO(yuval): Diagnostic
+    }
+    
+    return ExitCode;
+}
+
+internal b32
+BuildWorkspace(build_workspace* Workspace, memory_arena* Arena)
+{
+    u64 BuildStartCounter = mach_absolute_time();
+    
+    build_options* BuildOptions = &Workspace->Options;
+    
+    compiler_info* CompilerInfo = 0;
+    For (GlobalCompilers)
+    {
+        if (((It.Type == BuildOptions->Compiler) ||
+             BuildOptions->Compiler == BuildCompiler_Auto) &&
+            It.Path)
+        {
+            CompilerInfo = &It;
+            Break;
+        }
+    }
+    
+    if (CompilerInfo)
+    {
+        pid_t PID = getpid();
+        char BuildAppPathZ[PATH_MAX] = {};
+        s32 BuildAppPathCount = proc_pidpath(PID, BuildAppPathZ, sizeof(BuildAppPathZ));
+        
+        if (BuildAppPathCount > 0)
+        {
+            string BuildAppPath = MakeString(BuildAppPathZ,
+                                             BuildAppPathCount,
+                                             sizeof(BuildAppPathZ));
+            SetLastFolder(&BuildAppPath, "code", '/');
+            TerminateWithNull(&BuildAppPath);
+            
+            const char* CompilerArgs[512] = {};
+            CompilerArgs[0] = CompilerInfo->Name;
+            CompilerArgs[1] = "-I";
+            CompilerArgs[2] = BuildAppPath.Data;
+            CompilerArgs[4] = "-c";
+            
+            const char* LinkerArgs[512] = {};
+            LinkerArgs[0] = CompilerInfo->Name;
+            LinkerArgs[Workspace->Files.Count + 1] = "-o";
+            LinkerArgs[Workspace->Files.Count + 2] = "test"; // TODO(yuval): Use the workspace's output name & path
+            
+            temporary_memory TempMem = BeginTemporaryMemory(Arena);
+            
+            for (umm Index = 0;
+                 Index < Workspace->Files.Count;
+                 ++Index)
+            {
+                // TODO(yuval): Do I have to push this string????
+                CompilerArgs[3] = PushCopyZ(Arena, Workspace->Files.Paths[Index]);
+                
+                // TODO(yuval): Use PushCopyZ and add functions to append and set extensions for
+                // null-terminated strings
+                string ObjectFilePath = PushCopyString(Arena, Workspace->Files.Paths[Index]);
+                if (SetExtension(&ObjectFilePath, ".o"))
+                {
+                    TerminateWithNull(&ObjectFilePath);
+                    LinkerArgs[Index + 1] = ObjectFilePath.Data;
+                }
+                else
+                {
+                    // TODO(yuval): Diagnostic
+                }
+                
+                printf("Compiling: ");
+                for (const char** Arg = CompilerArgs; *Arg; ++Arg)
+                {
+                    printf("%s ", *Arg);
+                }
+                printf("\n\n");
+                
+                ExecProcessAndWait(CompilerInfo->Path, (char**)CompilerArgs, Arena);
+            }
+            
+            
+            printf("Linking: ");
+            for (const char** Arg = LinkerArgs; *Arg; ++Arg)
+            {
+                printf("%s ", *Arg);
+            }
+            printf("\n\n");
+            
+            ExecProcessAndWait(CompilerInfo->Path, (char**)LinkerArgs, Arena);
+            
+            EndTemporaryMemory(TempMem);
+        }
+        else
+        {
+            // TODO(yuval): Diagnostic
+        }
+    }
+    else
+    {
+        // TODO(yuval): Diagnostic
+    }
+    
+    u64 BuildEndCounter = mach_absolute_time();
+    printf("Build Time: %f\n", MacGetSecondsElapsed(BuildStartCounter, BuildEndCounter));
+    
+    return true;
+}
+
 internal char*
-GetCompilerPath(memory_arena* Arena, string EnvPath, const char* CompilerName)
+GetCompilerPath(const char* CompilerName,  string EnvPath, memory_arena* Arena)
 {
     char* Result = 0;
     
@@ -99,137 +295,6 @@ GetCompilerPath(memory_arena* Arena, string EnvPath, const char* CompilerName)
     return Result;
 }
 
-internal b32
-BuildWorkspace(memory_arena* Arena, build_workspace* Workspace)
-{
-    
-    build_options* BuildOptions = &Workspace->Options;
-    
-    compiler_info* CompilerInfo = 0;
-    For (GlobalCompilers)
-    {
-        if (((It.Type == BuildOptions->Compiler) ||
-             BuildOptions->Compiler == BuildCompiler_Auto) &&
-            It.Path)
-        {
-            CompilerInfo = &It;
-            Break;
-        }
-    }
-    
-    if (CompilerInfo)
-    {
-        pid_t PID = getpid();
-        char BuildAppPathZ[PATH_MAX] = {};
-        s32 BuildAppPathCount = proc_pidpath(PID, BuildAppPathZ, sizeof(BuildAppPathZ));
-        
-        if (BuildAppPathCount > 0)
-        {
-            string BuildAppPath = MakeString(BuildAppPathZ,
-                                             BuildAppPathCount,
-                                             sizeof(BuildAppPathZ));
-            SetLastFolder(&BuildAppPath, "code", '/');
-            TerminateWithNull(&BuildAppPath);
-            
-            const char* CompilerArgs[512] = {};
-            CompilerArgs[0] = CompilerInfo->Name;
-            CompilerArgs[1] = "-I";
-            CompilerArgs[2] = BuildAppPath.Data;
-            CompilerArgs[Workspace->Files.Count + 3] = "-o";
-            CompilerArgs[Workspace->Files.Count + 4] = "test"; // TODO(yuval): Use the workspace's output name & path
-            
-            temporary_memory TempMem = BeginTemporaryMemory(Arena);
-            
-            // TODO(yuval): Maybe build each file to an object file and like after all files are built?
-            for (umm Index = 0;
-                 Index < Workspace->Files.Count;
-                 ++Index)
-            {
-                // printf("Building: %.*s\n", PrintableString(Workspace->Files.Paths[Index]));
-                CompilerArgs[Index + 3] = PushCopyZ(Arena, Workspace->Files.Paths[Index]);
-            }
-            
-            printf("Running Compiler: ");
-            for (const char** Arg = CompilerArgs; *Arg; ++Arg)
-            {
-                printf("%s ", *Arg);
-            }
-            printf("\n\n");
-            
-            int PipeEnds[2];
-            if (pipe(PipeEnds) != -1)
-            {
-                int ChildPID = fork();
-                
-                switch (ChildPID)
-                {
-                    // NOTE(yuval): Fork Failed
-                    case -1:
-                    {
-                        printf("Fork Failed!\n");
-                    } break;
-                    
-                    // NOTE(yuval): Child Process
-                    case 0:
-                    {
-                        // NOTE(yuval): Routing the standard output to the pipe
-                        while ((dup2(PipeEnds[1], STDOUT_FILENO) == -1) && (errno == EINTR));
-                        while ((dup2(PipeEnds[1], STDERR_FILENO) == -1) && (errno == EINTR));
-                        close(PipeEnds[0]);
-                        close(PipeEnds[1]);
-                        
-                        execv(CompilerInfo->Path, (char**)CompilerArgs);
-                    } break;
-                    
-                    // NOTE(yuval): Parent Process
-                    default:
-                    {
-                        close(PipeEnds[1]);
-                        
-                        b32 Flag = true;
-                        char Buffer[4096] = {};
-                        int Status;
-                        
-                        size_t Count = 0;
-                        
-                        do
-                        {
-                            Count = read(PipeEnds[0], Buffer, sizeof(Buffer));
-                            
-                            if (Count != 0)
-                            {
-                                printf("%.*s", (s32)Count, Buffer);
-                            }
-                        }
-                        while (waitpid(ChildPID, &Status, WNOHANG) == 0);
-                        
-                        close(PipeEnds[0]);
-                        
-                        int CompilerExitCode =  WEXITSTATUS(Status);
-                        printf("\nThe Compiler Has Exited With Exit Code: %d\n", CompilerExitCode);
-                    } break;
-                }
-            }
-            else
-            {
-                // TODO(yuval): Diagnostic
-            }
-            
-            EndTemporaryMemory(TempMem);
-        }
-        else
-        {
-            // TODO(yuval): Diagnostic
-        }
-    }
-    else
-    {
-        // TODO(yuval): Diagnostic
-    }
-    
-    return true;
-}
-
 int
 main(int ArgCount, const char* Args[])
 {
@@ -239,6 +304,14 @@ main(int ArgCount, const char* Args[])
     
     @autoreleasepool
     {
+        // NOTE(yuval): Getting the timebase info
+        mach_timebase_info(&GlobalTimebaseInfo);
+        
+        string Test = MakeLitString("test.cpp");
+        printf("Before: %.*s\n", PrintableString(Test));
+        RemoveExtension(&Test);
+        printf("After: %.*s\n", PrintableString(Test));
+        
         if (ArgCount > 1)
         {
             memory_arena Arena = {};
@@ -249,22 +322,22 @@ main(int ArgCount, const char* Args[])
             compiler_info* Compiler = GlobalCompilers;
             Compiler->Type = BuildCompiler_Clang;
             Compiler->Name = "clang";
-            Compiler->Path = GetCompilerPath(&Arena, EnvPath, Compiler->Name);
+            Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
             ++Compiler;
             
             Compiler->Type = BuildCompiler_GPP;
             Compiler->Name = "g++";
-            Compiler->Path = GetCompilerPath(&Arena, EnvPath, Compiler->Name);
+            Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
             ++Compiler;
             
             Compiler->Type = BuildCompiler_GCC;
             Compiler->Name = "gcc";
-            Compiler->Path = GetCompilerPath(&Arena, EnvPath, Compiler->Name);
+            Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
             ++Compiler;
             
             Compiler->Type = BuildCompiler_MSVC;
             Compiler->Name = "cl";
-            Compiler->Path = GetCompilerPath(&Arena, EnvPath, Compiler->Name);
+            Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
             
             // NOTE(yuval): Build File Workspace Setup
             // TODO(yuval): Maybe name the workspace with the name of the build file?
@@ -281,7 +354,7 @@ main(int ArgCount, const char* Args[])
             BuildAddFile(&BuildFileWorkspace, MakeStringSlowly(Args[1]));
             
             // NOTE(yuval): Build File Workspace Building
-            BuildWorkspace(&Arena, &BuildFileWorkspace);
+            BuildWorkspace(&BuildFileWorkspace, &Arena);
             
 #if 0
             
