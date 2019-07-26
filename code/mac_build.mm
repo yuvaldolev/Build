@@ -44,6 +44,8 @@ struct compiler_message_queue
 #endif // #if 0
 
 global_variable mach_timebase_info_data_t GlobalTimebaseInfo;
+global_variable char GlobalBuildAppPath[PATH_MAX];
+global_variable char GlobalBuildRunTreeCodePath[PATH_MAX];
 global_variable compiler_info GlobalCompilers[BuildCompiler_Count - 1];
 //global_variable process_message_queue GlobalProcessMessageQueue = {};
 
@@ -150,13 +152,17 @@ ExecProcessAndWait(const char* Path, char** Args, memory_arena* Arena)
     return ExitCode;
 }
 
+#define BEGIN_TIMING(Name) u64 Name##StartCounter = mach_absolute_time();
+#define END_TIMING(Name) u64 Name##EndCounter = mach_absolute_time();
+
 internal b32
-BuildWorkspace(build_workspace* Workspace, memory_arena* Arena)
+BuildWorkspace(build_workspace* Workspace, memory_arena* Arena, yd_b32 IsSilentBuild = false)
 {
-    u64 BuildStartCounter = mach_absolute_time();
+    BEGIN_TIMING(Build);
+    
+    yd_b32 SuccessfulBuild = true;
     
     build_options* BuildOptions = &Workspace->Options;
-    
     compiler_info* CompilerInfo = 0;
     For (GlobalCompilers)
     {
@@ -171,78 +177,78 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena)
     
     if (CompilerInfo)
     {
-        pid_t PID = getpid();
-        char BuildAppPathZ[PATH_MAX] = {};
-        s32 BuildAppPathCount = proc_pidpath(PID, BuildAppPathZ, sizeof(BuildAppPathZ));
+        const char* CompilerArgs[512] = {};
+        CompilerArgs[0] = CompilerInfo->Name;
+        CompilerArgs[1] = "-I";
+        CompilerArgs[2] = GlobalBuildRunTreeCodePath;
+        CompilerArgs[4] = "-c";
         
-        if (BuildAppPathCount > 0)
+        const char* LinkerArgs[512] = {};
+        LinkerArgs[0] = CompilerInfo->Name;
+        LinkerArgs[Workspace->Files.Count + 1] = "-o";
+        LinkerArgs[Workspace->Files.Count + 2] = "test"; // TODO(yuval): Use the workspace's output name & path
+        
+        temporary_memory TempMem = BeginTemporaryMemory(Arena);
+        
+        BEGIN_TIMING(Compilation);
+        for (umm Index = 0;
+             Index < Workspace->Files.Count;
+             ++Index)
         {
-            string BuildAppPath = MakeString(BuildAppPathZ,
-                                             BuildAppPathCount,
-                                             sizeof(BuildAppPathZ));
-            SetLastFolder(&BuildAppPath, "code", '/');
-            TerminateWithNull(&BuildAppPath);
+            // TODO(yuval): Do I have to push this string????
+            CompilerArgs[3] = PushCopyZ(Arena, Workspace->Files.Paths[Index]);
             
-            const char* CompilerArgs[512] = {};
-            CompilerArgs[0] = CompilerInfo->Name;
-            CompilerArgs[1] = "-I";
-            CompilerArgs[2] = BuildAppPath.Data;
-            CompilerArgs[4] = "-c";
-            
-            const char* LinkerArgs[512] = {};
-            LinkerArgs[0] = CompilerInfo->Name;
-            LinkerArgs[Workspace->Files.Count + 1] = "-o";
-            LinkerArgs[Workspace->Files.Count + 2] = "test"; // TODO(yuval): Use the workspace's output name & path
-            
-            temporary_memory TempMem = BeginTemporaryMemory(Arena);
-            
-            u64 CompilationStartCounter = mach_absolute_time();
-            for (umm Index = 0;
-                 Index < Workspace->Files.Count;
-                 ++Index)
+            // TODO(yuval): Use PushCopyZ and add functions to append and set extensions for
+            // null-terminated strings
+            string ObjectFilePath = PushCopyString(Arena, Workspace->Files.Paths[Index]);
+            if (SetExtension(&ObjectFilePath, ".o"))
             {
-                // TODO(yuval): Do I have to push this string????
-                CompilerArgs[3] = PushCopyZ(Arena, Workspace->Files.Paths[Index]);
-                
-                // TODO(yuval): Use PushCopyZ and add functions to append and set extensions for
-                // null-terminated strings
-                string ObjectFilePath = PushCopyString(Arena, Workspace->Files.Paths[Index]);
-                if (SetExtension(&ObjectFilePath, ".o"))
-                {
-                    TerminateWithNull(&ObjectFilePath);
-                    LinkerArgs[Index + 1] = ObjectFilePath.Data;
-                }
-                else
-                {
-                    // TODO(yuval): Diagnostic
-                }
-                
+                TerminateWithNull(&ObjectFilePath);
+                LinkerArgs[Index + 1] = ObjectFilePath.Data;
+            }
+            else
+            {
+                // TODO(yuval): Diagnostic
+            }
+            
+            if (!IsSilentBuild)
+            {
                 printf("Compiling File: ");
                 for (const char** Arg = CompilerArgs; *Arg; ++Arg)
                 {
                     printf("%s ", *Arg);
                 }
-                printf("\n\n");
-                
-                ExecProcessAndWait(CompilerInfo->Path, (char**)CompilerArgs, Arena);
+                printf("\n");
             }
-            u64 CompilationEndCounter = mach_absolute_time();
             
-            u64 LinkageStartCounter = mach_absolute_time();
+            int ExitCode = ExecProcessAndWait(CompilerInfo->Path, (char**)CompilerArgs, Arena);
+            SuccessfulBuild &= (ExitCode == 0);
+        }
+        if (!IsSilentBuild)
+        {
+            printf("\n");
+        }
+        END_TIMING(Compilation);
+        
+        BEGIN_TIMING(Linkage);
+        if (!IsSilentBuild)
+        {
             printf("Linking: ");
             for (const char** Arg = LinkerArgs; *Arg; ++Arg)
             {
                 printf("%s ", *Arg);
             }
             printf("\n\n");
-            u64 LinkageEndCounter = mach_absolute_time();
-            
-            ExecProcessAndWait(CompilerInfo->Path, (char**)LinkerArgs, Arena);
-            
-            EndTemporaryMemory(TempMem);
-            
-            u64 BuildEndCounter = mach_absolute_time();
-            
+        }
+        int ExitCode = ExecProcessAndWait(CompilerInfo->Path, (char**)LinkerArgs, Arena);
+        SuccessfulBuild &= (ExitCode == 0);
+        END_TIMING(Linkage);
+        
+        EndTemporaryMemory(TempMem);
+        END_TIMING(Build);
+        
+        if (!IsSilentBuild)
+        {
             // NOTE(yuval): Workspace Build Stats
             f32 FrontendTime = MacGetSecondsElapsed(BuildStartCounter, CompilationStartCounter) +
                 MacGetSecondsElapsed(CompilationEndCounter, LinkageStartCounter) +
@@ -260,10 +266,6 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena)
             
             f32 TotalBuildTime = MacGetSecondsElapsed(BuildStartCounter, BuildEndCounter);
             printf("Total Build Time: %f seconds\n", TotalBuildTime);
-        }
-        else
-        {
-            // TODO(yuval): Diagnostic
         }
     }
     else
@@ -327,10 +329,19 @@ main(int ArgCount, const char* Args[])
         // NOTE(yuval): Getting the timebase info
         mach_timebase_info(&GlobalTimebaseInfo);
         
-        string Test = MakeLitString("test.cpp");
-        printf("Before: %.*s\n", PrintableString(Test));
-        RemoveExtension(&Test);
-        printf("After: %.*s\n", PrintableString(Test));
+        pid_t PID = getpid();
+        s32 BuildAppPathCount = proc_pidpath(PID, GlobalBuildAppPath, sizeof(GlobalBuildAppPath));
+        if (BuildAppPathCount > 0)
+        {
+            yd_umm BuildAppFilePathLastSlashIndex = RFind(GlobalBuildAppPath, BuildAppPathCount, '/');
+            ConcatStrings(GlobalBuildRunTreeCodePath, sizeof(GlobalBuildRunTreeCodePath),
+                          GlobalBuildAppPath, BuildAppFilePathLastSlashIndex + 1,
+                          Literal("code/"));
+        }
+        else
+        {
+            // TODO(yuval): Diagnostic
+        }
         
         if (ArgCount > 1)
         {

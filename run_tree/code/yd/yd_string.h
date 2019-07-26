@@ -138,6 +138,8 @@ yd_b32 Append(string* Dest, char C);
 yd_b32 TerminateWithNull(string* Str);
 yd_b32 AppendPadding(string* Dest, char C, yd_umm TargetCount);
 
+yd_b32 ConcatStrings(string* Dest, string SourceA, string SourceB);
+
 void ReplaceRange(string* Str, yd_umm First, yd_umm OnePastLast, char With);
 void ReplaceRange(string* Str, yd_umm First, yd_umm OnePastLast, const char* With);
 void ReplaceRange(string* Str, yd_umm First, yd_umm OnePastLast, string With);
@@ -603,6 +605,49 @@ yd_internal inline yd_b32
 Append(string* Dest, string Source)
 {
     yd_b32 Result = AppendPartial(Dest, Source);
+    return Result;
+}
+
+//
+// NOTE(yuval): String Concatenation Functions
+//
+
+yd_internal inline yd_b32
+ConcatStrings(char* Dest, yd_umm DestCount,
+              const char* SourceA, yd_umm SourceACount,
+              const char* SourceB, yd_umm SourceBCount)
+{
+    string DestString = MakeString(Dest, DestCount - 1);
+    string SourceAString = MakeString((char*)SourceA, SourceACount);
+    string SourceBString = MakeString((char*)SourceB, SourceBCount);
+    
+    yd_b32 Result = ConcatStrings(&DestString, SourceAString, SourceBString);
+    Dest[DestString.Count] = 0;
+    
+    return Result;
+}
+
+yd_internal inline yd_b32
+ConcatStrings(char* Dest, yd_umm DestCount,
+              string SourceA, string SourceB)
+{
+    string DestString = MakeString(Dest, DestCount - 1);
+    
+    yd_b32 Result = ConcatStrings(&DestString, SourceA, SourceB);
+    Dest[DestString.Count] = 0;
+    
+    return Result;
+}
+
+yd_internal inline yd_b32
+ConcatStrings(string* Dest,
+              const char* SourceA, yd_umm SourceACount,
+              const char* SourceB, yd_umm SourceBCount)
+{
+    string SourceAString = MakeString((char*)SourceA, SourceACount);
+    string SourceBString = MakeString((char*)SourceB, SourceBCount);
+    
+    yd_b32 Result = ConcatStrings(Dest, SourceAString, SourceBString);
     return Result;
 }
 
@@ -2422,6 +2467,39 @@ AppendPadding(string* Dest, char C, yd_umm TargetCount)
 }
 
 //
+// NOTE(yuval): String Concatenation
+//
+
+yd_b32
+ConcatStrings(string* Dest, string SourceA, string SourceB)
+{
+    yd_b32 CanFitConcat = (Dest->MemorySize >= SourceA.Count + SourceB.Count);
+    
+    if (CanFitConcat)
+    {
+        yd_umm DestIndex = 0;
+        
+        for (yd_umm SourceIndex = 0;
+             SourceIndex < SourceA.Count;
+             ++SourceIndex, ++DestIndex)
+        {
+            Dest->Data[DestIndex] = SourceA.Data[SourceIndex];
+        }
+        
+        for (yd_umm SourceIndex = 0;
+             SourceIndex < SourceB.Count;
+             ++SourceIndex, ++DestIndex)
+        {
+            Dest->Data[DestIndex] = SourceB.Data[SourceIndex];
+        }
+        
+        Dest->Count = SourceA.Count + SourceB.Count;
+    }
+    
+    return CanFitConcat;
+}
+
+//
 // NOTE(yuval): Other String Editing Functions
 //
 
@@ -3282,6 +3360,24 @@ ReverseSeekSlash(string Str)
     return Result;
 }
 
+#if 0
+yd_b32
+SetLastFolder(char* Dir, yd_umm Count, const char* FolderName, char Slash)
+{
+    yd_b32 Result = false;
+    yd_umm LastSlashIndex = ReverseSeekSlash(Dir, Count);
+    
+    if (LastSlashIndex != STRING_NOT_FOUND)
+    {
+        yd_umm NewCount = LastSlashIndex + 1;
+        NewCount = Append(Dir, Count, FolderName));
+        {
+            if (Append())
+        }
+    }
+}
+#endif // #if 0
+
 yd_b32
 SetLastFolder(string* Dir, const char* FolderName, char Slash)
 {
@@ -3309,6 +3405,14 @@ SetLastFolder(string* Dir, const char* FolderName, char Slash)
     
     return Result;
 }
+
+#if 0
+yd_b32
+SetLastFolder(char* Dir, yd_umm Count, string FolderName, char Slash)
+{
+    
+}
+#endif // #if 0
 
 yd_b32
 SetLastFolder(string* Dir, string FolderName, char Slash)
