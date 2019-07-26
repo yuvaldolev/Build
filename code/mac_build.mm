@@ -386,7 +386,10 @@ main(int ArgCount, const char* Args[])
                 // NOTE(yuval): Build File Workspace Building
                 if (BuildWorkspace(&BuildFileWorkspace, &Arena))
                 {
-                    
+                    // TODO(yuval): Should we fork and exec the build file?
+                    // TODO(yuval): Execv need the full build file path!!!!!!!!
+                    const char* Arg = "build_file";
+                    execv("build_file", (char**)&Arg);
                 }
             }
             else
