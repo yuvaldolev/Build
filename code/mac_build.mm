@@ -24,6 +24,9 @@
  - Platform specific message boxes.
 */
 
+#define BEGIN_TIMING(Name) u64 Name##StartCounter = mach_absolute_time();
+#define END_TIMING(Name) u64 Name##EndCounter = mach_absolute_time();
+
 // TODO(yuval): Use a hash map for this
 struct compiler_info
 {
@@ -152,9 +155,6 @@ ExecProcessAndWait(const char* Path, char** Args, memory_arena* Arena)
     return ExitCode;
 }
 
-#define BEGIN_TIMING(Name) u64 Name##StartCounter = mach_absolute_time();
-#define END_TIMING(Name) u64 Name##EndCounter = mach_absolute_time();
-
 internal b32
 BuildWorkspace(build_workspace* Workspace, memory_arena* Arena, yd_b32 IsSilentBuild = false)
 {
@@ -183,10 +183,14 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena, yd_b32 IsSilentB
         CompilerArgs[2] = GlobalBuildRunTreeCodePath;
         CompilerArgs[4] = "-c";
         
+        char FullOutputPath[PATH_MAX];
+        ConcatStrings(FullOutputPath, sizeof(FullOutputPath),
+                      BuildOptions->OutputPath, BuildOptions->OutputName);
+        
         const char* LinkerArgs[512] = {};
         LinkerArgs[0] = CompilerInfo->Name;
         LinkerArgs[Workspace->Files.Count + 1] = "-o";
-        LinkerArgs[Workspace->Files.Count + 2] = "test"; // TODO(yuval): Use the workspace's output name & path
+        LinkerArgs[Workspace->Files.Count + 2] = FullOutputPath; // TODO(yuval): Use the workspace's output name & path
         
         temporary_memory TempMem = BeginTemporaryMemory(Arena);
         
@@ -337,76 +341,62 @@ main(int ArgCount, const char* Args[])
             ConcatStrings(GlobalBuildRunTreeCodePath, sizeof(GlobalBuildRunTreeCodePath),
                           GlobalBuildAppPath, BuildAppFilePathLastSlashIndex + 1,
                           Literal("code/"));
+            
+            if (ArgCount > 1)
+            {
+                memory_arena Arena = {};
+                
+                // NOTE(yuval): Compiler Paths Discovery
+                string EnvPath = MakeStringSlowly(getenv("PATH"));
+                
+                compiler_info* Compiler = GlobalCompilers;
+                Compiler->Type = BuildCompiler_Clang;
+                Compiler->Name = "clang";
+                Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
+                ++Compiler;
+                
+                Compiler->Type = BuildCompiler_GPP;
+                Compiler->Name = "g++";
+                Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
+                ++Compiler;
+                
+                Compiler->Type = BuildCompiler_GCC;
+                Compiler->Name = "gcc";
+                Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
+                ++Compiler;
+                
+                Compiler->Type = BuildCompiler_MSVC;
+                Compiler->Name = "cl";
+                Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
+                
+                // NOTE(yuval): Build File Workspace Setup
+                // TODO(yuval): Maybe name the workspace with the name of the build file?
+                build_workspace BuildFileWorkspace = {};
+                BuildFileWorkspace.Name = MakeLitString("Build File");
+                
+                build_options* Options = &BuildFileWorkspace.Options;
+                Options->OptimizationLevel = 0; // TODO(yuval): Use max optimization level
+                Options->OutputType = BuildOutput_Executable;
+                Options->OutputName = MakeLitString("build_file");
+                Options->OutputPath = MakeLitString(""); // TODO(yuval): Add an output path;
+                Options->Compiler = BuildCompiler_Auto;
+                
+                BuildAddFile(&BuildFileWorkspace, MakeStringSlowly(Args[1]));
+                
+                // NOTE(yuval): Build File Workspace Building
+                if (BuildWorkspace(&BuildFileWorkspace, &Arena))
+                {
+                    
+                }
+            }
+            else
+            {
+                printf("A Build File Was Not Specified\n");
+            }
         }
         else
         {
             // TODO(yuval): Diagnostic
-        }
-        
-        if (ArgCount > 1)
-        {
-            memory_arena Arena = {};
-            
-            // NOTE(yuval): Compiler Paths Discovery
-            string EnvPath = MakeStringSlowly(getenv("PATH"));
-            
-            compiler_info* Compiler = GlobalCompilers;
-            Compiler->Type = BuildCompiler_Clang;
-            Compiler->Name = "clang";
-            Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
-            ++Compiler;
-            
-            Compiler->Type = BuildCompiler_GPP;
-            Compiler->Name = "g++";
-            Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
-            ++Compiler;
-            
-            Compiler->Type = BuildCompiler_GCC;
-            Compiler->Name = "gcc";
-            Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
-            ++Compiler;
-            
-            Compiler->Type = BuildCompiler_MSVC;
-            Compiler->Name = "cl";
-            Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
-            
-            // NOTE(yuval): Build File Workspace Setup
-            // TODO(yuval): Maybe name the workspace with the name of the build file?
-            build_workspace BuildFileWorkspace = {};
-            BuildFileWorkspace.Name = MakeLitString("Build File");
-            
-            build_options* Options = &BuildFileWorkspace.Options;
-            Options->OptimizationLevel = 0; // TODO(yuval): Use max optimization level
-            Options->OutputType = BuildOutput_Executable;
-            Options->OutputName = MakeLitString("build_file");
-            Options->OutputPath = MakeLitString(""); // TODO(yuval): Add an output path;
-            Options->Compiler = BuildCompiler_Auto;
-            
-            BuildAddFile(&BuildFileWorkspace, MakeStringSlowly(Args[1]));
-            
-            // NOTE(yuval): Build File Workspace Building
-            BuildWorkspace(&BuildFileWorkspace, &Arena);
-            
-#if 0
-            
-            if (CompilerInstalled(Path, MakeLitString("clang")))
-            {
-                
-            }
-            else if (CompilerInstalled(Path, MakeLitString("g++")))
-            {
-            }
-            else if (CompilerInstalled(Path, MakeLitString("cl")))
-            {
-            }
-            else
-            {
-            }
-#endif // #if 0
-        }
-        else
-        {
-            printf("A Build File Was Not Specified\n");
         }
     }
     
