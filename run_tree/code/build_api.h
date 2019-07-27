@@ -35,7 +35,7 @@ typedef uintptr_t build_umm;
 #include "yd/yd_memory.h"
 #include "yd/yd_string.h"
 
-#define BUILD_FUNC
+#define BUILD_FN // TODO(yuval): Make this export functions
 
 struct build_file_array
 {
@@ -109,18 +109,24 @@ struct build_message
     } Data;
 };
 
-build_global_variable build_workspace_array GlobalWorkspaces = {};
+#define BUILD_CREATE_WORKSPACE(FnName) build_workspace* FnName(string Name);
+typedef BUILD_CREATE_WORKSPACE(build_create_workspace);
 
-build_internal build_workspace*
-BuildCreateWorkspace(string Name)
+#define START_BUILD(Name) void Name();
+typedef START_BUILD(start_build);
+
+#define BUILD_WAIT_FOR_MESSAGE(Name) build_message Name();
+typedef BUILD_WAIT_FOR_MESSAGE(build_wait_for_message)
+
+struct build_app
 {
-    build_workspace* Result = &GlobalWorkspaces.Workspaces[GlobalWorkspaces.Count++];
+    build_workspace_array Workspaces;
     
-    Result->Name = Name;
-    // TODO(yuval): Default workspace options
+    build_create_workspace* CreateWorkspace;
     
-    return Result;
-}
+    start_build* StartBuild;
+    build_wait_for_message* WaitForMessage;
+};
 
 build_internal void
 BuildAddFile(build_workspace* Workspace, string FileName)
@@ -131,66 +137,6 @@ BuildAddFile(build_workspace* Workspace, string FileName)
     {
         Files->Paths[Files->Count++] = FileName;
     }
-}
-
-build_internal build_message
-BuildWaitForMessage()
-{
-    // TODO(yuval): Create a proper messaging system and dequeue messages here.
-    build_local_persist build_b32 Started = false;
-    build_local_persist build_b32 WorkspacesBuildShouldStart = false;
-    build_local_persist build_umm WorkspaceIndex = 0;
-    build_local_persist build_umm FileIndex = 0;
-    
-#if 0
-    printf("Waiting For Message: (");
-    printf("Started: %d, ", Started);
-    printf("Workspace Index: %lu/%lu, ", WorkspaceIndex, GlobalWorkspaces.Count - 1);
-    printf("File Index: %lu)\n", FileIndex);
-#endif // #if 0
-    
-    build_message Message = {};
-    
-    if (!Started)
-    {
-        Message.Type = BuildMessage_Started;
-        Started = true;
-        WorkspacesBuildShouldStart = true;
-    }
-    else if (WorkspaceIndex >= GlobalWorkspaces.Count - 1)
-    {
-        Message.Type = BuildMessage_Completed;
-        Message.Data.Bool = true;
-    }
-    else
-    {
-        build_workspace* CurrWorkspace = &GlobalWorkspaces.Workspaces[WorkspaceIndex];
-        
-        if (WorkspacesBuildShouldStart ||
-            (FileIndex >= CurrWorkspace->Files.Count))
-        {
-            if (WorkspacesBuildShouldStart)
-            {
-                WorkspacesBuildShouldStart = false;
-            }
-            else
-            {
-                CurrWorkspace = &GlobalWorkspaces.Workspaces[++WorkspaceIndex];
-            }
-            
-            Message.Type = BuildMessage_Workspace;
-            Message.Data.String = CurrWorkspace->Name;
-            
-            FileIndex = 0;
-        }
-        else
-        {
-            Message.Type = BuildMessage_File;
-            Message.Data.String = CurrWorkspace->Files.Paths[FileIndex++];
-        }
-    }
-    
-    return Message;
 }
 
 #define BUILD_API_H

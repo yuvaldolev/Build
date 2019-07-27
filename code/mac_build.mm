@@ -24,8 +24,10 @@
  - Platform specific message boxes.
 */
 
+#if 0
 #define BEGIN_TIMING(Name) u64 Name##StartCounter = mach_absolute_time();
 #define END_TIMING(Name) u64 Name##EndCounter = mach_absolute_time();
+#endif // #if 0
 
 // TODO(yuval): Use a hash map for this
 struct compiler_info
@@ -155,10 +157,91 @@ ExecProcessAndWait(const char* Path, char** Args, memory_arena* Arena)
     return ExitCode;
 }
 
-internal b32
-BuildWorkspace(build_workspace* Workspace, memory_arena* Arena, yd_b32 IsSilentBuild = false)
+enum time_event_type
 {
-    BEGIN_TIMING(Build);
+    TimeEvent_None,
+    
+    TimeEvent_BeginBlock,
+    TimeEvent_EndBlock
+};
+
+struct time_event
+{
+    time_event_type Type;
+    const char* Name;
+    u64 Clock;
+    u64 CycleCount;
+    
+    // TODO(yuval): Change this to a union as more time_event types are added
+    time_event* Parent; // NOTE(yuval): Used to TimeEvent_BeginBlock
+    
+};
+
+struct time_events_queue
+{
+    time_event Events[1024];
+    yd_umm ReadIndex;
+    yd_umm WriteIndex;
+};
+
+global_variable time_events_queue GlobalTimeEventsQueue;
+
+// TODO(yuval): Maybe force sending CycleCount (get rid of the default value for the parameter)
+inline void
+RecordTimeEvent(time_events_queue* Queue, time_event_type Type,
+                const char* Name, u64 Clock, u64 CycleCount = 0)
+{
+    // TODO(yuval): Make this write thread-safe
+    time_event* Event = &Queue->Events[Queue->WriteIndex++];
+    Queue->WriteIndex %= ArrayCount(Queue->Events);
+    
+    Event->Type = Type;
+    Event->Name = Name;
+    Event->Clock = Clock;
+    Event->CycleCount = CycleCount;
+}
+
+inline time_event*
+ReadTimeEvent(time_events_queue* Queue)
+{
+    // TODO(yuval): Make this read thread-safe
+    time_event* Event = 0;
+    
+    if (Queue->ReadIndex != Queue->WriteIndex)
+    {
+        Event = &Queue->Events[Queue->ReadIndex++];
+        Queue->ReadIndex %= ArrayCount(Queue->Events);
+    }
+    
+    return Event;
+}
+
+// TODO(yuval): Maybe take a queue parameter?
+#define BeginTimedBlock(Name) { RecordTimeEvent(&GlobalTimeEventsQueue, TimeEvent_BeginBlock, \
+    Name, mach_absolute_time()); }
+#define EndTimedBlock() { RecordTimeEvent(&GlobalTimeEventsQueue, TimeEvent_EndBlock, \
+    "EndBlock_", mach_absolute_time()); }
+
+struct timed_block
+{
+    timed_block(const char* Name)
+    {
+        BeginTimedBlock(Name);
+    }
+    
+    ~timed_block()
+    {
+        EndTimedBlock();
+    }
+};
+
+#define TimedBlock(Name) timed_block Join2(TimedBlock_, __COUNTER__)(Name)
+#define TimedFunction TimedBlock(__FUNCTION__)
+
+internal build_b32
+BuildWorkspace(build_workspace* Workspace, memory_arena* Arena, b32 IsSilentBuild)
+{
+    TimedFunction;
     
     yd_b32 SuccessfulBuild = true;
     
@@ -194,83 +277,66 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena, yd_b32 IsSilentB
         
         temporary_memory TempMem = BeginTemporaryMemory(Arena);
         
-        BEGIN_TIMING(Compilation);
-        for (umm Index = 0;
-             Index < Workspace->Files.Count;
-             ++Index)
         {
-            // TODO(yuval): Do I have to push this string????
-            CompilerArgs[3] = PushCopyZ(Arena, Workspace->Files.Paths[Index]);
+            TimedBlock("Compilation");
             
-            // TODO(yuval): Use PushCopyZ and add functions to append and set extensions for
-            // null-terminated strings
-            string ObjectFilePath = PushCopyString(Arena, Workspace->Files.Paths[Index]);
-            if (SetExtension(&ObjectFilePath, ".o"))
+            for (umm Index = 0;
+                 Index < Workspace->Files.Count;
+                 ++Index)
             {
-                TerminateWithNull(&ObjectFilePath);
-                LinkerArgs[Index + 1] = ObjectFilePath.Data;
-            }
-            else
-            {
-                // TODO(yuval): Diagnostic
+                // TODO(yuval): Do I have to push this string????
+                CompilerArgs[3] = PushCopyZ(Arena, Workspace->Files.Paths[Index]);
+                
+                // TODO(yuval): Use PushCopyZ and add functions to append and set extensions for
+                // null-terminated strings
+                string ObjectFilePath = PushCopyString(Arena, Workspace->Files.Paths[Index]);
+                if (SetExtension(&ObjectFilePath, ".o"))
+                {
+                    TerminateWithNull(&ObjectFilePath);
+                    LinkerArgs[Index + 1] = ObjectFilePath.Data;
+                }
+                else
+                {
+                    // TODO(yuval): Diagnostic
+                }
+                
+                if (!IsSilentBuild)
+                {
+                    printf("Compiling File: ");
+                    for (const char** Arg = CompilerArgs; *Arg; ++Arg)
+                    {
+                        printf("%s ", *Arg);
+                    }
+                    printf("\n");
+                }
+                
+                int ExitCode = ExecProcessAndWait(CompilerInfo->Path, (char**)CompilerArgs, Arena);
+                SuccessfulBuild &= (ExitCode == 0);
             }
             
             if (!IsSilentBuild)
             {
-                printf("Compiling File: ");
-                for (const char** Arg = CompilerArgs; *Arg; ++Arg)
+                printf("\n");
+            }
+        }
+        
+        {
+            TimedBlock("Linkage");
+            
+            if (!IsSilentBuild)
+            {
+                printf("Linking: ");
+                for (const char** Arg = LinkerArgs; *Arg; ++Arg)
                 {
                     printf("%s ", *Arg);
                 }
-                printf("\n");
+                printf("\n\n");
             }
-            
-            int ExitCode = ExecProcessAndWait(CompilerInfo->Path, (char**)CompilerArgs, Arena);
+            int ExitCode = ExecProcessAndWait(CompilerInfo->Path, (char**)LinkerArgs, Arena);
             SuccessfulBuild &= (ExitCode == 0);
         }
-        if (!IsSilentBuild)
-        {
-            printf("\n");
-        }
-        END_TIMING(Compilation);
-        
-        BEGIN_TIMING(Linkage);
-        if (!IsSilentBuild)
-        {
-            printf("Linking: ");
-            for (const char** Arg = LinkerArgs; *Arg; ++Arg)
-            {
-                printf("%s ", *Arg);
-            }
-            printf("\n\n");
-        }
-        int ExitCode = ExecProcessAndWait(CompilerInfo->Path, (char**)LinkerArgs, Arena);
-        SuccessfulBuild &= (ExitCode == 0);
-        END_TIMING(Linkage);
         
         EndTemporaryMemory(TempMem);
-        END_TIMING(Build);
-        
-        if (!IsSilentBuild)
-        {
-            // NOTE(yuval): Workspace Build Stats
-            f32 FrontendTime = MacGetSecondsElapsed(BuildStartCounter, CompilationStartCounter) +
-                MacGetSecondsElapsed(CompilationEndCounter, LinkageStartCounter) +
-                MacGetSecondsElapsed(LinkageEndCounter, BuildEndCounter);
-            printf("Front-end Time: %f seconds\n", FrontendTime);
-            
-            f32 CompilationTime = MacGetSecondsElapsed(CompilationStartCounter, CompilationEndCounter);
-            printf("    Compilation Time: %f seconds\n", CompilationTime);
-            
-            f32 LinkageTime = MacGetSecondsElapsed(LinkageStartCounter, LinkageEndCounter);
-            printf("    Linkage Time: %f seconds\n", LinkageTime);
-            
-            f32 BackendTime = MacGetSecondsElapsed(CompilationStartCounter, LinkageEndCounter);
-            printf("Back-end Time: %f seconds\n", BackendTime);
-            
-            f32 TotalBuildTime = MacGetSecondsElapsed(BuildStartCounter, BuildEndCounter);
-            printf("Total Build Time: %f seconds\n", TotalBuildTime);
-        }
     }
     else
     {
@@ -384,12 +450,14 @@ main(int ArgCount, const char* Args[])
                 BuildAddFile(&BuildFileWorkspace, MakeStringSlowly(Args[1]));
                 
                 // NOTE(yuval): Build File Workspace Building
-                if (BuildWorkspace(&BuildFileWorkspace, &Arena))
+                if (BuildWorkspace(&BuildFileWorkspace, &Arena, true))
                 {
                     // TODO(yuval): Should we fork and exec the build file?
                     // TODO(yuval): Execv need the full build file path!!!!!!!!
-                    const char* Arg = "build_file";
-                    execv("build_file", (char**)&Arg);
+                    const char* BuildFileArgs[2] = {};
+                    BuildFileArgs[0] = "build_file";
+                    //ExecProcessAndWait("build_file", (char**)BuildFileArgs, &Arena);
+                    execv("build_file", (char**)BuildFileArgs);
                 }
             }
             else

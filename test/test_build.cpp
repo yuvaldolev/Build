@@ -3,13 +3,15 @@
 #include <stdio.h>
 
 build_internal void
-Build()
+Build(build_app* App)
 {
     build_b32 Building = true;
     
+    App->StartBuild();
+    
     while (Building)
     {
-        build_message Message = BuildWaitForMessage();
+        build_message Message = App->WaitForMessage();
         
         switch (Message.Type)
         {
@@ -76,9 +78,9 @@ SetupRelease(build_workspace* Workspace)
 }
 
 build_internal build_workspace*
-StartWorkspace(string Name)
+StartWorkspace(build_app* App, string Name)
 {
-    build_workspace* Workspace = BuildCreateWorkspace(Name);
+    build_workspace* Workspace = App->CreateWorkspace(Name);
     
     // TODO(yuval): Flags to indicate whether or not to use metaprogramming
     
@@ -87,30 +89,24 @@ StartWorkspace(string Name)
     return Workspace;
 }
 
-BUILD_FUNC void
-BuildDebug()
+BUILD_FN void
+BuildDebug(build_app* App)
 {
-    build_workspace* Workspace = StartWorkspace(MakeLitString("Debug"));
+    build_workspace* Workspace = StartWorkspace(App, MakeLitString("Debug"));
     SetupDebug(Workspace);
     
-    build_workspace* Workspace2 = StartWorkspace(MakeLitString("Debug2"));
+    build_workspace* Workspace2 = StartWorkspace(App, MakeLitString("Debug2"));
     SetupDebug(Workspace2);
     
-    Build();
+    Build(App);
 }
 
-BUILD_FUNC void
-BuildRelease()
+BUILD_FN void
+BuildRelease(build_app* App)
 {
-    build_workspace* Workspace = StartWorkspace(MakeLitString("Release"));
+    build_workspace* Workspace = StartWorkspace(App, MakeLitString("Release"));
     SetupRelease(Workspace);
-    Build();
-}
-
-int main()
-{
-    BuildDebug();
-    return 0;
+    Build(App);
 }
 
 // TODO(yuval): #build BuildDebug
