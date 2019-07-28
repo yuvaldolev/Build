@@ -1,4 +1,4 @@
-#if defined(BUILD_ASSERT_H)
+#if !defined(BUILD_ASSERT_H)
 
 #if BUILD_SLOW
 // TODO(yuval): Temporary
@@ -45,4 +45,4 @@ if (!(Expression)) \
 #endif // #if BUILD_SLOW
 
 #define BUILD_ASSERT_H
-#endif // #if defined(BUILD_ASSERT_H)
+#endif // #if !defined(BUILD_ASSERT_H)

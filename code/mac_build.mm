@@ -169,6 +169,8 @@ struct time_event
 {
     time_event_type Type;
     const char* Name;
+    // TODO(yuval): Maybe add a name hash so that we would be able to quickly search an event by its name
+    
     u64 Clock;
     u64 CycleCount;
     
@@ -180,25 +182,33 @@ struct time_event
 struct time_events_queue
 {
     time_event Events[1024];
-    yd_umm ReadIndex;
-    yd_umm WriteIndex;
+    umm ReadIndex;
+    umm WriteIndex;
 };
 
 global_variable time_events_queue GlobalTimeEventsQueue;
 
 // TODO(yuval): Maybe force sending CycleCount (get rid of the default value for the parameter)
-inline void
+inline b32
 RecordTimeEvent(time_events_queue* Queue, time_event_type Type,
                 const char* Name, u64 Clock, u64 CycleCount = 0)
 {
-    // TODO(yuval): Make this write thread-safe
-    time_event* Event = &Queue->Events[Queue->WriteIndex++];
-    Queue->WriteIndex %= ArrayCount(Queue->Events);
+    umm NextWriteIndex = (Queue->WriteIndex + 1) % ArrayCount(Queue->Events);
+    b32 CanRecordTimeEvent = (NextWriteIndex != Queue->ReadIndex);
     
-    Event->Type = Type;
-    Event->Name = Name;
-    Event->Clock = Clock;
-    Event->CycleCount = CycleCount;
+    // TODO(yuval): Make this write thread-safe
+    if (CanRecordTimeEvent)
+    {
+        time_event* Event = &Queue->Events[Queue->WriteIndex];
+        Queue->WriteIndex = NextWriteIndex;
+        
+        Event->Type = Type;
+        Event->Name = Name;
+        Event->Clock = Clock;
+        Event->CycleCount = CycleCount;
+    }
+    
+    return CanRecordTimeEvent;
 }
 
 inline time_event*
