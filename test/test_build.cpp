@@ -7,11 +7,11 @@ Build(build_app* App)
 {
     build_b32 Building = true;
     
-    App->StartBuild();
+    StartBuild(App);
     
     while (Building)
     {
-        build_message Message = App->WaitForMessage();
+        build_message Message = BuildWaitForMessage(App);
         
         switch (Message.Type)
         {
@@ -80,7 +80,7 @@ SetupRelease(build_workspace* Workspace)
 build_internal build_workspace*
 StartWorkspace(build_app* App, string Name)
 {
-    build_workspace* Workspace = App->CreateWorkspace(Name);
+    build_workspace* Workspace = BuildCreateWorkspace(App, Name);
     
     // TODO(yuval): Flags to indicate whether or not to use metaprogramming
     

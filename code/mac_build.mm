@@ -248,8 +248,86 @@ struct timed_block
 #define TimedBlock(Name) timed_block Join2(TimedBlock_, __COUNTER__)(Name)
 #define TimedFunction TimedBlock(__FUNCTION__)
 
-internal build_b32
-BuildWorkspace(build_workspace* Workspace, memory_arena* Arena, b32 IsSilentBuild)
+// TODO(yuval): Move this to another file
+#define COMPILATION_TIMED_BLOCK_NAME "Compilation"
+#define LINKAGE_TIMED_BLOCK_NAME "Linkage"
+
+internal void
+PrintWorkspaceBuildStats(time_events_queue* Queue)
+{
+    f32 TotalBuildTime = -1.0f;
+    f32 CompilationTime = -1.0f;
+    f32 LinkageTime = -1.0f;
+    
+    time_event* LastTimedBlock = 0;
+    
+    time_event* Event = ReadTimeEvent(Queue);
+    while (Event)
+    {
+        switch (Event->Type)
+        {
+            case TimeEvent_BeginBlock:
+            {
+                // TODO(yuval): The parent event and the OpenBlock event can change when new events
+                // are inserted to the queue, FIX THIS!!!
+                Event->Parent = LastTimedBlock;
+                LastTimedBlock = Event;
+            } break;
+            
+            case TimeEvent_EndBlock:
+            {
+                if (LastTimedBlock)
+                {
+                    f32* Time = 0;
+                    
+                    if (StringsMatch(LastTimedBlock->Name, "BuildWorkspace"))
+                    {
+                        Time = &TotalBuildTime;
+                    }
+                    
+                    else if (StringsMatch(LastTimedBlock->Name,
+                                          COMPILATION_TIMED_BLOCK_NAME))
+                    {
+                        Time = &CompilationTime;
+                    }
+                    else if (StringsMatch(LastTimedBlock->Name,
+                                          LINKAGE_TIMED_BLOCK_NAME))
+                    {
+                        Time = &LinkageTime;
+                    }
+                    
+                    if (Time)
+                    {
+                        *Time = MacGetSecondsElapsed(LastTimedBlock->Clock, Event->Clock);
+                    }
+                    
+                    LastTimedBlock = LastTimedBlock->Parent;
+                }
+                else
+                {
+                    // TODO(yuval): Diagnostic
+                }
+            } break;
+        }
+        
+        Event = ReadTimeEvent(Queue);
+    }
+    
+    if ((TotalBuildTime != -1.0f) && (CompilationTime != -1.0f) && (LinkageTime != -1.0f))
+    {
+        f32 BackendTime = CompilationTime + LinkageTime;
+        f32 FrontendTime = TotalBuildTime - BackendTime;
+        
+        printf("Front-end Time: %f seconds\n", FrontendTime);
+        printf("    Compilation Time: %f seconds\n", CompilationTime);
+        printf("    Linkage Time: %f seconds\n", LinkageTime);
+        printf("Back-end Time: %f seconds\n", BackendTime);
+        printf("Total Build Time: %f seconds\n", TotalBuildTime);
+    }
+}
+
+internal b32
+BuildWorkspace(build_workspace* Workspace, memory_arena* Arena, b32 IsSilentBuild = false)
 {
     TimedFunction;
     
@@ -282,13 +360,16 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena, b32 IsSilentBuil
         
         const char* LinkerArgs[512] = {};
         LinkerArgs[0] = CompilerInfo->Name;
+        
+        // TODO(yuval): Add workspace options for compiling as shared/static library
+        // in addition to compiling as an executable
         LinkerArgs[Workspace->Files.Count + 1] = "-o";
         LinkerArgs[Workspace->Files.Count + 2] = FullOutputPath; // TODO(yuval): Use the workspace's output name & path
         
         temporary_memory TempMem = BeginTemporaryMemory(Arena);
         
         {
-            TimedBlock("Compilation");
+            TimedBlock(COMPILATION_TIMED_BLOCK_NAME);
             
             for (umm Index = 0;
                  Index < Workspace->Files.Count;
@@ -330,8 +411,9 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena, b32 IsSilentBuil
             }
         }
         
+        if (SuccessfulBuild)
         {
-            TimedBlock("Linkage");
+            TimedBlock(LINKAGE_TIMED_BLOCK_NAME);
             
             if (!IsSilentBuild)
             {
@@ -409,6 +491,11 @@ main(int ArgCount, const char* Args[])
         // NOTE(yuval): Getting the timebase info
         mach_timebase_info(&GlobalTimebaseInfo);
         
+        build_app App = {};
+        App.CreateWorkspace_ = AppCreateWorkspace;
+        App.StartBuild_ = AppStartBuild;
+        App.WaitForMessage_ = AppWaitForMessage;
+        
         pid_t PID = getpid();
         s32 BuildAppPathCount = proc_pidpath(PID, GlobalBuildAppPath, sizeof(GlobalBuildAppPath));
         if (BuildAppPathCount > 0)
@@ -460,8 +547,10 @@ main(int ArgCount, const char* Args[])
                 BuildAddFile(&BuildFileWorkspace, MakeStringSlowly(Args[1]));
                 
                 // NOTE(yuval): Build File Workspace Building
-                if (BuildWorkspace(&BuildFileWorkspace, &Arena, true))
+                if (BuildWorkspace(&BuildFileWorkspace, &Arena))
                 {
+                    PrintWorkspaceBuildStats(&GlobalTimeEventsQueue);
+                    
                     // TODO(yuval): Should we fork and exec the build file?
                     // TODO(yuval): Execv need the full build file path!!!!!!!!
                     const char* BuildFileArgs[2] = {};

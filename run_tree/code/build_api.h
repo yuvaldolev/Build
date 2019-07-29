@@ -109,24 +109,42 @@ struct build_message
     } Data;
 };
 
-#define BUILD_CREATE_WORKSPACE(FnName) build_workspace* FnName(string Name);
+#define BUILD_CREATE_WORKSPACE(FnName) build_workspace* FnName(struct build_app* App, string Name)
 typedef BUILD_CREATE_WORKSPACE(build_create_workspace);
 
-#define START_BUILD(Name) void Name();
+#define START_BUILD(Name) void Name()
 typedef START_BUILD(start_build);
 
-#define BUILD_WAIT_FOR_MESSAGE(Name) build_message Name();
-typedef BUILD_WAIT_FOR_MESSAGE(build_wait_for_message)
+#define BUILD_WAIT_FOR_MESSAGE(Name) build_message Name()
+typedef BUILD_WAIT_FOR_MESSAGE(build_wait_for_message);
 
 struct build_app
 {
     build_workspace_array Workspaces;
     
-    build_create_workspace* CreateWorkspace;
+    build_create_workspace* CreateWorkspace_;
     
-    start_build* StartBuild;
-    build_wait_for_message* WaitForMessage;
+    start_build* StartBuild_;
+    build_wait_for_message* WaitForMessage_;
 };
+
+build_internal inline build_workspace*
+BuildCreateWorkspace(build_app* App, string Name)
+{
+    return App->CreateWorkspace_(App, Name);
+}
+
+build_internal inline void
+StartBuild(build_app* App)
+{
+    App->StartBuild_();
+}
+
+build_internal inline build_message
+BuildWaitForMessage(build_app* App)
+{
+    return App->WaitForMessage_();
+}
 
 build_internal void
 BuildAddFile(build_workspace* Workspace, string FileName)

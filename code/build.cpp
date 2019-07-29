@@ -236,13 +236,24 @@ MetaToolProcessFile(string FileName)
 
 #endif // #if 0
 
-build_internal build_workspace*
-BuildCreateWorkspace(build_app* App, string Name)
+BUILD_CREATE_WORKSPACE(AppCreateWorkspace)
 {
     build_workspace* Result = &App->Workspaces.Workspaces[App->Workspaces.Count++];
     
     Result->Name = Name;
     // TODO(yuval): Default workspace options
+    
+    return Result;
+}
+
+START_BUILD(AppStartBuild)
+{
+    
+}
+
+BUILD_WAIT_FOR_MESSAGE(AppWaitForMessage)
+{
+    build_message Result;
     
     return Result;
 }
