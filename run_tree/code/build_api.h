@@ -112,7 +112,7 @@ struct build_message
 #define BUILD_CREATE_WORKSPACE(FnName) build_workspace* FnName(struct build_app* App, string Name)
 typedef BUILD_CREATE_WORKSPACE(build_create_workspace);
 
-#define START_BUILD(Name) void Name()
+#define START_BUILD(Name) void Name(struct build_app* App);
 typedef START_BUILD(start_build);
 
 #define BUILD_WAIT_FOR_MESSAGE(Name) build_message Name()
@@ -137,7 +137,7 @@ BuildCreateWorkspace(build_app* App, string Name)
 build_internal inline void
 StartBuild(build_app* App)
 {
-    App->StartBuild_();
+    App->StartBuild_(App);
 }
 
 build_internal inline build_message

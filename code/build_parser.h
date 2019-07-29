@@ -369,4 +369,4 @@ struct ast_file
 };
 
 #define BUILD_PARSER_H
-#endif
+#endif // #if !defined(BUILD_PARSER_H)

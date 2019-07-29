@@ -10,6 +10,7 @@
 #include "build_types.h"
 #include "build_for.h"
 #include "build_assert.h"
+#include "build_profile.h"
 
 #if 0
 #include "build_shared.h"
