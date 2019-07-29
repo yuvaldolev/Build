@@ -25,19 +25,6 @@
 */
 
 #if 0
-#define BEGIN_TIMING(Name) u64 Name##StartCounter = mach_absolute_time();
-#define END_TIMING(Name) u64 Name##EndCounter = mach_absolute_time();
-#endif // #if 0
-
-// TODO(yuval): Use a hash map for this
-struct compiler_info
-{
-    build_compiler_type Type;
-    const char* Name;
-    const char* Path;
-};
-
-#if 0
 struct compiler_message_queue
 {
     string CompiledFileName;
@@ -79,8 +66,13 @@ SetupCrashpad()
 }
 #endif // #if !defined(BUILD_TRAVIS)
 
-internal f32
-MacGetSecondsElapsed(u64 Start, u64 End)
+internal PLATFORM_GET_WALL_CLOCK(MacGetWallClock)
+{
+    u64 Result = mach_absolute_time();
+    return Result;
+}
+
+internal PLATFORM_GET_SECONDS_ELAPSED(MacGetSecondsElapsed)
 {
     // NOTE(yuval): Elapsed nanoseconds calculation
     f32 Result = ((f32)(End - Start) *
@@ -94,7 +86,7 @@ MacGetSecondsElapsed(u64 Start, u64 End)
 }
 
 internal s32
-ExecProcessAndWait(const char* Path, char** Args, memory_arena* Arena)
+MacExecProcessAndWait(const char* Path, char** Args, memory_arena* Arena)
 {
     s32 ExitCode = -1;
     
@@ -157,12 +149,13 @@ ExecProcessAndWait(const char* Path, char** Args, memory_arena* Arena)
     return ExitCode;
 }
 
+// TODO(yuval): Maybe factor this function to be non platform specific?
 internal char*
-GetCompilerPath(const char* CompilerName,  string EnvPath, memory_arena* Arena)
+MacGetCompilerPath(const char* CompilerName, string EnvPath, memory_arena* Arena)
 {
     char* Result = 0;
     
-    // TODO(yuval): Make this platform independent (use the max path define for the corrent platform)
+    // TODO(yuval): Make this platform independent (use the max path define for the current platform)
     char CompilerPath[PATH_MAX] = {};
     char* PathAt = CompilerPath;
     
@@ -210,10 +203,11 @@ main(int ArgCount, const char* Args[])
         // NOTE(yuval): Getting the timebase info
         mach_timebase_info(&GlobalTimebaseInfo);
         
-        build_app App = {};
-        App.CreateWorkspace_ = AppCreateWorkspace;
-        App.StartBuild_ = AppStartBuild;
-        App.WaitForMessage_ = AppWaitForMessage;
+        platform_api PlatformAPI;
+        PlatformAPI.GetWallClock = MacGetWallClock;
+        PlatformAPI.GetSecondsElapsed = MacGetSecondsElapsed;
+        
+        BuildInitialize(PlatformAPI);
         
         pid_t PID = getpid();
         s32 BuildAppPathCount = proc_pidpath(PID, GlobalBuildAppPath, sizeof(GlobalBuildAppPath));

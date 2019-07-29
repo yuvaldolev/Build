@@ -10,6 +10,7 @@
 #include "build_tokenizer.cpp"
 #include "build_parser.cpp"
 
+global_variable build_app GlobalApp;
 global_variable b32 MetaToolIsInitialized = false;
 global_variable time_events_queue GlobalTimeEventsQueue;
 
@@ -286,7 +287,7 @@ PrintWorkspaceBuildStats(time_events_queue* Queue)
                     
                     if (Time)
                     {
-                        *Time = MacGetSecondsElapsed(LastTimedBlock->Clock, Event->Clock);
+                        *Time = Platform.GetSecondsElapsed(LastTimedBlock->Clock, Event->Clock);
                     }
                     
                     LastTimedBlock = LastTimedBlock->Parent;
@@ -315,9 +316,10 @@ PrintWorkspaceBuildStats(time_events_queue* Queue)
 }
 
 internal b32
-BuildWorkspace(build_workspace* Workspace, memory_arena* Arena, b32 IsSilentBuild = false)
+BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
+               time_events_queue* TimeEventsQueue, b32 IsSilentBuild = false)
 {
-    TimedFunction;
+    TimedFunction(TimeEventsQueue);
     
     yd_b32 SuccessfulBuild = true;
     
@@ -451,4 +453,15 @@ BUILD_WAIT_FOR_MESSAGE(AppWaitForMessage)
     build_message Result;
     
     return Result;
+}
+
+platform_api Platform;
+void BuildInitialize(platform_api PlatformAPI)
+{
+    Platform = PlatformAPI;
+    
+    GloabalApp.CreateWorkspace_ = AppCreateWorkspace;
+    GlobalApp.StartBuild_ = AppStartBuild;
+    GlobalApp.WaitForMessage_ = AppWaitForMessage;
+    
 }

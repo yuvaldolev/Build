@@ -53,8 +53,8 @@ RecordTimeEvent_(time_events_queue* Queue, time_event_type Type,
 }
 
 #define RecordTimeEvent(Queue, Type, Name) RecordTimeEvent_(Queue, Type, Name, \
-Platfrom.GetWallBlock(), \
-__rctsc())
+Platform.GetWallClock(), \
+__rdtsc())
 inline time_event*
 ReadTimeEvent(time_events_queue* Queue)
 {

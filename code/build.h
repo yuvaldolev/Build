@@ -7,19 +7,28 @@
 
 #include "build_api.h"
 
-#include "build_types.h"
+#include "build_platform.h"
 #include "build_for.h"
 #include "build_assert.h"
+#include "build_intrinsics.h"
 #include "build_profile.h"
 
 #if 0
 #include "build_shared.h"
 #include "build_memory.h"
-#include "build_intrinsics.h"
+
 #include "build_tokenizer.h"
 #include "build_parser.h"
 #include "build_errors.h"
 #endif // #if 0
+
+// TODO(yuval): Use a hash map for this
+struct compiler_info
+{
+    build_compiler_type Type;
+    const char* Name;
+    const char* Path;
+};
 
 #define BUILD_H
 #endif // #if !defined(BUILD_H)
