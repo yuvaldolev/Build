@@ -89,24 +89,18 @@ StartWorkspace(build_app* App, string Name)
     return Workspace;
 }
 
-BUILD_FN void
-BuildDebug(build_app* App)
+BUILD_FUNCTION(BuildDebug)
 {
     build_workspace* Workspace = StartWorkspace(App, MakeLitString("Debug"));
     SetupDebug(Workspace);
-    
-    build_workspace* Workspace2 = StartWorkspace(App, MakeLitString("Debug2"));
-    SetupDebug(Workspace2);
-    
     Build(App);
 }
 
-BUILD_FN void
-BuildRelease(build_app* App)
+BUILD_FUNCTION(BuildRelease)
 {
     build_workspace* Workspace = StartWorkspace(App, MakeLitString("Release"));
     SetupRelease(Workspace);
     Build(App);
 }
 
-// TODO(yuval): #build BuildDebug
+#build BuildDebug

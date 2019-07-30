@@ -236,7 +236,6 @@ MetaToolProcessFile(string FileName)
 }
 #endif // #if 0
 
-// TODO(yuval): Move this to another file
 #define COMPILATION_TIMED_BLOCK_NAME "Compilation"
 #define LINKAGE_TIMED_BLOCK_NAME "Linkage"
 
@@ -343,17 +342,37 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
         CompilerArgs[2] = Platform.BuildRunTreeCodePath;
         CompilerArgs[4] = "-c";
         
-        char FullOutputPath[PATH_MAX];
-        ConcatStrings(FullOutputPath, sizeof(FullOutputPath),
-                      BuildOptions->OutputPath, BuildOptions->OutputName);
+        // TODO(yuval): Create append functions for Z strings
+        char FullOutputPathData[PATH_MAX + 1];
+        string FullOutputPath = MakeString(FullOutputPathData, 0,
+                                           sizeof(FullOutputPath) - 1);
+        Copy(&FullOutputPath, BuildOptions->OutputPath);
+        Append(&FullOutputPath, BuildOptions->OutputName);
+        const char* OutputExtension = Platform.GetOutputExtension(BuildOptions->OutputType);
+        Append(&FullOutputPath, OutputExtension);
+        TerminateWithNull(&FullOutputPath);
         
         const char* LinkerArgs[512] = {};
-        LinkerArgs[0] = CompilerInfo->Name;
+        const char** LinkerArgsAt = LinkerArgs;
+        *LinkerArgsAt++ = CompilerInfo->Name;
         
-        // TODO(yuval): Add workspace options for compiling as shared/static library
-        // in addition to compiling as an executable
-        LinkerArgs[Workspace->Files.Count + 1] = "-o";
-        LinkerArgs[Workspace->Files.Count + 2] = FullOutputPath;
+        LinkerArgsAt += Workspace->Files.Count;
+        switch (BuildOptions->OutputType)
+        {
+            case BuildOutput_StaticLibrary:
+            {
+                // TODO(yuval): Add support for static libraries
+                //LinkerArgs[Workspace->Files.Count + 1] = "";
+            } break;
+            
+            case BuildOutput_SharedLibrary:
+            {
+                *LinkerArgsAt++ = "-shared";
+            } break;
+        }
+        
+        *LinkerArgsAt++ = "-o";
+        *LinkerArgsAt = FullOutputPath.Data;
         
         temporary_memory TempMem = BeginTemporaryMemory(Arena);
         
@@ -382,7 +401,7 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
                 
                 if (!IsSilentBuild)
                 {
-                    printf("Compiling File: ");
+                    printf("Running Compiler: ");
                     for (const char** Arg = CompilerArgs; *Arg; ++Arg)
                     {
                         printf("%s ", *Arg);
@@ -407,7 +426,7 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
             
             if (!IsSilentBuild)
             {
-                printf("Linking: ");
+                printf("Running Linker: ");
                 for (const char** Arg = LinkerArgs; *Arg; ++Arg)
                 {
                     printf("%s ", *Arg);
@@ -428,7 +447,7 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
     return true;
 }
 
-BUILD_CREATE_WORKSPACE(AppCreateWorkspace)
+internal BUILD_CREATE_WORKSPACE(AppCreateWorkspace)
 {
     build_workspace* Result = &App->Workspaces.Workspaces[App->Workspaces.Count++];
     
@@ -438,7 +457,7 @@ BUILD_CREATE_WORKSPACE(AppCreateWorkspace)
     return Result;
 }
 
-START_BUILD(AppStartBuild)
+internal START_BUILD(AppStartBuild)
 {
     for (umm Index = 0; Index < App->Workspaces.Count; ++Index)
     {
@@ -449,7 +468,7 @@ START_BUILD(AppStartBuild)
     }
 }
 
-BUILD_WAIT_FOR_MESSAGE(AppWaitForMessage)
+internal BUILD_WAIT_FOR_MESSAGE(AppWaitForMessage)
 {
     build_message Result;
     

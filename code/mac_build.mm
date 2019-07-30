@@ -64,23 +64,29 @@ SetupCrashpad()
 }
 #endif // #if !defined(BUILD_TRAVIS)
 
-internal PLATFORM_GET_WALL_CLOCK(MacGetWallClock)
+internal PLATFORM_GET_OUTPUT_EXTENSION(MacGetOutputExtension)
 {
-    u64 Result = mach_absolute_time();
-    return Result;
-}
-
-internal PLATFORM_GET_SECONDS_ELAPSED(MacGetSecondsElapsed)
-{
-    // NOTE(yuval): Elapsed nanoseconds calculation
-    f32 Result = ((f32)(End - Start) *
-                  ((f32)GlobalTimebaseInfo.numer) /
-                  ((f32)GlobalTimebaseInfo.denom));
+    const char* Extension;
     
-    // NOTE(yuval): Conversion to seconds
-    Result *= (f32)1.0E-9;
+    switch (OutputType)
+    {
+        case BuildOutput_Executable:
+        {
+            Extension = "";
+        } break;
+        
+        case BuildOutput_StaticLibrary:
+        {
+            Extension = ".a";
+        } break;
+        
+        case BuildOutput_SharedLibrary:
+        {
+            Extension = ".dylib";
+        } break;
+    }
     
-    return Result;
+    return Extension;
 }
 
 internal PLATFORM_EXEC_PROCESS_AND_WAIT(MacExecProcessAndWait)
@@ -144,6 +150,25 @@ internal PLATFORM_EXEC_PROCESS_AND_WAIT(MacExecProcessAndWait)
     }
     
     return ExitCode;
+}
+
+internal PLATFORM_GET_WALL_CLOCK(MacGetWallClock)
+{
+    u64 Result = mach_absolute_time();
+    return Result;
+}
+
+internal PLATFORM_GET_SECONDS_ELAPSED(MacGetSecondsElapsed)
+{
+    // NOTE(yuval): Elapsed nanoseconds calculation
+    f32 Result = ((f32)(End - Start) *
+                  ((f32)GlobalTimebaseInfo.numer) /
+                  ((f32)GlobalTimebaseInfo.denom));
+    
+    // NOTE(yuval): Conversion to seconds
+    Result *= (f32)1.0E-9;
+    
+    return Result;
 }
 
 // TODO(yuval): Maybe factor this function to be non platform specific?
@@ -212,6 +237,7 @@ main(int ArgCount, const char* Args[])
                           BuildAppPath, BuildAppPathLastSlashIndex + 1,
                           Literal("code/"));
             
+            PlatformAPI.GetOutputExtension = MacGetOutputExtension;
             PlatformAPI.ExecProcessAndWait = MacExecProcessAndWait;
             
             PlatformAPI.GetWallClock = MacGetWallClock;
@@ -221,12 +247,16 @@ main(int ArgCount, const char* Args[])
             
             if (ArgCount > 1)
             {
+                // TODO(yuval): Tune this size later
+                char BuildFunctionNameData[65] = {};
+                string BuildFunctionName = MakeString(BuildFunctionNameData, 0, );
+                
                 memory_arena Arena = {};
                 
                 // NOTE(yuval): Compiler Paths Discovery
                 string EnvPath = MakeStringSlowly(getenv("PATH"));
                 
-                compiler_info* Compiler = (compiler_info*)&Platform.Compilers;
+                compiler_info* Compiler = Platform.Compilers;
                 Compiler->Type = BuildCompiler_Clang;
                 Compiler->Name = "clang";
                 Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
@@ -253,7 +283,7 @@ main(int ArgCount, const char* Args[])
                 
                 build_options* Options = &BuildFileWorkspace.Options;
                 Options->OptimizationLevel = 0; // TODO(yuval): Use max optimization level
-                Options->OutputType = BuildOutput_Executable;
+                Options->OutputType = BuildOutput_SharedLibrary;
                 Options->OutputName = MakeLitString("build_file");
                 Options->OutputPath = MakeLitString(""); // TODO(yuval): Add an output path;
                 Options->Compiler = BuildCompiler_Auto;
@@ -262,16 +292,12 @@ main(int ArgCount, const char* Args[])
                 
                 // NOTE(yuval): Build File Workspace Building
                 time_events_queue BuildFileTimeEventsQueue;
-                if (BuildWorkspace(&BuildFileWorkspace, &Arena, &BuildFileTimeEventsQueue))
+                if (BuildWorkspace(&BuildFileWorkspace, &Arena, &BuildFileTimeEventsQueue, true))
                 {
-                    PrintWorkspaceBuildStats(&GlobalTimeEventsQueue);
-                    
                     // TODO(yuval): Should we fork and exec the build file?
                     // TODO(yuval): Execv need the full build file path!!!!!!!!
                     const char* BuildFileArgs[2] = {};
                     BuildFileArgs[0] = "build_file";
-                    //ExecProcessAndWait("build_file", (char**)BuildFileArgs, &Arena);
-                    execv("build_file", (char**)BuildFileArgs);
                 }
             }
             else

@@ -35,8 +35,9 @@ typedef uintptr_t build_umm;
 #include "yd/yd_memory.h"
 #include "yd/yd_string.h"
 
-#define BUILD_FN // TODO(yuval): Make this export functions
-
+// TODO(yuval): Make this export functions
+#define BUILD_FUNCTION(Name) void Name(build_app* App)
+typedef BUILD_FUNCTION(build_function);
 struct build_file_array
 {
     string Paths[4096];
@@ -63,6 +64,12 @@ enum build_compiler_type
     BuildCompiler_Count
 };
 
+struct build_command_line_args
+{
+    const char* Args[512];
+    build_umm Count;
+};
+
 struct build_options
 {
     build_u32 OptimizationLevel;
@@ -70,6 +77,9 @@ struct build_options
     build_output_type OutputType;
     string OutputName;
     string OutputPath;
+    
+    build_command_line_args CompilerArgs;
+    build_command_line_args LinkerArgs;
     
     build_compiler_type Compiler;
 };

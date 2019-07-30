@@ -5,8 +5,6 @@
 #define Join3(Arg1, Arg2, Arg3) Join2(Join2(Arg1, Arg2), Arg3)
 #define Join4(Arg1, Arg2, Arg3, Arg4) Join2(Join3(Arg1, Arg2, Arg3), Arg4)
 
-#include "build_api.h"
-
 #include "build_platform.h"
 #include "build_for.h"
 #include "build_assert.h"
