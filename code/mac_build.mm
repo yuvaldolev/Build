@@ -36,9 +36,7 @@ struct compiler_message_queue
 #endif // #if 0
 
 global_variable mach_timebase_info_data_t GlobalTimebaseInfo;
-global_variable char GlobalBuildAppPath[PATH_MAX];
-global_variable char GlobalBuildRunTreeCodePath[PATH_MAX];
-global_variable compiler_info GlobalCompilers[BuildCompiler_Count - 1];
+
 //global_variable process_message_queue GlobalProcessMessageQueue = {};
 
 #if !defined(BUILD_TRAVIS)
@@ -85,8 +83,7 @@ internal PLATFORM_GET_SECONDS_ELAPSED(MacGetSecondsElapsed)
     return Result;
 }
 
-internal s32
-MacExecProcessAndWait(const char* Path, char** Args, memory_arena* Arena)
+internal PLATFORM_EXEC_PROCESS_AND_WAIT(MacExecProcessAndWait)
 {
     s32 ExitCode = -1;
     
@@ -203,20 +200,24 @@ main(int ArgCount, const char* Args[])
         // NOTE(yuval): Getting the timebase info
         mach_timebase_info(&GlobalTimebaseInfo);
         
-        platform_api PlatformAPI;
-        PlatformAPI.GetWallClock = MacGetWallClock;
-        PlatformAPI.GetSecondsElapsed = MacGetSecondsElapsed;
-        
-        BuildInitialize(PlatformAPI);
-        
         pid_t PID = getpid();
-        s32 BuildAppPathCount = proc_pidpath(PID, GlobalBuildAppPath, sizeof(GlobalBuildAppPath));
+        char BuildAppPath[PATH_MAX];
+        s32 BuildAppPathCount = proc_pidpath(PID, BuildAppPath, sizeof(BuildAppPath));
         if (BuildAppPathCount > 0)
         {
-            yd_umm BuildAppFilePathLastSlashIndex = RFind(GlobalBuildAppPath, BuildAppPathCount, '/');
-            ConcatStrings(GlobalBuildRunTreeCodePath, sizeof(GlobalBuildRunTreeCodePath),
-                          GlobalBuildAppPath, BuildAppFilePathLastSlashIndex + 1,
+            platform_api PlatformAPI;
+            
+            yd_umm BuildAppPathLastSlashIndex = RFind(BuildAppPath, BuildAppPathCount, '/');
+            ConcatStrings(PlatformAPI.BuildRunTreeCodePath, sizeof(PlatformAPI.BuildRunTreeCodePath),
+                          BuildAppPath, BuildAppPathLastSlashIndex + 1,
                           Literal("code/"));
+            
+            PlatformAPI.ExecProcessAndWait = MacExecProcessAndWait;
+            
+            PlatformAPI.GetWallClock = MacGetWallClock;
+            PlatformAPI.GetSecondsElapsed = MacGetSecondsElapsed;
+            
+            BuildInitialize(PlatformAPI);
             
             if (ArgCount > 1)
             {
@@ -225,25 +226,25 @@ main(int ArgCount, const char* Args[])
                 // NOTE(yuval): Compiler Paths Discovery
                 string EnvPath = MakeStringSlowly(getenv("PATH"));
                 
-                compiler_info* Compiler = GlobalCompilers;
+                compiler_info* Compiler = (compiler_info*)&Platform.Compilers;
                 Compiler->Type = BuildCompiler_Clang;
                 Compiler->Name = "clang";
-                Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
+                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
                 ++Compiler;
                 
                 Compiler->Type = BuildCompiler_GPP;
                 Compiler->Name = "g++";
-                Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
+                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
                 ++Compiler;
                 
                 Compiler->Type = BuildCompiler_GCC;
                 Compiler->Name = "gcc";
-                Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
+                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
                 ++Compiler;
                 
                 Compiler->Type = BuildCompiler_MSVC;
                 Compiler->Name = "cl";
-                Compiler->Path = GetCompilerPath(Compiler->Name, EnvPath, &Arena);
+                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
                 
                 // NOTE(yuval): Build File Workspace Setup
                 // TODO(yuval): Maybe name the workspace with the name of the build file?
@@ -260,7 +261,8 @@ main(int ArgCount, const char* Args[])
                 BuildAddFile(&BuildFileWorkspace, MakeStringSlowly(Args[1]));
                 
                 // NOTE(yuval): Build File Workspace Building
-                if (BuildWorkspace(&BuildFileWorkspace, &Arena))
+                time_events_queue BuildFileTimeEventsQueue;
+                if (BuildWorkspace(&BuildFileWorkspace, &Arena, &BuildFileTimeEventsQueue))
                 {
                     PrintWorkspaceBuildStats(&GlobalTimeEventsQueue);
                     

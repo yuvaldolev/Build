@@ -112,7 +112,7 @@ struct build_message
 #define BUILD_CREATE_WORKSPACE(FnName) build_workspace* FnName(struct build_app* App, string Name)
 typedef BUILD_CREATE_WORKSPACE(build_create_workspace);
 
-#define START_BUILD(Name) void Name(struct build_app* App);
+#define START_BUILD(Name) void Name(struct build_app* App)
 typedef START_BUILD(start_build);
 
 #define BUILD_WAIT_FOR_MESSAGE(Name) build_message Name()
@@ -120,6 +120,7 @@ typedef BUILD_WAIT_FOR_MESSAGE(build_wait_for_message);
 
 struct build_app
 {
+    memory_arena MemoryArena;
     build_workspace_array Workspaces;
     
     build_create_workspace* CreateWorkspace_;

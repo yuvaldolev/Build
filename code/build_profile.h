@@ -90,8 +90,8 @@ struct timed_block
     }
 };
 
-#define TimedBlock(Name, Queue) timed_block Join2(TimedBlock_, __COUNTER__)(Name)
-#define TimedFunction(Name) TimedBlock(__FUNCTION__, Queue)
+#define TimedBlock(Name, Queue) timed_block Join2(TimedBlock_, __COUNTER__)(Name, Queue)
+#define TimedFunction(Queue) TimedBlock(__FUNCTION__, Queue)
 
 #define BUILD_PROFILE_H
 #endif // #if !defined(BUILD_PROFILE_H)

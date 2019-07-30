@@ -6,13 +6,12 @@
 #define YD_STRING_IMPLEMENTATION
 #include "yd/yd_string.h"
 
+global_variable build_app GlobalApp;
+global_variable time_events_queue GlobalTimeEventsQueue;
+
 #if 0
 #include "build_tokenizer.cpp"
 #include "build_parser.cpp"
-
-global_variable build_app GlobalApp;
-global_variable b32 MetaToolIsInitialized = false;
-global_variable time_events_queue GlobalTimeEventsQueue;
 
 struct FunctionVariable
 {
@@ -325,7 +324,7 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
     
     build_options* BuildOptions = &Workspace->Options;
     compiler_info* CompilerInfo = 0;
-    For (GlobalCompilers)
+    For (Platform.Compilers)
     {
         if (((It.Type == BuildOptions->Compiler) ||
              BuildOptions->Compiler == BuildCompiler_Auto) &&
@@ -341,7 +340,7 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
         const char* CompilerArgs[512] = {};
         CompilerArgs[0] = CompilerInfo->Name;
         CompilerArgs[1] = "-I";
-        CompilerArgs[2] = GlobalBuildRunTreeCodePath;
+        CompilerArgs[2] = Platform.BuildRunTreeCodePath;
         CompilerArgs[4] = "-c";
         
         char FullOutputPath[PATH_MAX];
@@ -359,7 +358,7 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
         temporary_memory TempMem = BeginTemporaryMemory(Arena);
         
         {
-            TimedBlock(COMPILATION_TIMED_BLOCK_NAME);
+            TimedBlock(COMPILATION_TIMED_BLOCK_NAME, TimeEventsQueue);
             
             for (umm Index = 0;
                  Index < Workspace->Files.Count;
@@ -391,7 +390,8 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
                     printf("\n");
                 }
                 
-                int ExitCode = ExecProcessAndWait(CompilerInfo->Path, (char**)CompilerArgs, Arena);
+                int ExitCode = Platform.ExecProcessAndWait(CompilerInfo->Path, (char**)CompilerArgs,
+                                                           Arena);
                 SuccessfulBuild &= (ExitCode == 0);
             }
             
@@ -403,7 +403,7 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
         
         if (SuccessfulBuild)
         {
-            TimedBlock(LINKAGE_TIMED_BLOCK_NAME);
+            TimedBlock(LINKAGE_TIMED_BLOCK_NAME, TimeEventsQueue);
             
             if (!IsSilentBuild)
             {
@@ -414,7 +414,7 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
                 }
                 printf("\n\n");
             }
-            int ExitCode = ExecProcessAndWait(CompilerInfo->Path, (char**)LinkerArgs, Arena);
+            int ExitCode = Platform.ExecProcessAndWait(CompilerInfo->Path, (char**)LinkerArgs, Arena);
             SuccessfulBuild &= (ExitCode == 0);
         }
         
@@ -443,7 +443,8 @@ START_BUILD(AppStartBuild)
     for (umm Index = 0; Index < App->Workspaces.Count; ++Index)
     {
         time_events_queue WorkspaceTimeEventsQueue;
-        BuildWorkspace(&App->Workspaces.Workspaces[Index], &App->MemoryArena);
+        BuildWorkspace(&App->Workspaces.Workspaces[Index], &App->MemoryArena,
+                       &WorkspaceTimeEventsQueue);
         //PrintWorkspaceBuildStats(&WorkspaceTimeEventsQueue);
     }
 }
@@ -456,12 +457,13 @@ BUILD_WAIT_FOR_MESSAGE(AppWaitForMessage)
 }
 
 platform_api Platform;
-void BuildInitialize(platform_api PlatformAPI)
+
+internal void
+BuildInitialize(platform_api PlatformAPI)
 {
     Platform = PlatformAPI;
     
-    GloabalApp.CreateWorkspace_ = AppCreateWorkspace;
+    GlobalApp.CreateWorkspace_ = AppCreateWorkspace;
     GlobalApp.StartBuild_ = AppStartBuild;
     GlobalApp.WaitForMessage_ = AppWaitForMessage;
-    
 }
