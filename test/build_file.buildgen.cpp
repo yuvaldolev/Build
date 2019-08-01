@@ -89,7 +89,7 @@ StartWorkspace(build_app* App, string Name)
     return Workspace;
 }
 
-BUILD_FUNCTION(BuildDebug)
+extern "C" BUILD_FUNCTION(BuildDebug)
 {
     printf("Building In Debug Mode!\n");
     
@@ -98,7 +98,7 @@ BUILD_FUNCTION(BuildDebug)
     Build(App);
 }
 
-BUILD_FUNCTION(BuildRelease)
+extern "C" BUILD_FUNCTION(BuildRelease)
 {
     printf("Building In Release Mode!\n");
     
