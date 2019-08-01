@@ -444,7 +444,7 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
         // TODO(yuval): Diagnostic
     }
     
-    return true;
+    return SuccessfulBuild;
 }
 
 internal BUILD_CREATE_WORKSPACE(AppCreateWorkspace)
