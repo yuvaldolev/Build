@@ -107,4 +107,3 @@ BUILD_FUNCTION(BuildRelease)
     Build(App);
 }
 
-#build BuildDebug

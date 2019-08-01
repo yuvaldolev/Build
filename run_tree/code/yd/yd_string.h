@@ -582,6 +582,13 @@ Copy(char* Dest, const char* Source)
     return Result;
 }
 
+yd_internal inline yd_umm
+Copy(char* Dest, string Source)
+{
+    yd_umm Result = CopyFastUnsafe(Dest, Source);
+    return Result;
+}
+
 yd_internal inline void
 Copy(string* Dest, string Source)
 {

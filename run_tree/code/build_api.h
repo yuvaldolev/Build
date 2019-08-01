@@ -36,8 +36,9 @@ typedef uintptr_t build_umm;
 #include "yd/yd_string.h"
 
 // TODO(yuval): Make this export functions
-#define BUILD_FUNCTION(Name) void Name(build_app* App)
+#define BUILD_FUNCTION(Name) void Name(struct build_app* App)
 typedef BUILD_FUNCTION(build_function);
+
 struct build_file_array
 {
     string Paths[4096];

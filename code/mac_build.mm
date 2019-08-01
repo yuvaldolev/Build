@@ -11,10 +11,11 @@
 #include "build.cpp"
 
 #include <mach/mach_time.h>
+#include <libproc.h>
 
 #include <sys/stat.h>
 #include <unistd.h>
-#include <libproc.h>
+#include <dlfcn.h>
 #include <stdio.h> // TODO(yuval): Temporary
 
 /*
@@ -171,6 +172,92 @@ internal PLATFORM_GET_SECONDS_ELAPSED(MacGetSecondsElapsed)
     return Result;
 }
 
+internal void
+MacFreeFileMemory(void* Memory)
+{
+    // TODO(yuval): Stop using crt for this
+    if (Memory)
+    {
+        free(Memory);
+    }
+}
+
+struct read_file_result
+{
+    void* Contents;
+    umm ContentsSize;
+};
+
+internal read_file_result
+MacReadEntireFile(const char* FileName)
+{
+    read_file_result Result = {};
+    
+    s32 FileHandle = open(FileName, O_RDONLY);
+    if (FileHandle != -1)
+    {
+        struct stat FileStat;
+        if (fstat(FileHandle, &FileStat) == 0)
+        {
+            umm FileSize = FileStat.st_size;
+            
+            // TODO(yuval): Stop using crt for this
+            Result.Contents = malloc(FileSize);
+            if (Result.Contents)
+            {
+                umm BytesRead = read(FileHandle, Result.Contents, FileSize);
+                
+                if (BytesRead == FileSize)
+                {
+                    Result.ContentsSize = FileSize;
+                }
+                else
+                {
+                    MacFreeFileMemory(Result.Contents);
+                    Result.Contents = 0;
+                }
+            }
+            else
+            {
+                // TODO(yuval): Diagnostic
+            }
+        }
+        else
+        {
+            // TODO(yuval): Diagnostic
+        }
+        
+        close(FileHandle);
+    }
+    else
+    {
+        // TODO(yuval): Diagnostic
+    }
+    
+    return Result;
+}
+
+internal b32
+MacWriteEntireFile(const char* FileName, void* Memory, umm MemorySize)
+{
+    b32 Result = false;
+    
+    s32 FileHandle = open(FileName, O_WRONLY | O_CREAT, 0644);
+    if (FileHandle != -1)
+    {
+        umm BytesWritten = write(FileHandle, Memory, MemorySize);
+        Result = (BytesWritten == MemorySize);
+        
+        close(FileHandle);
+    }
+    else
+    {
+        // TODO(yuval): Diagnostic
+    }
+    
+    return Result;
+}
+
 // TODO(yuval): Maybe factor this function to be non platform specific?
 internal char*
 MacGetCompilerPath(const char* CompilerName, string EnvPath, memory_arena* Arena)
@@ -213,6 +300,8 @@ MacGetCompilerPath(const char* CompilerName, string EnvPath, memory_arena* Arena
     return Result;
 }
 
+#define GENERATED_BUILD_FILE_NAME "build_file.buildgen.cpp"
+
 int
 main(int ArgCount, const char* Args[])
 {
@@ -247,57 +336,108 @@ main(int ArgCount, const char* Args[])
             
             if (ArgCount > 1)
             {
-                // TODO(yuval): Tune this size later
-                char BuildFunctionNameData[65] = {};
-                string BuildFunctionName = MakeString(BuildFunctionNameData, 0, );
+                read_file_result BuildFile = MacReadEntireFile(Args[1]);
+                string BuildFileContents = MakeString(BuildFile.Contents, BuildFile.ContentsSize);
                 
-                memory_arena Arena = {};
+                // TODO(yuval): Better parsing for finding the build function name:
+                // Parse the document to tokens, ignore whitespaces, newlines, and so on....
+                char BuildFunctionName[64];
+                umm BuildFunctionNameCount = 0;
                 
-                // NOTE(yuval): Compiler Paths Discovery
-                string EnvPath = MakeStringSlowly(getenv("PATH"));
-                
-                compiler_info* Compiler = Platform.Compilers;
-                Compiler->Type = BuildCompiler_Clang;
-                Compiler->Name = "clang";
-                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
-                ++Compiler;
-                
-                Compiler->Type = BuildCompiler_GPP;
-                Compiler->Name = "g++";
-                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
-                ++Compiler;
-                
-                Compiler->Type = BuildCompiler_GCC;
-                Compiler->Name = "gcc";
-                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
-                ++Compiler;
-                
-                Compiler->Type = BuildCompiler_MSVC;
-                Compiler->Name = "cl";
-                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
-                
-                // NOTE(yuval): Build File Workspace Setup
-                // TODO(yuval): Maybe name the workspace with the name of the build file?
-                build_workspace BuildFileWorkspace = {};
-                BuildFileWorkspace.Name = MakeLitString("Build File");
-                
-                build_options* Options = &BuildFileWorkspace.Options;
-                Options->OptimizationLevel = 0; // TODO(yuval): Use max optimization level
-                Options->OutputType = BuildOutput_SharedLibrary;
-                Options->OutputName = MakeLitString("build_file");
-                Options->OutputPath = MakeLitString(""); // TODO(yuval): Add an output path;
-                Options->Compiler = BuildCompiler_Auto;
-                
-                BuildAddFile(&BuildFileWorkspace, MakeStringSlowly(Args[1]));
-                
-                // NOTE(yuval): Build File Workspace Building
-                time_events_queue BuildFileTimeEventsQueue;
-                if (BuildWorkspace(&BuildFileWorkspace, &Arena, &BuildFileTimeEventsQueue, true))
+                string BuildFileWord = GetFirstWord(BuildFileContents);
+                while (!IsNullString(BuildFileWord))
                 {
-                    // TODO(yuval): Should we fork and exec the build file?
-                    // TODO(yuval): Execv need the full build file path!!!!!!!!
-                    const char* BuildFileArgs[2] = {};
-                    BuildFileArgs[0] = "build_file";
+                    if (StringsMatch(BuildFileWord, "#build"))
+                    {
+                        BuildFunctionNameCount = Copy(BuildFunctionName,
+                                                      GetNextWord(BuildFileContents, BuildFileWord));
+                        BuildFile.ContentsSize = (umm)(BuildFileWord.Data - BuildFileContents.Data);
+                        MacWriteEntireFile(GENERATED_BUILD_FILE_NAME,
+                                           BuildFile.Contents,
+                                           BuildFile.ContentsSize);
+                        break;
+                    }
+                    
+                    BuildFileWord = GetNextWord(BuildFileContents, BuildFileWord);
+                }
+                
+                MacFreeFileMemory(BuildFile.Contents);
+                
+                if (BuildFunctionNameCount != 0)
+                {
+                    printf("Build Function: %s\n\n", BuildFunctionName);
+                    
+                    memory_arena Arena = {};
+                    
+                    // NOTE(yuval): Compiler Paths Discovery
+                    string EnvPath = MakeStringSlowly(getenv("PATH"));
+                    
+                    compiler_info* Compiler = Platform.Compilers;
+                    Compiler->Type = BuildCompiler_Clang;
+                    Compiler->Name = "clang";
+                    Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
+                    ++Compiler;
+                    
+                    Compiler->Type = BuildCompiler_GPP;
+                    Compiler->Name = "g++";
+                    Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
+                    ++Compiler;
+                    
+                    Compiler->Type = BuildCompiler_GCC;
+                    Compiler->Name = "gcc";
+                    Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
+                    ++Compiler;
+                    
+                    Compiler->Type = BuildCompiler_MSVC;
+                    Compiler->Name = "cl";
+                    Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
+                    
+                    // NOTE(yuval): Build File Workspace Setup
+                    build_workspace BuildFileWorkspace = {};
+                    BuildFileWorkspace.Name = MakeLitString("Build File");
+                    
+                    build_options* Options = &BuildFileWorkspace.Options;
+                    Options->OptimizationLevel = 0; // TODO(yuval): Use max optimization level
+                    Options->OutputType = BuildOutput_SharedLibrary;
+                    Options->OutputName = MakeLitString("build_file");
+                    Options->OutputPath = MakeLitString(""); // TODO(yuval): Add an output path;
+                    Options->Compiler = BuildCompiler_Auto;
+                    
+                    BuildAddFile(&BuildFileWorkspace, MakeLitString(GENERATED_BUILD_FILE_NAME));
+                    
+                    // NOTE(yuval): Build File Workspace Building
+                    time_events_queue BuildFileTimeEventsQueue;
+                    if (BuildWorkspace(&BuildFileWorkspace, &Arena, &BuildFileTimeEventsQueue, true))
+                    {
+                        void* BuildFileDLL = dlopen("build_file.dylib", RTLD_LAZY | RTLD_GLOBAL);
+                        
+                        if (BuildFileDLL)
+                        {
+                            build_function* BuildFunction =
+                                (build_function*)dlsym(BuildFileDLL, BuildFunctionName);
+                            
+                            if (BuildFunction)
+                            {
+                                BuildFunction(&GlobalApp);
+                            }
+                            else
+                            {
+                                // TODO(yuval): Report invalid build function
+                            }
+                        }
+                        else
+                        {
+                            // TODO(yuval): Diagnostic
+                        }
+                    }
+                    else
+                    {
+                        // TODO(yuval): Diagnostic
+                    }
+                }
+                else
+                {
+                    // TODO(yuval): Report no build function!
                 }
             }
             else
