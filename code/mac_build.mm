@@ -300,8 +300,6 @@ MacGetCompilerPath(const char* CompilerName, string EnvPath, memory_arena* Arena
     return Result;
 }
 
-#define GENERATED_BUILD_FILE_NAME "build_file.buildgen.cpp"
-
 int
 main(int ArgCount, const char* Args[])
 {
@@ -314,30 +312,52 @@ main(int ArgCount, const char* Args[])
         // NOTE(yuval): Getting the timebase info
         mach_timebase_info(&GlobalTimebaseInfo);
         
-        pid_t PID = getpid();
-        char BuildAppPath[PATH_MAX];
-        s32 BuildAppPathCount = proc_pidpath(PID, BuildAppPath, sizeof(BuildAppPath));
-        if (BuildAppPathCount > 0)
+        if (ArgCount > 1)
         {
-            platform_api PlatformAPI;
-            
-            yd_umm BuildAppPathLastSlashIndex = RFind(BuildAppPath, BuildAppPathCount, '/');
-            ConcatStrings(PlatformAPI.BuildRunTreeCodePath, sizeof(PlatformAPI.BuildRunTreeCodePath),
-                          BuildAppPath, BuildAppPathLastSlashIndex + 1,
-                          Literal("code/"));
-            
-            PlatformAPI.GetOutputExtension = MacGetOutputExtension;
-            PlatformAPI.ExecProcessAndWait = MacExecProcessAndWait;
-            
-            PlatformAPI.GetWallClock = MacGetWallClock;
-            PlatformAPI.GetSecondsElapsed = MacGetSecondsElapsed;
-            
-            BuildInitialize(PlatformAPI);
-            
-            if (ArgCount > 1)
+            pid_t PID = getpid();
+            char BuildAppPath[PATH_MAX];
+            s32 BuildAppPathCount = proc_pidpath(PID, BuildAppPath, sizeof(BuildAppPath));
+            if (BuildAppPathCount > 0)
             {
+                build_application* App = BootstrapPushStruct(build_application, AppArena);
+                
+                yd_umm BuildAppPathLastSlashIndex = RFind(BuildAppPath, BuildAppPathCount, '/');
+                ConcatStrings(App->PlatformAPI.BuildRunTreeCodePath, sizeof(Platform.BuildRunTreeCodePath),
+                              BuildAppPath, BuildAppPathLastSlashIndex + 1,
+                              Literal("code/"));
+                
+                App->PlatformAPI.GetOutputExtension = MacGetOutputExtension;
+                App->PlatformAPI.ExecProcessAndWait = MacExecProcessAndWait;
+                
+                App->PlatformAPI.GetWallClock = MacGetWallClock;
+                App->PlatformAPI.GetSecondsElapsed = MacGetSecondsElapsed;
+                
+                // NOTE(yuval): Compiler Paths Discovery
+                string EnvPath = MakeStringSlowly(getenv("PATH"));
+                
+                compiler_info* Compiler = App->PlatformAPI.Compilers;
+                Compiler->Type = BuildCompiler_Clang;
+                Compiler->Name = "clang";
+                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
+                ++Compiler;
+                
+                Compiler->Type = BuildCompiler_GPP;
+                Compiler->Name = "g++";
+                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
+                ++Compiler;
+                
+                Compiler->Type = BuildCompiler_GCC;
+                Compiler->Name = "gcc";
+                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
+                ++Compiler;
+                
+                Compiler->Type = BuildCompiler_MSVC;
+                Compiler->Name = "cl";
+                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
+                
                 read_file_result BuildFile = MacReadEntireFile(Args[1]);
-                string BuildFileContents = MakeString(BuildFile.Contents, BuildFile.ContentsSize);
+                string BuildFileContents = MakeString(BuildFile.Contents,
+                                                      BuildFile.ContentsSize);
                 
                 // TODO(yuval): Better parsing for finding the build function name:
                 // Parse the document to tokens, ignore whitespaces, newlines, and so on....
@@ -351,10 +371,10 @@ main(int ArgCount, const char* Args[])
                     {
                         BuildFunctionNameCount = Copy(BuildFunctionName,
                                                       GetNextWord(BuildFileContents, BuildFileWord));
-                        BuildFile.ContentsSize = (umm)(BuildFileWord.Data - BuildFileContents.Data);
+                        
                         MacWriteEntireFile(GENERATED_BUILD_FILE_NAME,
                                            BuildFile.Contents,
-                                           BuildFile.ContentsSize);
+                                           (umm)(BuildFileWord.Data - BuildFileContents.Data));
                         break;
                     }
                     
@@ -367,47 +387,7 @@ main(int ArgCount, const char* Args[])
                 {
                     printf("Build Function: %s\n\n", BuildFunctionName);
                     
-                    memory_arena Arena = {};
-                    
-                    // NOTE(yuval): Compiler Paths Discovery
-                    string EnvPath = MakeStringSlowly(getenv("PATH"));
-                    
-                    compiler_info* Compiler = Platform.Compilers;
-                    Compiler->Type = BuildCompiler_Clang;
-                    Compiler->Name = "clang";
-                    Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
-                    ++Compiler;
-                    
-                    Compiler->Type = BuildCompiler_GPP;
-                    Compiler->Name = "g++";
-                    Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
-                    ++Compiler;
-                    
-                    Compiler->Type = BuildCompiler_GCC;
-                    Compiler->Name = "gcc";
-                    Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
-                    ++Compiler;
-                    
-                    Compiler->Type = BuildCompiler_MSVC;
-                    Compiler->Name = "cl";
-                    Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &Arena);
-                    
-                    // NOTE(yuval): Build File Workspace Setup
-                    build_workspace BuildFileWorkspace = {};
-                    BuildFileWorkspace.Name = MakeLitString("Build File");
-                    
-                    build_options* Options = &BuildFileWorkspace.Options;
-                    Options->OptimizationLevel = 0; // TODO(yuval): Use max optimization level
-                    Options->OutputType = BuildOutput_SharedLibrary;
-                    Options->OutputName = MakeLitString("build_file");
-                    Options->OutputPath = MakeLitString(""); // TODO(yuval): Add an output path;
-                    Options->Compiler = BuildCompiler_Auto;
-                    
-                    BuildAddFile(&BuildFileWorkspace, MakeLitString(GENERATED_BUILD_FILE_NAME));
-                    
-                    // NOTE(yuval): Build File Workspace Building
-                    time_events_queue BuildFileTimeEventsQueue;
-                    if (BuildWorkspace(&BuildFileWorkspace, &Arena, &BuildFileTimeEventsQueue, true))
+                    if (BuildStartup(App))
                     {
                         void* BuildFileDLL = dlopen("build_file.dylib", RTLD_LAZY | RTLD_GLOBAL);
                         
@@ -418,7 +398,7 @@ main(int ArgCount, const char* Args[])
                             
                             if (BuildFunction)
                             {
-                                BuildFunction(&GlobalApp);
+                                BuildFunction(&App->AppLinks);
                             }
                             else
                             {

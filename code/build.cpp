@@ -6,7 +6,6 @@
 #define YD_STRING_IMPLEMENTATION
 #include "yd/yd_string.h"
 
-global_variable build_app GlobalApp;
 global_variable time_events_queue GlobalTimeEventsQueue;
 
 #if 0
@@ -459,10 +458,12 @@ internal BUILD_CREATE_WORKSPACE(AppCreateWorkspace)
 
 internal START_BUILD(AppStartBuild)
 {
+    build_application* TheApp = (build_application*)App;
+    
     for (umm Index = 0; Index < App->Workspaces.Count; ++Index)
     {
         time_events_queue WorkspaceTimeEventsQueue;
-        BuildWorkspace(&App->Workspaces.Workspaces[Index], &App->MemoryArena,
+        BuildWorkspace(&App->Workspaces.Workspaces[Index], &TheApp->AppArena,
                        &WorkspaceTimeEventsQueue);
         //PrintWorkspaceBuildStats(&WorkspaceTimeEventsQueue);
     }
@@ -475,14 +476,34 @@ internal BUILD_WAIT_FOR_MESSAGE(AppWaitForMessage)
     return Result;
 }
 
+#define GENERATED_BUILD_FILE_NAME "build_file.buildgen.cpp"
 platform_api Platform;
 
-internal void
-BuildInitialize(platform_api PlatformAPI)
+internal b32
+BuildStartup(build_application* App)
 {
-    Platform = PlatformAPI;
+    Platform = App->PlatformAPI;
     
-    GlobalApp.CreateWorkspace_ = AppCreateWorkspace;
-    GlobalApp.StartBuild_ = AppStartBuild;
-    GlobalApp.WaitForMessage_ = AppWaitForMessage;
+    App->AppLinks.CreateWorkspace_ = AppCreateWorkspace;
+    App->AppLinks.StartBuild_ = AppStartBuild;
+    App->AppLinks.WaitForMessage_ = AppWaitForMessage;
+    
+    // NOTE(yuval): Build File Workspace Setup
+    build_workspace BuildFileWorkspace = {};
+    BuildFileWorkspace.Name = MakeLitString("Build File");
+    
+    build_options* Options = &BuildFileWorkspace.Options;
+    Options->OptimizationLevel = 0; // TODO(yuval): Use max optimization level
+    Options->OutputType = BuildOutput_SharedLibrary;
+    Options->OutputName = MakeLitString("build_file");
+    Options->OutputPath = MakeLitString(""); // TODO(yuval): Add an output path;
+    Options->Compiler = BuildCompiler_Auto;
+    
+    BuildAddFile(&BuildFileWorkspace, MakeLitString(GENERATED_BUILD_FILE_NAME));
+    
+    // NOTE(yuval): Build File Workspace Building
+    time_events_queue BuildFileTimeEventsQueue;
+    b32 Result = BuildWorkspace(&BuildFileWorkspace, &App->AppArena, &BuildFileTimeEventsQueue, false);
+    
+    return Result;
 }

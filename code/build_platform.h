@@ -37,5 +37,14 @@ typedef struct platform_api
 
 extern platform_api Platform;
 
+struct build_application
+{
+    build_application_links AppLinks;
+    
+    memory_arena AppArena;
+    platform_api PlatformAPI;
+};
+
+
 #define BUILD_PLATFORM_H
 #endif // #if !defined(BUILD_PLATFORM_H)

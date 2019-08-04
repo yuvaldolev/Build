@@ -36,7 +36,7 @@ typedef uintptr_t build_umm;
 #include "yd/yd_string.h"
 
 // TODO(yuval): Make this export functions
-#define BUILD_FUNCTION(Name) void Name(struct build_app* App)
+#define BUILD_FUNCTION(Name) void Name(struct build_application_links* App)
 typedef BUILD_FUNCTION(build_function);
 
 struct build_file_array
@@ -120,16 +120,17 @@ struct build_message
     } Data;
 };
 
-#define BUILD_CREATE_WORKSPACE(FnName) build_workspace* FnName(struct build_app* App, string Name)
+#define BUILD_CREATE_WORKSPACE(FnName) build_workspace* FnName(struct build_application_links* App, \
+string Name)
 typedef BUILD_CREATE_WORKSPACE(build_create_workspace);
 
-#define START_BUILD(Name) void Name(struct build_app* App)
+#define START_BUILD(Name) void Name(struct build_application_links* App)
 typedef START_BUILD(start_build);
 
 #define BUILD_WAIT_FOR_MESSAGE(Name) build_message Name()
 typedef BUILD_WAIT_FOR_MESSAGE(build_wait_for_message);
 
-struct build_app
+struct build_application_links
 {
     memory_arena MemoryArena;
     build_workspace_array Workspaces;
@@ -141,19 +142,19 @@ struct build_app
 };
 
 build_internal inline build_workspace*
-BuildCreateWorkspace(build_app* App, string Name)
+BuildCreateWorkspace(build_application_links* App, string Name)
 {
     return App->CreateWorkspace_(App, Name);
 }
 
 build_internal inline void
-StartBuild(build_app* App)
+StartBuild(build_application_links* App)
 {
     App->StartBuild_(App);
 }
 
 build_internal inline build_message
-BuildWaitForMessage(build_app* App)
+BuildWaitForMessage(build_application_links* App)
 {
     return App->WaitForMessage_();
 }
