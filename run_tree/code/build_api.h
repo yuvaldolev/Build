@@ -132,7 +132,6 @@ typedef BUILD_WAIT_FOR_MESSAGE(build_wait_for_message);
 
 struct build_application_links
 {
-    memory_arena MemoryArena;
     build_workspace_array Workspaces;
     
     build_create_workspace* CreateWorkspace_;

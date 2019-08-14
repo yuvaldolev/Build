@@ -18,6 +18,8 @@
 #include <dlfcn.h>
 #include <stdio.h> // TODO(yuval): Temporary
 
+#include "mac_build.h"
+
 /*
  TODO(yuval): What is left to be done in the platform layer:
   - Proper Args parsing.
@@ -258,6 +260,16 @@ MacWriteEntireFile(const char* FileName, void* Memory, umm MemorySize)
     return Result;
 }
 
+internal void*
+MacThreadProc(void* Parameter)
+{
+    mac_thread_info* ThreadInfo = (mac_thread_info*)Parameter;
+    
+    printf("Thread: %d\n", ThreadInfo->Num);
+    
+    return 0;
+}
+
 // TODO(yuval): Maybe factor this function to be non platform specific?
 internal char*
 MacGetCompilerPath(const char* CompilerName, string EnvPath, memory_arena* Arena)
@@ -398,6 +410,22 @@ main(int ArgCount, const char* Args[])
                             
                             if (BuildFunction)
                             {
+                                // NOTE(yuval): Work Queue Creation
+                                //platform_work_queue WorkQueue = {};
+                                mac_thread_info ThreadInfos[8];
+                                
+                                for (u32 ThreadIndex = 0;
+                                     ThreadIndex < ArrayCount(ThreadInfos);
+                                     ++ThreadIndex)
+                                {
+                                    mac_thread_info* Info = &ThreadInfos[ThreadIndex];
+                                    Info->Num = ThreadIndex;
+                                    
+                                    pthread_t ThreadHandle;
+                                    pthread_create(&ThreadHandle, 0, MacThreadProc, Info);
+                                    pthread_detach(ThreadHandle);
+                                }
+                                
                                 BuildFunction(&App->AppLinks);
                             }
                             else

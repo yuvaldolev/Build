@@ -462,7 +462,7 @@ internal START_BUILD(AppStartBuild)
     
     for (umm Index = 0; Index < App->Workspaces.Count; ++Index)
     {
-        time_events_queue WorkspaceTimeEventsQueue;
+        time_events_queue WorkspaceTimeEventsQueue = {};
         BuildWorkspace(&App->Workspaces.Workspaces[Index], &TheApp->AppArena,
                        &WorkspaceTimeEventsQueue);
         //PrintWorkspaceBuildStats(&WorkspaceTimeEventsQueue);

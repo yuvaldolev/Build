@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 build_internal void
-Build(build_app* App)
+Build(build_application_links* App)
 {
     build_b32 Building = true;
     
@@ -78,7 +78,7 @@ SetupRelease(build_workspace* Workspace)
 }
 
 build_internal build_workspace*
-StartWorkspace(build_app* App, string Name)
+StartWorkspace(build_application_links* App, string Name)
 {
     build_workspace* Workspace = BuildCreateWorkspace(App, Name);
     
