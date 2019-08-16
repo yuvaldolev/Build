@@ -1,8 +1,24 @@
 #if !defined(MAC_BUILD_H)
 
-struct mac_thread_info
+struct platform_work_queue_entry
 {
-    s32 Num;
+    platform_work_queue_callback* Callback;
+    void* Data;
+};
+
+struct platform_work_queue
+{
+    sem_t SemaphoreHandle;
+    
+    volatile u32 NextEntryToRead;
+    volatile u32 NextEntryToWrite;
+    
+    platform_work_queue_entry Entries[256];
+};
+
+struct mac_thread_startup
+{
+    platform_work_queue* Queue;
 };
 
 #define MAC_BUILD_H

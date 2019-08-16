@@ -1,17 +1,11 @@
 #include <Cocoa/Cocoa.h>
 
-#if !defined(BUILD_TRAVIS)
-# include <iostream>
-# include <base/files/file_path.h>
-# include <client/crash_report_database.h>
-# include <client/settings.h>
-# include <client/crashpad_client.h>
-#endif // #if !defined(BUILD_TRAVIS)
-
 #include "build.cpp"
 
 #include <mach/mach_time.h>
 #include <libproc.h>
+#include <pthread.h>
+#include <semaphore.h>
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -27,45 +21,7 @@
  - Platform specific message boxes.
 */
 
-#if 0
-struct compiler_message_queue
-{
-    string CompiledFileName;
-    
-    string Messages[512];
-    yd_umm ReadIndex;
-    yd_umm WriteIndex;
-};
-#endif // #if 0
-
 global_variable mach_timebase_info_data_t GlobalTimebaseInfo;
-
-//global_variable process_message_queue GlobalProcessMessageQueue = {};
-
-#if !defined(BUILD_TRAVIS)
-internal void
-SetupCrashpad()
-{
-    using namespace crashpad;
-    
-    std::map<std::string, std::string> Annotations;
-    std::vector<std::string> Arguments;
-    CrashpadClient Client;
-    
-    Annotations["format"] = "minidump";
-    Annotations["token"] = "b82a6196b7e80dab321f0f414edfe1084b70e5a6cb53b93206c0c8732692e705";
-    
-    Arguments.push_back("--no-rate-limit");
-    Client.StartHandler(base::FilePath{"../crashpad/crashpad/out/Default/crashpad_handler"},
-                        base::FilePath{"../crashpad/meta_crashpad_db"},
-                        base::FilePath{"../crashpad/meta_crashpad_db"},
-                        "https://submit.backtrace.io/yuvaldolev/b82a6196b7e80dab321f0f414edfe1084b70e5a6cb53b93206c0c8732692e705/minidump",
-                        Annotations,
-                        Arguments,
-                        true,
-                        true);
-}
-#endif // #if !defined(BUILD_TRAVIS)
 
 internal PLATFORM_GET_OUTPUT_EXTENSION(MacGetOutputExtension)
 {
@@ -260,12 +216,35 @@ MacWriteEntireFile(const char* FileName, void* Memory, umm MemorySize)
     return Result;
 }
 
+
 internal void*
 MacThreadProc(void* Parameter)
 {
-    mac_thread_info* ThreadInfo = (mac_thread_info*)Parameter;
+    mac_thread_startup* Startup = (mac_thread_startup*)Parameter;
+    platform_work_queue* Queue = Startup->Queue;
     
-    printf("Thread: %d\n", ThreadInfo->Num);
+    for (;;)
+    {
+        u32 OriginalNextEntryToRead = Queue->NextEntryToRead;
+        u32 NewNextEntryToRead = (OriginalNextEntryToRead + 1) % ArrayCount(Queue->Entries);
+        
+        if (OriginalNextEntryToRead != Queue->NextEntryToWrite)
+        {
+            u32 Index = AtomicCompareExchangeU32((volatile u32*)&Queue->NextEntryToRead,
+                                                 NewNextEntryToRead,
+                                                 OriginalNextEntryToRead);
+            
+            if (Index == OriginalNextEntryToRead)
+            {
+                platform_work_queue_entry Entry = Queue->Entries[Index];
+                Entry.Callback(Queue, Entry.Data);
+            }
+        }
+        else
+        {
+            sem_wait(&Queue->SemaphoreHandle);
+        }
+    }
     
     return 0;
 }
@@ -315,127 +294,119 @@ MacGetCompilerPath(const char* CompilerName, string EnvPath, memory_arena* Arena
 int
 main(int ArgCount, const char* Args[])
 {
-#if !defined(BUILD_TRAVIS)
-    SetupCrashpad();
-#endif // #if !defined(BUILD_TRAVIS)
+    // NOTE(yuval): Getting the timebase info
+    mach_timebase_info(&GlobalTimebaseInfo);
     
-    @autoreleasepool
+    if (ArgCount > 1)
     {
-        // NOTE(yuval): Getting the timebase info
-        mach_timebase_info(&GlobalTimebaseInfo);
-        
-        if (ArgCount > 1)
+        pid_t PID = getpid();
+        char BuildAppPath[PATH_MAX];
+        s32 BuildAppPathCount = proc_pidpath(PID, BuildAppPath, sizeof(BuildAppPath));
+        if (BuildAppPathCount > 0)
         {
-            pid_t PID = getpid();
-            char BuildAppPath[PATH_MAX];
-            s32 BuildAppPathCount = proc_pidpath(PID, BuildAppPath, sizeof(BuildAppPath));
-            if (BuildAppPathCount > 0)
+            build_application* App = BootstrapPushStruct(build_application, AppArena);
+            
+            yd_umm BuildAppPathLastSlashIndex = RFind(BuildAppPath, BuildAppPathCount, '/');
+            ConcatStrings(App->PlatformAPI.BuildRunTreeCodePath, sizeof(Platform.BuildRunTreeCodePath),
+                          BuildAppPath, BuildAppPathLastSlashIndex + 1,
+                          Literal("code/"));
+            
+            App->PlatformAPI.GetOutputExtension = MacGetOutputExtension;
+            App->PlatformAPI.ExecProcessAndWait = MacExecProcessAndWait;
+            
+            App->PlatformAPI.GetWallClock = MacGetWallClock;
+            App->PlatformAPI.GetSecondsElapsed = MacGetSecondsElapsed;
+            
+            // NOTE(yuval): Compiler Paths Discovery
+            string EnvPath = MakeStringSlowly(getenv("PATH"));
+            
+            compiler_info* Compiler = App->PlatformAPI.Compilers;
+            Compiler->Type = BuildCompiler_Clang;
+            Compiler->Name = "clang";
+            Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
+            ++Compiler;
+            
+            Compiler->Type = BuildCompiler_GPP;
+            Compiler->Name = "g++";
+            Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
+            ++Compiler;
+            
+            Compiler->Type = BuildCompiler_GCC;
+            Compiler->Name = "gcc";
+            Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
+            ++Compiler;
+            
+            Compiler->Type = BuildCompiler_MSVC;
+            Compiler->Name = "cl";
+            Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
+            
+            read_file_result BuildFile = MacReadEntireFile(Args[1]);
+            string BuildFileContents = MakeString(BuildFile.Contents,
+                                                  BuildFile.ContentsSize);
+            
+            // TODO(yuval): Better parsing for finding the build function name:
+            // Parse the document to tokens, ignore whitespaces, newlines, and so on....
+            char BuildFunctionName[64];
+            umm BuildFunctionNameCount = 0;
+            
+            string BuildFileWord = GetFirstWord(BuildFileContents);
+            while (!IsNullString(BuildFileWord))
             {
-                build_application* App = BootstrapPushStruct(build_application, AppArena);
-                
-                yd_umm BuildAppPathLastSlashIndex = RFind(BuildAppPath, BuildAppPathCount, '/');
-                ConcatStrings(App->PlatformAPI.BuildRunTreeCodePath, sizeof(Platform.BuildRunTreeCodePath),
-                              BuildAppPath, BuildAppPathLastSlashIndex + 1,
-                              Literal("code/"));
-                
-                App->PlatformAPI.GetOutputExtension = MacGetOutputExtension;
-                App->PlatformAPI.ExecProcessAndWait = MacExecProcessAndWait;
-                
-                App->PlatformAPI.GetWallClock = MacGetWallClock;
-                App->PlatformAPI.GetSecondsElapsed = MacGetSecondsElapsed;
-                
-                // NOTE(yuval): Compiler Paths Discovery
-                string EnvPath = MakeStringSlowly(getenv("PATH"));
-                
-                compiler_info* Compiler = App->PlatformAPI.Compilers;
-                Compiler->Type = BuildCompiler_Clang;
-                Compiler->Name = "clang";
-                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
-                ++Compiler;
-                
-                Compiler->Type = BuildCompiler_GPP;
-                Compiler->Name = "g++";
-                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
-                ++Compiler;
-                
-                Compiler->Type = BuildCompiler_GCC;
-                Compiler->Name = "gcc";
-                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
-                ++Compiler;
-                
-                Compiler->Type = BuildCompiler_MSVC;
-                Compiler->Name = "cl";
-                Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
-                
-                read_file_result BuildFile = MacReadEntireFile(Args[1]);
-                string BuildFileContents = MakeString(BuildFile.Contents,
-                                                      BuildFile.ContentsSize);
-                
-                // TODO(yuval): Better parsing for finding the build function name:
-                // Parse the document to tokens, ignore whitespaces, newlines, and so on....
-                char BuildFunctionName[64];
-                umm BuildFunctionNameCount = 0;
-                
-                string BuildFileWord = GetFirstWord(BuildFileContents);
-                while (!IsNullString(BuildFileWord))
+                if (StringsMatch(BuildFileWord, "#build"))
                 {
-                    if (StringsMatch(BuildFileWord, "#build"))
-                    {
-                        BuildFunctionNameCount = Copy(BuildFunctionName,
-                                                      GetNextWord(BuildFileContents, BuildFileWord));
-                        
-                        MacWriteEntireFile(GENERATED_BUILD_FILE_NAME,
-                                           BuildFile.Contents,
-                                           (umm)(BuildFileWord.Data - BuildFileContents.Data));
-                        break;
-                    }
+                    BuildFunctionNameCount = Copy(BuildFunctionName,
+                                                  GetNextWord(BuildFileContents, BuildFileWord));
                     
-                    BuildFileWord = GetNextWord(BuildFileContents, BuildFileWord);
+                    MacWriteEntireFile(GENERATED_BUILD_FILE_NAME,
+                                       BuildFile.Contents,
+                                       (umm)(BuildFileWord.Data - BuildFileContents.Data));
+                    break;
                 }
                 
-                MacFreeFileMemory(BuildFile.Contents);
+                BuildFileWord = GetNextWord(BuildFileContents, BuildFileWord);
+            }
+            
+            MacFreeFileMemory(BuildFile.Contents);
+            
+            if (BuildFunctionNameCount != 0)
+            {
+                printf("Build Function: %s\n\n", BuildFunctionName);
                 
-                if (BuildFunctionNameCount != 0)
+                if (BuildStartup(App))
                 {
-                    printf("Build Function: %s\n\n", BuildFunctionName);
+                    void* BuildFileDLL = dlopen("build_file.dylib", RTLD_LAZY | RTLD_GLOBAL);
                     
-                    if (BuildStartup(App))
+                    if (BuildFileDLL)
                     {
-                        void* BuildFileDLL = dlopen("build_file.dylib", RTLD_LAZY | RTLD_GLOBAL);
+                        build_function* BuildFunction =
+                            (build_function*)dlsym(BuildFileDLL, BuildFunctionName);
                         
-                        if (BuildFileDLL)
+                        if (BuildFunction)
                         {
-                            build_function* BuildFunction =
-                                (build_function*)dlsym(BuildFileDLL, BuildFunctionName);
+                            // NOTE(yuval): Work Queue Creation
+                            platform_work_queue WorkQueue = {};
+                            mac_thread_info ThreadStartups[8];
                             
-                            if (BuildFunction)
+                            sem_init(&WorkQueue->SemaphoreHandle, 0, 0);
+                            
+                            for (u32 ThreadIndex = 0;
+                                 ThreadIndex < ArrayCount(ThreadInfos);
+                                 ++ThreadIndex)
                             {
-                                // NOTE(yuval): Work Queue Creation
-                                //platform_work_queue WorkQueue = {};
-                                mac_thread_info ThreadInfos[8];
+                                mac_thread_startup* Startup = &ThreadStartups[ThreadIndex];
+                                Startup->Queue = &WorkQueue;
                                 
-                                for (u32 ThreadIndex = 0;
-                                     ThreadIndex < ArrayCount(ThreadInfos);
-                                     ++ThreadIndex)
-                                {
-                                    mac_thread_info* Info = &ThreadInfos[ThreadIndex];
-                                    Info->Num = ThreadIndex;
-                                    
-                                    pthread_t ThreadHandle;
-                                    pthread_create(&ThreadHandle, 0, MacThreadProc, Info);
-                                    pthread_detach(ThreadHandle);
-                                }
-                                
-                                BuildFunction(&App->AppLinks);
+                                pthread_t ThreadHandle;
+                                pthread_create(&ThreadHandle, 0, MacThreadProc, Startup);
+                                pthread_detach(ThreadHandle);
                             }
-                            else
-                            {
-                                // TODO(yuval): Report invalid build function
-                            }
+                            
+                            // NOTE(yuval): Calling the build function
+                            BuildFunction(&App->AppLinks);
                         }
                         else
                         {
-                            // TODO(yuval): Diagnostic
+                            // TODO(yuval): Report invalid build function
                         }
                     }
                     else
@@ -445,18 +416,22 @@ main(int ArgCount, const char* Args[])
                 }
                 else
                 {
-                    // TODO(yuval): Report no build function!
+                    // TODO(yuval): Diagnostic
                 }
             }
             else
             {
-                printf("A Build File Was Not Specified\n");
+                // TODO(yuval): Report no build function!
             }
         }
         else
         {
-            // TODO(yuval): Diagnostic
+            printf("A Build File Was Not Specified\n");
         }
+    }
+    else
+    {
+        // TODO(yuval): Diagnostic
     }
     
     return 0;

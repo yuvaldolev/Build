@@ -70,7 +70,7 @@ ReadTimeEvent(time_events_queue* Queue)
     return Event;
 }
 
-// TODO(yuval): Maybe take a queue parameter?
+// TODO(yuval): Maybe allow using a default queue?
 #define BeginTimedBlock(Queue, Name) { RecordTimeEvent(Queue, TimeEvent_BeginBlock, Name); }
 #define EndTimedBlock(Queue) { RecordTimeEvent(Queue, TimeEvent_EndBlock, "EndBlock_"); }
 

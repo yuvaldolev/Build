@@ -4,6 +4,9 @@ CommonFlags="-g -Weverything -Wall -Werror -fdiagnostics-absolute-paths -std=c++
 CommonFlags+=" -Wno-unsequenced -Wno-comment -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-switch -Wno-old-style-cast -Wno-zero-as-null-pointer-constant -Wno-string-conversion  -Wno-newline-eof -Wno-c++98-compat-pedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-unused-parameter -Wno-padded -Wno-missing-prototypes -Wno-cast-align -Wno-sign-conversion -Wno-switch-enum -Wno-double-promotion -Wno-gnu-zero-variadic-macro-arguments -Wno-missing-noreturn -Wno-class-varargs -Wno-deprecated-declarations -Wno-documentation-unknown-command -Wno-weak-vtables -Wno-cast-qual -Wno-float-equal"
 CommonFlags+=" -DBUILD_INTERNAL=1 -DBUILD_SLOW=1 -I../run_tree/code"
 
+RunTests=0
+BacktraceIntegration=0
+
 # NOTE(yuval): Setup compiler
 if [ -n "$(command -v clang++)" ]
 then
@@ -35,12 +38,14 @@ CompilationExitCode=$?
 if [ $CompilationExitCode -eq 0 ]
 then
   # Crashpad Debug Symbols Upload
-  echo
-  zip -r mac_build.dSYM.zip ../run_tree/mac_build.dSYM
-  morgue put Build mac_build.dSYM.zip --format=symbols
+  if [ $BacktraceIntegration -eq 1 ]
+  then
+    echo
+    zip -r mac_build.dSYM.zip ../run_tree/mac_build.dSYM
+    morgue put Build mac_build.dSYM.zip --format=symbols
+  fi
 
   # Tests
-  RunTests=0
   if [ $RunTests -eq 1 ]
   then
     pushd "../test" > /dev/null
