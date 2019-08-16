@@ -7,8 +7,6 @@
 
 #include "build_platform.h"
 #include "build_for.h"
-#include "build_assert.h"
-#include "build_intrinsics.h"
 #include "build_profile.h"
 
 #if 0

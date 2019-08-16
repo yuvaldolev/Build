@@ -66,8 +66,8 @@ GetThreadID()
     return ThreadID;
 }
 #elif COMPILER_LLVM
-# define CompletePreviousReadsBeforeFutureReads asm volatile("" ::: "memory")
-# define CompletePreviousWritesBeforeFutureWrites asm volatile("" ::: "memory")
+# define CompletePreviousReadsBeforeFutureReads(...) asm volatile("" ::: "memory")
+# define CompletePreviousWritesBeforeFutureWrites(...) asm volatile("" ::: "memory")
 
 inline u32
 AtomicCompareExchangeU32(volatile u32* Value, u32 New, u32 Expected)

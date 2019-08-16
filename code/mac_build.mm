@@ -216,6 +216,20 @@ MacWriteEntireFile(const char* FileName, void* Memory, umm MemorySize)
     return Result;
 }
 
+internal PLATFORM_ADD_WORK_QUEUE_ENTRY(MacAddWorkQueueEntry)
+{
+    u32 NewNextEntryToWrite = (Queue->NextEntryToWrite + 1) % ArrayCount(Queue->Entries);
+    Assert(NewNextEntryToWrite != Queue->NextEntryToRead);
+    
+    platform_work_queue_entry* Entry = &Queue->Entries[Queue->NextEntryToWrite];
+    Entry->Callback = Callback;
+    Entry->Data = Data;
+    
+    CompletePreviousWritesBeforeFutureWrites();
+    
+    Queue->NextEntryToWrite = NewNextEntryToWrite;
+    sem_post(&Queue->SemaphoreHandle);
+}
 
 internal void*
 MacThreadProc(void* Parameter)
@@ -245,8 +259,6 @@ MacThreadProc(void* Parameter)
             sem_wait(&Queue->SemaphoreHandle);
         }
     }
-    
-    return 0;
 }
 
 // TODO(yuval): Maybe factor this function to be non platform specific?
