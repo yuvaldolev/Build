@@ -397,12 +397,12 @@ main(int ArgCount, const char* Args[])
                         {
                             // NOTE(yuval): Work Queue Creation
                             platform_work_queue WorkQueue = {};
-                            mac_thread_info ThreadStartups[8];
+                            mac_thread_startup ThreadStartups[8];
                             
-                            sem_init(&WorkQueue->SemaphoreHandle, 0, 0);
+                            sem_init(&WorkQueue.SemaphoreHandle, 0, 0);
                             
                             for (u32 ThreadIndex = 0;
-                                 ThreadIndex < ArrayCount(ThreadInfos);
+                                 ThreadIndex < ArrayCount(ThreadStartups);
                                  ++ThreadIndex)
                             {
                                 mac_thread_startup* Startup = &ThreadStartups[ThreadIndex];
