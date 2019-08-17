@@ -24,7 +24,7 @@ compatible with the library.
 #include <stddef.h>
 
 #define yd_internal static
-#define yd_global_variable static
+#define yd_global static
 #define yd_local_persist static
 
 typedef int8_t yd_s8;

@@ -37,7 +37,7 @@
 #include <stddef.h>
 
 #define internal static
-#define global_variable static
+#define global static
 #define local_persist static
 
 // NOTE(yuval): To be used only in the same function

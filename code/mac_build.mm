@@ -323,12 +323,6 @@ main(int ArgCount, const char* Args[])
                           BuildAppPath, BuildAppPathLastSlashIndex + 1,
                           Literal("code/"));
             
-            App->PlatformAPI.GetOutputExtension = MacGetOutputExtension;
-            App->PlatformAPI.ExecProcessAndWait = MacExecProcessAndWait;
-            
-            App->PlatformAPI.GetWallClock = MacGetWallClock;
-            App->PlatformAPI.GetSecondsElapsed = MacGetSecondsElapsed;
-            
             // NOTE(yuval): Compiler Paths Discovery
             string EnvPath = MakeStringSlowly(getenv("PATH"));
             
@@ -352,6 +346,34 @@ main(int ArgCount, const char* Args[])
             Compiler->Name = "cl";
             Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
             
+            // NOTE(yuval): Work Queue Creation
+            platform_work_queue WorkQueue = {};
+            mac_thread_startup ThreadStartups[8];
+            
+            sem_init(&WorkQueue.SemaphoreHandle, 0, 0);
+            
+            for (u32 ThreadIndex = 0;
+                 ThreadIndex < ArrayCount(ThreadStartups);
+                 ++ThreadIndex)
+            {
+                mac_thread_startup* Startup = &ThreadStartups[ThreadIndex];
+                Startup->Queue = &WorkQueue;
+                
+                pthread_t ThreadHandle;
+                pthread_create(&ThreadHandle, 0, MacThreadProc, Startup);
+                pthread_detach(ThreadHandle);
+            }
+            
+            App->PlatformAPI.WorkQueue = &WorkQueue;
+            
+            // NOTE(yuval): PlatformAPI Functions Initilization
+            App->PlatformAPI.GetOutputExtension = MacGetOutputExtension;
+            App->PlatformAPI.ExecProcessAndWait = MacExecProcessAndWait;
+            
+            App->PlatformAPI.GetWallClock = MacGetWallClock;
+            App->PlatformAPI.GetSecondsElapsed = MacGetSecondsElapsed;
+            
+            // NOTE(yuval): Build File Processing
             read_file_result BuildFile = MacReadEntireFile(Args[1]);
             string BuildFileContents = MakeString(BuildFile.Contents,
                                                   BuildFile.ContentsSize);
@@ -380,6 +402,7 @@ main(int ArgCount, const char* Args[])
             
             MacFreeFileMemory(BuildFile.Contents);
             
+            // NOTE(yuval): Build Startup & Build Function Call
             if (BuildFunctionNameCount != 0)
             {
                 printf("Build Function: %s\n\n", BuildFunctionName);
@@ -395,24 +418,6 @@ main(int ArgCount, const char* Args[])
                         
                         if (BuildFunction)
                         {
-                            // NOTE(yuval): Work Queue Creation
-                            platform_work_queue WorkQueue = {};
-                            mac_thread_startup ThreadStartups[8];
-                            
-                            sem_init(&WorkQueue.SemaphoreHandle, 0, 0);
-                            
-                            for (u32 ThreadIndex = 0;
-                                 ThreadIndex < ArrayCount(ThreadStartups);
-                                 ++ThreadIndex)
-                            {
-                                mac_thread_startup* Startup = &ThreadStartups[ThreadIndex];
-                                Startup->Queue = &WorkQueue;
-                                
-                                pthread_t ThreadHandle;
-                                pthread_create(&ThreadHandle, 0, MacThreadProc, Startup);
-                                pthread_detach(ThreadHandle);
-                            }
-                            
                             // NOTE(yuval): Calling the build function
                             BuildFunction(&App->AppLinks);
                         }

@@ -13,7 +13,7 @@ struct compiler_info
 
 struct platform_work_queue;
 
-#define PLATFORM_WORK_QUEUE_CALLBACK(Name) void Name(platform_work_queue* Queue, void* Data);
+#define PLATFORM_WORK_QUEUE_CALLBACK(Name) void Name(platform_work_queue* Queue, void* Data)
 typedef PLATFORM_WORK_QUEUE_CALLBACK(platform_work_queue_callback);
 
 #define PLATFORM_ADD_WORK_QUEUE_ENTRY(Name) void Name(platform_work_queue* Queue, \
@@ -37,6 +37,8 @@ typedef struct platform_api
 {
     char BuildRunTreeCodePath[PATH_MAX];
     compiler_info Compilers[BuildCompiler_Count - 1];
+    
+    platform_work_queue* WorkQueue;
     
     platform_add_work_queue_entry* AddWorkQueueEntry;
     

@@ -20,7 +20,7 @@
 #include <stddef.h>
 
 #define yd_internal static
-#define yd_global_variable static
+#define yd_global static
 #define yd_local_persist static
 
 typedef int8_t yd_s8;
@@ -71,8 +71,8 @@ struct string
 // NOTE(yuval): Flags And Constants
 //
 
-yd_global_variable const string NULL_STRING = {};
-yd_global_variable const yd_umm STRING_NOT_FOUND = -1;
+yd_global const string NULL_STRING = {};
+yd_global const yd_umm STRING_NOT_FOUND = -1;
 
 //
 // NOTE(yuval): Public API Function Declarations

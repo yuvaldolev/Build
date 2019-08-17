@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 #define build_internal static
-#define build_global_variable static
+#define build_global static
 #define build_local_persist static
 
 // NOTE(yuval): To be used only in the same function

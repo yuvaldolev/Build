@@ -17,5 +17,12 @@
 #include "build_errors.h"
 #endif // #if 0
 
+struct compilation_work
+{
+    char* FileName;
+    compiler_info* CompilerInfo;
+    memory_arena* MemoryArena;
+};
+
 #define BUILD_H
 #endif // #if !defined(BUILD_H)

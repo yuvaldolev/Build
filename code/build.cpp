@@ -6,7 +6,7 @@
 #define YD_STRING_IMPLEMENTATION
 #include "yd/yd_string.h"
 
-global_variable time_events_queue GlobalTimeEventsQueue;
+global time_events_queue GlobalTimeEventsQueue;
 
 #if 0
 #include "build_tokenizer.cpp"
@@ -312,14 +312,110 @@ PrintWorkspaceBuildStats(time_events_queue* Queue)
     }
 }
 
+#if 0
 internal b32
-BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
-               time_events_queue* TimeEventsQueue, b32 IsSilentBuild = false)
+LinkWorkspace(build_workspace* Workspace)
 {
-    TimedFunction(TimeEventsQueue);
     
-    yd_b32 SuccessfulBuild = true;
+    // TODO(yuval): Create append functions for Z strings
+    char FullOutputPathData[PATH_MAX + 1];
+    string FullOutputPath = MakeString(FullOutputPathData, 0,
+                                       sizeof(FullOutputPath) - 1);
+    Copy(&FullOutputPath, BuildOptions->OutputPath);
+    Append(&FullOutputPath, BuildOptions->OutputName);
+    const char* OutputExtension = Platform.GetOutputExtension(BuildOptions->OutputType);
+    Append(&FullOutputPath, OutputExtension);
+    TerminateWithNull(&FullOutputPath);
     
+    const char* LinkerArgs[512] = {};
+    const char** LinkerArgsAt = LinkerArgs;
+    *LinkerArgsAt++ = CompilerInfo->Name;
+    
+    LinkerArgsAt += Workspace->Files.Count;
+    switch (BuildOptions->OutputType)
+    {
+        case BuildOutput_StaticLibrary:
+        {
+            // TODO(yuval): Add support for static libraries
+            //LinkerArgs[Workspace->Files.Count + 1] = "";
+        } break;
+        
+        case BuildOutput_SharedLibrary:
+        {
+            *LinkerArgsAt++ = "-shared";
+        } break;
+    }
+    
+    *LinkerArgsAt++ = "-o";
+    *LinkerArgsAt = FullOutputPath.Data;
+    
+    
+    temporary_memory TempMem = BeginTemporaryMemory(Arena);
+    
+    for (umm Index = 0;
+         Index < Workspace->Files.Count;
+         ++Index)
+    {
+        
+        // TODO(yuval): Use PushCopyZ and add functions to append and set extensions for
+        // null-terminated strings
+        string ObjectFilePath = PushCopyString(Arena, Workspace->Files.Paths[Index]);
+        if (SetExtension(&ObjectFilePath, ".o"))
+        {
+            TerminateWithNull(&ObjectFilePath);
+            LinkerArgs[Index + 1] = ObjectFilePath.Data;
+        }
+        else
+        {
+            // TODO(yuval): Diagnostic
+        }
+        
+    }
+    
+    if (!IsSilentBuild)
+    {
+        printf("Running Linker: ");
+        for (const char** Arg = LinkerArgs; *Arg; ++Arg)
+        {
+            printf("%s ", *Arg);
+        }
+        printf("\n\n");
+    }
+    
+    int ExitCode = Platform.ExecProcessAndWait(CompilerInfo->Path, (char**)LinkerArgs, Arena);
+    SuccessfulBuild &= (ExitCode == 0);
+    
+    EndTemporaryMemory(TempMem);
+}
+#endif // #if 0
+
+internal PLATFORM_WORK_QUEUE_CALLBACK(DoCompilationWork)
+{
+    compilation_work* Work = (compilation_work*)Data;
+    
+    const char* CompilerArgs[512] = {};
+    CompilerArgs[0] = Work->CompilerInfo->Name;
+    CompilerArgs[1] = "-I";
+    CompilerArgs[2] = Platform.BuildRunTreeCodePath;
+    CompilerArgs[3] = Work->FileName;
+    CompilerArgs[4] = "-c";
+    
+#if BUILD_INTERNAL
+    printf("Running Compiler: ");
+    for (const char** Arg = CompilerArgs; *Arg; ++Arg)
+    {
+        printf("%s ", *Arg);
+    }
+    printf("\n");
+#endif // #if BUILD_INTERNAL
+    
+    int ExitCode = Platform.ExecProcessAndWait(Work->CompilerInfo->Path,
+                                               (char**)CompilerArgs, Work->MemoryArena);
+}
+
+internal void
+CompileWorkspace(build_workspace* Workspace, memory_arena* Arena)
+{
     build_options* BuildOptions = &Workspace->Options;
     compiler_info* CompilerInfo = 0;
     For (Platform.Compilers)
@@ -335,115 +431,24 @@ BuildWorkspace(build_workspace* Workspace, memory_arena* Arena,
     
     if (CompilerInfo)
     {
-        const char* CompilerArgs[512] = {};
-        CompilerArgs[0] = CompilerInfo->Name;
-        CompilerArgs[1] = "-I";
-        CompilerArgs[2] = Platform.BuildRunTreeCodePath;
-        CompilerArgs[4] = "-c";
-        
-        // TODO(yuval): Create append functions for Z strings
-        char FullOutputPathData[PATH_MAX + 1];
-        string FullOutputPath = MakeString(FullOutputPathData, 0,
-                                           sizeof(FullOutputPath) - 1);
-        Copy(&FullOutputPath, BuildOptions->OutputPath);
-        Append(&FullOutputPath, BuildOptions->OutputName);
-        const char* OutputExtension = Platform.GetOutputExtension(BuildOptions->OutputType);
-        Append(&FullOutputPath, OutputExtension);
-        TerminateWithNull(&FullOutputPath);
-        
-        const char* LinkerArgs[512] = {};
-        const char** LinkerArgsAt = LinkerArgs;
-        *LinkerArgsAt++ = CompilerInfo->Name;
-        
-        LinkerArgsAt += Workspace->Files.Count;
-        switch (BuildOptions->OutputType)
+        for (umm Index = 0;
+             Index < Workspace->Files.Count;
+             ++Index)
         {
-            case BuildOutput_StaticLibrary:
-            {
-                // TODO(yuval): Add support for static libraries
-                //LinkerArgs[Workspace->Files.Count + 1] = "";
-            } break;
+            compilation_work* Work = PushStruct(Arena, compilation_work);
             
-            case BuildOutput_SharedLibrary:
-            {
-                *LinkerArgsAt++ = "-shared";
-            } break;
+            // TODO(yuval): Add the workspace's object file path to the file name
+            Work->FileName = PushCopyZ(Arena, Workspace->Files.Paths[Index]);
+            Work->CompilerInfo = CompilerInfo;
+            Work->MemoryArena = Arena;
+            
+            Platform.AddWorkQueueEntry(Platform.WorkQueue, DoCompilationWork, Work);
         }
-        
-        *LinkerArgsAt++ = "-o";
-        *LinkerArgsAt = FullOutputPath.Data;
-        
-        temporary_memory TempMem = BeginTemporaryMemory(Arena);
-        
-        {
-            TimedBlock(COMPILATION_TIMED_BLOCK_NAME, TimeEventsQueue);
-            
-            for (umm Index = 0;
-                 Index < Workspace->Files.Count;
-                 ++Index)
-            {
-                // TODO(yuval): Do I have to push this string????
-                CompilerArgs[3] = PushCopyZ(Arena, Workspace->Files.Paths[Index]);
-                
-                // TODO(yuval): Use PushCopyZ and add functions to append and set extensions for
-                // null-terminated strings
-                string ObjectFilePath = PushCopyString(Arena, Workspace->Files.Paths[Index]);
-                if (SetExtension(&ObjectFilePath, ".o"))
-                {
-                    TerminateWithNull(&ObjectFilePath);
-                    LinkerArgs[Index + 1] = ObjectFilePath.Data;
-                }
-                else
-                {
-                    // TODO(yuval): Diagnostic
-                }
-                
-                if (!IsSilentBuild)
-                {
-                    printf("Running Compiler: ");
-                    for (const char** Arg = CompilerArgs; *Arg; ++Arg)
-                    {
-                        printf("%s ", *Arg);
-                    }
-                    printf("\n");
-                }
-                
-                int ExitCode = Platform.ExecProcessAndWait(CompilerInfo->Path, (char**)CompilerArgs,
-                                                           Arena);
-                SuccessfulBuild &= (ExitCode == 0);
-            }
-            
-            if (!IsSilentBuild)
-            {
-                printf("\n");
-            }
-        }
-        
-        if (SuccessfulBuild)
-        {
-            TimedBlock(LINKAGE_TIMED_BLOCK_NAME, TimeEventsQueue);
-            
-            if (!IsSilentBuild)
-            {
-                printf("Running Linker: ");
-                for (const char** Arg = LinkerArgs; *Arg; ++Arg)
-                {
-                    printf("%s ", *Arg);
-                }
-                printf("\n\n");
-            }
-            int ExitCode = Platform.ExecProcessAndWait(CompilerInfo->Path, (char**)LinkerArgs, Arena);
-            SuccessfulBuild &= (ExitCode == 0);
-        }
-        
-        EndTemporaryMemory(TempMem);
     }
     else
     {
         // TODO(yuval): Diagnostic
     }
-    
-    return SuccessfulBuild;
 }
 
 internal BUILD_CREATE_WORKSPACE(AppCreateWorkspace)
@@ -460,13 +465,18 @@ internal START_BUILD(AppStartBuild)
 {
     build_application* TheApp = (build_application*)App;
     
+    // NOTE(yuval): Compilation
+    temporary_memory TempMem = BeginTemporaryMemory(&TheApp->AppArena);
     for (umm Index = 0; Index < App->Workspaces.Count; ++Index)
     {
-        time_events_queue WorkspaceTimeEventsQueue = {};
-        BuildWorkspace(&App->Workspaces.Workspaces[Index], &TheApp->AppArena,
-                       &WorkspaceTimeEventsQueue);
+        CompileWorkspace(&App->Workspaces.Workspaces[Index], &TheApp->AppArena);
+        
         //PrintWorkspaceBuildStats(&WorkspaceTimeEventsQueue);
     }
+    Platform.CompleteAllWork(Platform.WorkQueue);
+    EndTemporaryMemory(TempMem);
+    
+    // TODO(yuval): Linkage
 }
 
 internal BUILD_WAIT_FOR_MESSAGE(AppWaitForMessage)
