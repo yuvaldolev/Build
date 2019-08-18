@@ -609,8 +609,6 @@ PushSize_(memory_arena* Arena, yd_umm SizeInit, arena_push_params Params)
     return Result;
 }
 
-
-
 //
 // NOTE(yuval): Arena Clearing
 //

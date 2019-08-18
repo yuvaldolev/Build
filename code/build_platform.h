@@ -21,6 +21,9 @@ platform_work_queue_callback* Callback, \
 void* Data)
 typedef PLATFORM_ADD_WORK_QUEUE_ENTRY(platform_add_work_queue_entry);
 
+#define PLATFORM_COMPLETE_ALL_WORK_QUEUE_WORK(Name) void Name(platform_work_queue* Queue)
+typedef PLATFORM_COMPLETE_ALL_WORK_QUEUE_WORK(platform_complete_all_work_queue_work);
+
 #define PLATFORM_GET_OUTPUT_EXTENSION(Name) const char* Name(build_output_type OutputType)
 typedef PLATFORM_GET_OUTPUT_EXTENSION(platform_get_output_extension);
 
@@ -41,6 +44,7 @@ typedef struct platform_api
     platform_work_queue* WorkQueue;
     
     platform_add_work_queue_entry* AddWorkQueueEntry;
+    platform_complete_all_work_queue_work* CompleteAllWorkQueueWork;
     
     platform_get_output_extension* GetOutputExtension;
     platform_exec_process_and_wait* ExecProcessAndWait;

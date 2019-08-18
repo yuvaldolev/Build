@@ -21,7 +21,7 @@
  - Platform specific message boxes.
 */
 
-global_variable mach_timebase_info_data_t GlobalTimebaseInfo;
+global mach_timebase_info_data_t GlobalTimebaseInfo;
 
 internal PLATFORM_GET_OUTPUT_EXTENSION(MacGetOutputExtension)
 {
@@ -231,6 +231,11 @@ internal PLATFORM_ADD_WORK_QUEUE_ENTRY(MacAddWorkQueueEntry)
     sem_post(&Queue->SemaphoreHandle);
 }
 
+internal PLATFORM_COMPLETE_ALL_WORK_QUEUE_WORK(MacCompleteAllWorkQueueWork)
+{
+    
+}
+
 internal void*
 MacThreadProc(void* Parameter)
 {
@@ -303,9 +308,26 @@ MacGetCompilerPath(const char* CompilerName, string EnvPath, memory_arena* Arena
     return Result;
 }
 
+#include "yd/yd_bucket_array.h"
+
 int
 main(int ArgCount, const char* Args[])
 {
+    memory_arena Arena = {};
+    
+    bucket_array<int> Array = MakeBucketArray<int>(2);
+    Append(&Array, 1, &Arena);
+    Append(&Array, 2, &Arena);
+    Append(&Array, 3, &Arena);
+    Append(&Array, 4, &Arena);
+    Append(&Array, 5, &Arena);
+    
+    for (umm i = 0; i < Array.Count; ++i)
+    {
+        printf("%d ", Array[i]);
+    }
+    printf("\n");
+    
     // NOTE(yuval): Getting the timebase info
     mach_timebase_info(&GlobalTimebaseInfo);
     

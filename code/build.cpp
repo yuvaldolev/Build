@@ -473,7 +473,7 @@ internal START_BUILD(AppStartBuild)
         
         //PrintWorkspaceBuildStats(&WorkspaceTimeEventsQueue);
     }
-    Platform.CompleteAllWork(Platform.WorkQueue);
+    Platform.CompleteAllWorkQueueWork(Platform.WorkQueue);
     EndTemporaryMemory(TempMem);
     
     // TODO(yuval): Linkage
@@ -513,7 +513,7 @@ BuildStartup(build_application* App)
     
     // NOTE(yuval): Build File Workspace Building
     time_events_queue BuildFileTimeEventsQueue;
-    b32 Result = BuildWorkspace(&BuildFileWorkspace, &App->AppArena, &BuildFileTimeEventsQueue, false);
-    
+    //b32 Result = BuildWorkspace(&BuildFileWorkspace, &App->AppArena, &BuildFileTimeEventsQueue, false);
+    b32 Result = true;
     return Result;
 }
