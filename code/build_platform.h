@@ -64,6 +64,8 @@ struct build_application
     
     memory_arena AppArena;
     platform_api PlatformAPI;
+    
+    b32 IsVerboseBuild;
 };
 
 

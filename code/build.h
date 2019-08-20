@@ -22,6 +22,7 @@ struct compilation_work
     char* FileName;
     compiler_info* CompilerInfo;
     memory_arena* MemoryArena;
+    b32 IsVerboseBuild;
 };
 
 #define BUILD_H

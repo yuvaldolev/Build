@@ -7,6 +7,7 @@
 #include "yd/yd_string.h"
 
 global time_events_queue GlobalTimeEventsQueue;
+global b32 GlobalBuildSucceeded = true;
 
 #if 0
 #include "build_tokenizer.cpp"
@@ -312,10 +313,23 @@ PrintWorkspaceBuildStats(time_events_queue* Queue)
     }
 }
 
-#if 0
-internal b32
-LinkWorkspace(build_workspace* Workspace)
+internal void
+LinkWorkspace(build_workspace* Workspace, memory_arena* Arena, b32 IsVerboseBuild)
 {
+    // TODO(yuval): Instead of using the compiler as the linker use the default system linker!
+    build_options* BuildOptions = &Workspace->Options;
+    compiler_info* CompilerInfo = 0;
+    ArrayFor(Platform.Compilers)
+    {
+        if (((It.Type == BuildOptions->Compiler) ||
+             BuildOptions->Compiler == BuildCompiler_Auto) &&
+            It.Path)
+        {
+            CompilerInfo = &It;
+            ArrayBreak;
+        }
+    }
+    
     // TODO(yuval): Create append functions for Z strings
     char FullOutputPathData[PATH_MAX + 1];
     string FullOutputPath = MakeString(FullOutputPathData, 0,
@@ -348,19 +362,18 @@ LinkWorkspace(build_workspace* Workspace)
     *LinkerArgsAt++ = "-o";
     *LinkerArgsAt = FullOutputPath.Data;
     
-    
     temporary_memory TempMem = BeginTemporaryMemory(Arena);
     
     for (umm Index = 0;
          Index < Workspace->Files.Count;
          ++Index)
     {
-        
         // TODO(yuval): Use PushCopyZ and add functions to append and set extensions for
         // null-terminated strings
         string ObjectFilePath = PushCopyString(Arena, Workspace->Files.Paths[Index]);
         if (SetExtension(&ObjectFilePath, ".o"))
         {
+            // TODO(yuval): WE NEED TO ALLOCATE MEMORY FOR THE NULL TERMINATOR!!!!!
             TerminateWithNull(&ObjectFilePath);
             LinkerArgs[Index + 1] = ObjectFilePath.Data;
         }
@@ -370,7 +383,7 @@ LinkWorkspace(build_workspace* Workspace)
         }
     }
     
-    if (!IsSilentBuild)
+    if (IsVerboseBuild)
     {
         printf("Running Linker: ");
         for (const char** Arg = LinkerArgs; *Arg; ++Arg)
@@ -381,11 +394,10 @@ LinkWorkspace(build_workspace* Workspace)
     }
     
     int ExitCode = Platform.ExecProcessAndWait(CompilerInfo->Path, (char**)LinkerArgs, Arena);
-    SuccessfulBuild &= (ExitCode == 0);
+    GlobalBuildSucceeded &= (ExitCode == 0);
     
     EndTemporaryMemory(TempMem);
 }
-#endif // #if 0
 
 internal PLATFORM_WORK_QUEUE_CALLBACK(DoCompilationWork)
 {
@@ -398,21 +410,24 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(DoCompilationWork)
     CompilerArgs[3] = Work->FileName;
     CompilerArgs[4] = "-c";
     
-#if BUILD_INTERNAL
-    printf("Running Compiler: ");
-    for (const char** Arg = CompilerArgs; *Arg; ++Arg)
+    if (Work->IsVerboseBuild)
     {
-        printf("%s ", *Arg);
+        printf("Running Compiler: ");
+        for (const char** Arg = CompilerArgs; *Arg; ++Arg)
+        {
+            printf("%s ", *Arg);
+        }
+        printf("\n");
     }
-    printf("\n");
-#endif // #if BUILD_INTERNAL
     
     int ExitCode = Platform.ExecProcessAndWait(Work->CompilerInfo->Path,
                                                (char**)CompilerArgs, Work->MemoryArena);
+    
+    GlobalBuildSucceeded &= (ExitCode == 0);
 }
 
 internal void
-CompileWorkspace(build_workspace* Workspace, memory_arena* Arena)
+CompileWorkspace(build_workspace* Workspace, memory_arena* Arena, b32 IsVerboseBuild)
 {
     build_options* BuildOptions = &Workspace->Options;
     compiler_info* CompilerInfo = 0;
@@ -439,6 +454,7 @@ CompileWorkspace(build_workspace* Workspace, memory_arena* Arena)
             Work->FileName = PushCopyZ(Arena, Workspace->Files.Paths[Index]);
             Work->CompilerInfo = CompilerInfo;
             Work->MemoryArena = Arena;
+            Work->IsVerboseBuild = IsVerboseBuild;
             
 #if 1
             // Multi-Threaded
@@ -473,12 +489,25 @@ internal START_BUILD(AppStartBuild)
     temporary_memory TempMem = BeginTemporaryMemory(&TheApp->AppArena);
     for (umm Index = 0; Index < App->Workspaces.Count; ++Index)
     {
-        CompileWorkspace(&App->Workspaces.Workspaces[Index], &TheApp->AppArena);
+        CompileWorkspace(&App->Workspaces.Workspaces[Index],
+                         &TheApp->AppArena, TheApp->IsVerboseBuild);
         
         //PrintWorkspaceBuildStats(&WorkspaceTimeEventsQueue);
     }
     Platform.CompleteAllWorkQueueWork(Platform.WorkQueue);
     EndTemporaryMemory(TempMem);
+    
+    // NOTE(yuval): Compilation Succeeded
+    if (GlobalBuildSucceeded)
+    {
+        // NOTE(yuval): Linkage
+        // TODO(yuval): Link workspaces according to their depencencies on each other
+        for (umm Index = 0; Index < App->Workspaces.Count; ++Index)
+        {
+            LinkWorkspace(&App->Workspaces.Workspaces[Index],
+                          &TheApp->AppArena, TheApp->IsVerboseBuild);
+        }
+    }
     
     // TODO(yuval): Linkage
 }
