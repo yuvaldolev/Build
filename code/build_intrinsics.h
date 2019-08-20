@@ -72,7 +72,7 @@ GetThreadID()
 inline u32
 AtomicCompareExchangeU32(volatile u32* Value, u32 New, u32 Expected)
 {
-    u32 Result = __sync_val_compare_and_swap(Value, New, Expected);
+    u32 Result = __sync_val_compare_and_swap(Value, Expected, New);
     return Result;
 }
 

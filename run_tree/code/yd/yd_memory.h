@@ -17,6 +17,7 @@ YDDeallocateMemory to your deallocation function.
 Both your memory allocation and deallocation functions must be declared
 using the ALLOCATE_MEMORY and DEALLOCATE_MEMORY macros in order to be
 compatible with the library.
+
 */
 
 #if !defined(YD_TYPES)

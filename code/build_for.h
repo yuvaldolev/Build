@@ -3,7 +3,7 @@
 ///////////////////////////////
 //       Array Foreach       //
 ///////////////////////////////
-#define ArrayForeach_(Array) \
+#define ArrayFor(Array) \
 for (u32 Index = 0, For__ShouldBreak = 0; \
 Index < ArrayCount(Array) && !For__ShouldBreak; \
 ++Index) \
@@ -14,7 +14,7 @@ for (auto& It = (Array)[Index]; \
 Join2(B, __LINE__); \
 Join2(B, __LINE__) = false)
 
-#define Break For__ShouldBreak = 1
+#define ArrayBreak For__ShouldBreak = 1
 
 #if 0
 ///////////////////////////////
@@ -48,8 +48,6 @@ Join2(B, __LINE__) = false)
 #define GetFor_(_1, _2, Name, ...) Name
 #define For(...) GetFor_(__VA_ARGS__, ForRange_, ArrayForeach_)(__VA_ARGS__)
 #endif // #if 0
-
-#define For(...) ArrayForeach_(__VA_ARGS__)
 
 #define BUILD_FOR_H
 #endif // #if !defined(BUILD_FOR_H)

@@ -225,15 +225,52 @@ internal PLATFORM_ADD_WORK_QUEUE_ENTRY(MacAddWorkQueueEntry)
     Entry->Callback = Callback;
     Entry->Data = Data;
     
+    ++Queue->CompletionGoal;
+    
     CompletePreviousWritesBeforeFutureWrites();
     
     Queue->NextEntryToWrite = NewNextEntryToWrite;
     sem_post(&Queue->SemaphoreHandle);
 }
 
+internal b32
+MacDoNextWorkQueueEntry(platform_work_queue* Queue)
+{
+    b32 DoneWork = true;
+    
+    u32 OriginalNextEntryToRead = Queue->NextEntryToRead;
+    u32 NewNextEntryToRead = (OriginalNextEntryToRead + 1) % ArrayCount(Queue->Entries);
+    
+    if (OriginalNextEntryToRead != Queue->NextEntryToWrite)
+    {
+        u32 Index = AtomicCompareExchangeU32((volatile u32*)&Queue->NextEntryToRead,
+                                             NewNextEntryToRead,
+                                             OriginalNextEntryToRead);
+        
+        if (Index == OriginalNextEntryToRead)
+        {
+            platform_work_queue_entry Entry = Queue->Entries[Index];
+            Entry.Callback(Queue, Entry.Data);
+            AtomicAddU64((volatile u64*)&Queue->CompletionCount, 1);
+        }
+    }
+    else
+    {
+        DoneWork = false;
+    }
+    
+    return DoneWork;
+}
+
 internal PLATFORM_COMPLETE_ALL_WORK_QUEUE_WORK(MacCompleteAllWorkQueueWork)
 {
+    while (Queue->CompletionCount != Queue->CompletionGoal)
+    {
+        MacDoNextWorkQueueEntry(Queue);
+    }
     
+    Queue->CompletionCount = 0;
+    Queue->CompletionGoal = 0;
 }
 
 internal void*
@@ -244,22 +281,7 @@ MacThreadProc(void* Parameter)
     
     for (;;)
     {
-        u32 OriginalNextEntryToRead = Queue->NextEntryToRead;
-        u32 NewNextEntryToRead = (OriginalNextEntryToRead + 1) % ArrayCount(Queue->Entries);
-        
-        if (OriginalNextEntryToRead != Queue->NextEntryToWrite)
-        {
-            u32 Index = AtomicCompareExchangeU32((volatile u32*)&Queue->NextEntryToRead,
-                                                 NewNextEntryToRead,
-                                                 OriginalNextEntryToRead);
-            
-            if (Index == OriginalNextEntryToRead)
-            {
-                platform_work_queue_entry Entry = Queue->Entries[Index];
-                Entry.Callback(Queue, Entry.Data);
-            }
-        }
-        else
+        if (!MacDoNextWorkQueueEntry(Queue))
         {
             sem_wait(&Queue->SemaphoreHandle);
         }
@@ -308,26 +330,9 @@ MacGetCompilerPath(const char* CompilerName, string EnvPath, memory_arena* Arena
     return Result;
 }
 
-#include "yd/yd_bucket_array.h"
-
 int
 main(int ArgCount, const char* Args[])
 {
-    memory_arena Arena = {};
-    
-    bucket_array<int> Array = MakeBucketArray<int>(2);
-    Append(&Array, 1, &Arena);
-    Append(&Array, 2, &Arena);
-    Append(&Array, 3, &Arena);
-    Append(&Array, 4, &Arena);
-    Append(&Array, 5, &Arena);
-    
-    for (umm i = 0; i < Array.Count; ++i)
-    {
-        printf("%d ", Array[i]);
-    }
-    printf("\n");
-    
     // NOTE(yuval): Getting the timebase info
     mach_timebase_info(&GlobalTimebaseInfo);
     
@@ -389,6 +394,9 @@ main(int ArgCount, const char* Args[])
             App->PlatformAPI.WorkQueue = &WorkQueue;
             
             // NOTE(yuval): PlatformAPI Functions Initilization
+            App->PlatformAPI.AddWorkQueueEntry = MacAddWorkQueueEntry;
+            App->PlatformAPI.CompleteAllWorkQueueWork = MacCompleteAllWorkQueueWork;
+            
             App->PlatformAPI.GetOutputExtension = MacGetOutputExtension;
             App->PlatformAPI.ExecProcessAndWait = MacExecProcessAndWait;
             

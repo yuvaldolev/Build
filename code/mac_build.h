@@ -10,10 +10,12 @@ struct platform_work_queue
 {
     sem_t SemaphoreHandle;
     
+    platform_work_queue_entry Entries[256];
     volatile u32 NextEntryToRead;
     volatile u32 NextEntryToWrite;
     
-    platform_work_queue_entry Entries[256];
+    volatile u32 CompletionCount;
+    volatile u32 CompletionGoal;
 };
 
 struct mac_thread_startup

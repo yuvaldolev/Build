@@ -316,7 +316,6 @@ PrintWorkspaceBuildStats(time_events_queue* Queue)
 internal b32
 LinkWorkspace(build_workspace* Workspace)
 {
-    
     // TODO(yuval): Create append functions for Z strings
     char FullOutputPathData[PATH_MAX + 1];
     string FullOutputPath = MakeString(FullOutputPathData, 0,
@@ -369,7 +368,6 @@ LinkWorkspace(build_workspace* Workspace)
         {
             // TODO(yuval): Diagnostic
         }
-        
     }
     
     if (!IsSilentBuild)
@@ -418,14 +416,14 @@ CompileWorkspace(build_workspace* Workspace, memory_arena* Arena)
 {
     build_options* BuildOptions = &Workspace->Options;
     compiler_info* CompilerInfo = 0;
-    For (Platform.Compilers)
+    ArrayFor(Platform.Compilers)
     {
         if (((It.Type == BuildOptions->Compiler) ||
              BuildOptions->Compiler == BuildCompiler_Auto) &&
             It.Path)
         {
             CompilerInfo = &It;
-            Break;
+            ArrayBreak;
         }
     }
     
@@ -442,7 +440,13 @@ CompileWorkspace(build_workspace* Workspace, memory_arena* Arena)
             Work->CompilerInfo = CompilerInfo;
             Work->MemoryArena = Arena;
             
+#if 1
+            // Multi-Threaded
             Platform.AddWorkQueueEntry(Platform.WorkQueue, DoCompilationWork, Work);
+#else
+            // Single-Threaded
+            DoCompilationWork(Platform.WorkQueue, Work);
+#endif // #if 1
         }
     }
     else
