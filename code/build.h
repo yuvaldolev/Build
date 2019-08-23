@@ -9,13 +9,11 @@
 #include "build_for.h"
 #include "build_profile.h"
 
-#if 0
 #include "build_shared.h"
 
 #include "build_tokenizer.h"
 #include "build_parser.h"
 #include "build_errors.h"
-#endif // #if 0
 
 struct compilation_work
 {

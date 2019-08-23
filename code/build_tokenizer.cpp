@@ -1,4 +1,4 @@
-// TODO(yuval): Maybe @Add a better data structure for faster lookup
+// TODO(yuval): Maybe add a better data structure for faster lookup
 struct token_name_and_type
 {
     const char* Name;
@@ -7,10 +7,10 @@ struct token_name_and_type
 
 // TODO(yuval): Separate the keyword array into two arrays: One for the "regular" keywords
 // and one for the preprocessor keywords. This must be done to avoid duplicates like if / else.
-// TODO(yuval): Maybe @Add support for LINE, FILE, etc. preprocessor tokens
-// TODO(yuval): @Add C++ support (class, new, delete, try, catch...)
-global_variable token_name_and_type GlobalKeywords[] = {
-#define KeywordTokenType(Type, Name) {Name, MetaJoin2(Token_, Type)},
+// TODO(yuval): Maybe add support for LINE, FILE, etc. preprocessor tokens
+// TODO(yuval): Add C++ support (class, new, delete, try, catch...)
+global token_name_and_type GlobalKeywords[] = {
+#define KeywordTokenType(Type, Name) {Name, Join2(Token_, Type)},
     KeywordTokenTypes
 #undef KeywordTokenType
     
@@ -18,8 +18,8 @@ global_variable token_name_and_type GlobalKeywords[] = {
     {"false", Token_BoolConstant}
 };
 
-global_variable token_name_and_type GlobalPPKeywords[] = {
-#define PPKeywordTokenType(Type, Name) {Name, MetaJoin2(Token_, Type)},
+global token_name_and_type GlobalPPKeywords[] = {
+#define PPKeywordTokenType(Type, Name) {Name, Join2(Token_, Type)},
     PPKeywordTokenTypes
         PPKeywordTokenTypesUpper
 #undef PPKeywordTokenType
@@ -30,22 +30,22 @@ GetTokenTypeName(token_type Type)
 {
     switch (Type)
     {
-#define TokenType(Type) case MetaJoin2(Token_, Type): { return BundleZ(#Type); }
+#define TokenType(Type) case Join2(Token_, Type): { return MakeLitString(#Type); }
         TokenTypes
 #undef TokenType
         
-#define KeywordTokenType(Type, ...) case MetaJoin2(Token_, Type): { return BundleZ(#Type); }
+#define KeywordTokenType(Type, ...) case Join2(Token_, Type): { return MakeLitString(#Type); }
             KeywordTokenTypes
 #undef KeywordTokenType
     }
     
-    return BundleZ("Unknown");
+    return MakeLitString("Unknown");
 }
 
 internal b32
 TokenEquals(token Token, const char* Match)
 {
-    b32 Result = StringsAreEqual(Token.Text, Match);
+    b32 Result = StringsMatch(Token.Text, Match);
     return Result;
 }
 
@@ -70,7 +70,7 @@ Refill(tokenizer* Tokenizer)
 }
 
 internal void
-AdvanceChars(tokenizer* Tokenizer, u32 Count)
+AdvanceChars(tokenizer* Tokenizer, umm Count)
 {
     Tokenizer->ColumnNumber += Count;
     AdvanceString(&Tokenizer->Input, Count);
@@ -116,16 +116,15 @@ GetTokenRaw(tokenizer* Tokenizer)
     {
         b32 IsKeyword = false;
         
-        For (GlobalKeywords)
+        ArrayFor (GlobalKeywords)
         {
-            if (StringsAreEqual(Tokenizer->Input, It.Name,
-                                StringLength(It.Name)))
+            if (StringsMatchPart(Tokenizer->Input, It.Name))
             {
                 // TODO(yuval): @Copy-and-paste - StringLength is called twice
                 AdvanceChars(Tokenizer, StringLength(It.Name));
                 Token.Type = It.Type;
                 IsKeyword = true;
-                break;
+                ArrayBreak;
             }
         }
         
@@ -136,7 +135,7 @@ GetTokenRaw(tokenizer* Tokenizer)
             AdvanceChars(Tokenizer, 1);
             
             while (IsAlpha(Tokenizer->At[0]) ||
-                   IsNumber(Tokenizer->At[0]) ||
+                   IsNumeric(Tokenizer->At[0]) ||
                    (Tokenizer->At[0] == '_'))
             {
                 AdvanceChars(Tokenizer, 1);
@@ -362,16 +361,15 @@ GetTokenRaw(tokenizer* Tokenizer)
                 {
                     b32 IsKeyword = false;
                     
-                    For (GlobalPPKeywords)
+                    ArrayFor (GlobalPPKeywords)
                     {
-                        if (StringsAreEqual(Tokenizer->Input, It.Name,
-                                            StringLength(It.Name)))
+                        if (StringsMatchPart(Tokenizer->Input, It.Name))
                         {
                             // TODO(yuval): @Copy-and-paste - StringLength is called twice
                             AdvanceChars(Tokenizer, StringLength(It.Name));
                             Token.Type = It.Type;
                             IsKeyword = true;
-                            break;
+                            ArrayBreak;
                         }
                     }
                     
@@ -463,11 +461,11 @@ GetTokenRaw(tokenizer* Tokenizer)
                     Tokenizer->ColumnNumber = 1;
                     ++Tokenizer->LineNumber;
                 }
-                else if (IsNumber(C))
+                else if (IsNumeric(C))
                 {
                     f32 Number = (f32)(C - '0');
                     
-                    while (IsNumber(Tokenizer->At[0]))
+                    while (IsNumeric(Tokenizer->At[0]))
                     {
                         f32 Digit = (f32)(Tokenizer->At[0] - '0');
                         Number = 10.0f * Number + Digit;
@@ -478,7 +476,7 @@ GetTokenRaw(tokenizer* Tokenizer)
                     {
                         f32 Coefficient = 0.1f;
                         
-                        while (IsNumber(Tokenizer->At[0]))
+                        while (IsNumeric(Tokenizer->At[0]))
                         {
                             f32 Digit = (f32)(Tokenizer->At[0] - '0');
                             Number += Digit * Coefficient;

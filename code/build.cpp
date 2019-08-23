@@ -6,13 +6,13 @@
 #define YD_STRING_IMPLEMENTATION
 #include "yd/yd_string.h"
 
+#include "build_tokenizer.cpp"
+#include "build_parser.cpp"
+
 global time_events_queue GlobalTimeEventsQueue;
 global b32 GlobalBuildSucceeded = true;
 
 #if 0
-#include "build_tokenizer.cpp"
-#include "build_parser.cpp"
-
 struct FunctionVariable
 {
     String type;

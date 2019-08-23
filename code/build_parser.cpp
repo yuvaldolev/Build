@@ -13,21 +13,22 @@ DefaultType(Float, BundleZ("float")) \
 DefaultType(Double, BundleZ("double")) \
 DefaultType(Long, BundleZ("long")) \
 DefaultType(Short, BundleZ("short")) \
-DefaultType(Unsigned, BundleZ("Unsigned"))
+DefaultType(Unsigned, BundleZ("unsigned"))
 
-#define DefaultType(Type, ...) global_variable ast* MetaJoin2(TypeDef, Type);
+#define DefaultType(Type, ...) global ast* Join2(TypeDef, Type);
 DefaultTypes
 #undef DefaultType
 
 #define BeginAstDumpBlock ++GlobalIndentation;
 #define EndAstDumpBlock --GlobalIndentation;
 
-global_variable u32 GlobalIndentation = 0;
+global u32 GlobalIndentation = 0;
+global memory_arena* ParserArena = 0;
 
 internal ast*
 AstNew(ast_type Type, ast_file* File, token* Token = 0)
 {
-    ast* Result = Alloc(ast);
+    ast* Result = PushStruct(ParserArena, ast);
     u32 UnsignedInt = 0;
     
     Result->Type = Type;
@@ -732,13 +733,12 @@ ParseTopLevel(ast_file* File)
     }
 }
 
-internal ast_file*
-ParseFile(string FileName, string FileContents)
+internal ast*
+ParseTranslationUnit(parser* Parser, string FileName, string FileContents)
 {
-    ast_file* File = Alloc(ast_file);
-    File->FileName = FileName;
-    File->FileData = FileContents;
-    File->Tokenizer = Tokenize(FileName, FileContents);
+    ast_translation_unit* TranslationUnit = PushStruct(ast_translation_unit,
+                                                       Parser->MemoryArena);
+    Parser->Tokenizer = Tokenize(FileName, FileContents);
     
     while (!AstGetTokenOfType(File, Token_EndOfStream))
     {

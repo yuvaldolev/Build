@@ -127,15 +127,15 @@ PPKeywordTokenType(PP_Using, "USING")
 
 enum token_type
 {
-#define TokenType(Type) MetaJoin2(Token_, Type),
+#define TokenType(Type) Join2(Token_, Type),
     TokenTypes
 #undef TokenType
     
-#define KeywordTokenType(Type, ...) MetaJoin2(Token_, Type),
+#define KeywordTokenType(Type, ...) Join2(Token_, Type),
         KeywordTokenTypes
 #undef KeywordTokenType
     
-#define PPKeywordTokenType(Type, ...) MetaJoin2(Token_, Type),
+#define PPKeywordTokenType(Type, ...) Join2(Token_, Type),
         PPKeywordTokenTypes
 #undef PPKeywordTokenType
 };

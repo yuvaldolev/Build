@@ -346,6 +346,7 @@ struct ast
     
     union
     {
+        ast_translation_unit TranslationUnit;
         ast_block Block;
         ast_declaration Decl;
         ast_type_definition TypeDef;
@@ -354,18 +355,12 @@ struct ast
     };
 };
 
-/////////////////////////////
-//        AST File         //
-/////////////////////////////
-struct ast_file
+////////////////////////////////////
+//      AST Translation Unit      //
+////////////////////////////////////
+struct ast_translation_unit
 {
-    string FileName;
-    string FileData;
-    
-    ast GlobalScope; // Block
-    
-    tokenizer Tokenizer;
-    token Token;
+    ast GlobalScope;
 };
 
 #define BUILD_PARSER_H

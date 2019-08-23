@@ -10,7 +10,7 @@ PrintReport(string Type, string FileData, string FilePath,
     const char* DataAt = FileData.Data;
     
     // NOTE(yuval): Getting to the line that contains the error
-    For (LineNumber, Range(1, Line))
+    for (s32 LineNumber = 1; LineNumber < Line; ++LineNumber)
     {
         while (*DataAt && (*DataAt++ != '\n'));
     }
@@ -45,7 +45,9 @@ PrintReport(string Type, string FileData, string FilePath,
     fprintf(stderr, "    %.*s\n    ", LineLen, DataAt);
     
     // NOTE(yuval): Error char
-    For (CharIndex, Range(FirstCharIndex, Column - 1))
+    for (s32 CharIndex = FirstCharIndex;
+         CharIndex < Column - 1;
+         ++CharIndex)
     {
         fprintf(stderr, ((DataAt[CharIndex] == '\t') ? "    " : " "));
     }
@@ -58,7 +60,7 @@ ReportWarningList(string FileData, string FilePath,
                   s32 Line, s32 Column,
                   const char* Format, va_list ArgList)
 {
-    PrintReport(BundleZ("warning"), FileData, FilePath, Line, Column, Format, ArgList);
+    PrintReport(MakeLitString("warning"), FileData, FilePath, Line, Column, Format, ArgList);
 }
 
 internal void
@@ -78,8 +80,7 @@ ReportErrorList(string FileData, string FilePath,
                 s32 Line, s32 Column,
                 const char* Format, va_list ArgList)
 {
-    PrintReport(BundleZ("error"), FileData, FilePath, Line, Column, Format, ArgList);
-    exit(1);
+    PrintReport(MakeLitString("error"), FileData, FilePath, Line, Column, Format, ArgList);
 }
 
 internal void

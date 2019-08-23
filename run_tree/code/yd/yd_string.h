@@ -86,6 +86,10 @@ string SkipChopWhitespace(string Str, yd_umm* OutSkipCount);
 yd_b32 StringsMatch(const char* A, const char* B);
 yd_b32 StringsMatch(string A, const char* B);
 yd_b32 StringsMatch(string A, string B);
+yd_b32 StringsMatch(const char* A, yd_umm ACount, const char* B);
+yd_b32 StringsMatch(const char* A, yd_umm ACount,
+                    const char* B, yd_umm BCount);
+yd_b32 StringsMatch(string A, const char* B, yd_umm Count);
 yd_b32 StringsMatchPart(const char* A, const char* B, yd_umm* OutCount);
 yd_b32 StringsMatchPart(string A, const char* B, yd_umm* OutCount);
 yd_b32 StringsMatchPart(const char* A, string B, yd_umm* OutCount);
@@ -323,7 +327,6 @@ SkipWhitespace(string Str)
     return Result;
 }
 
-
 yd_internal inline string
 TailStr(string Str)
 {
@@ -333,6 +336,23 @@ TailStr(string Str)
     Result.MemorySize = Str.MemorySize - Str.Count;
     
     return Result;
+}
+
+yd_internal inline void
+AdvanceString(string* Value, yd_umm Count)
+{
+    if (Value->Count >= Count)
+    {
+        Value->Data += Count;
+        Value->Count -= Count;
+        Value->MemorySize -= (Count * sizeof(char));
+    }
+    else
+    {
+        Value->Data += Value->Count;
+        Value->Count = 0;
+        Value->MemorySize = 0;
+    }
 }
 
 //
@@ -346,6 +366,19 @@ StringsMatch(const char* A, string B)
     return Result;
 }
 
+yd_internal inline yd_b32
+StringsMatch(const char* A, const char* B, yd_umm BCount)
+{
+    yd_b32 Result = StringsMatch(B, BCount, A);
+    return Result;
+}
+
+yd_internal inline yd_b32
+StringsMatch(const char* A, string B, yd_umm Count)
+{
+    yd_b32 Result = StringsMatch(B, A, Count);
+    return Result;
+}
 
 yd_internal inline yd_b32
 StringsMatchPart(const char* A, const char* B)
@@ -1441,6 +1474,71 @@ StringsMatch(string A, string B)
                 Result = false;
                 break;
             }
+        }
+    }
+    
+    return Result;
+}
+
+yd_b32
+StringsMatch(const char* A, yd_umm ACount, const char* B)
+{
+    yd_b32 Result = false;
+    
+    if (B)
+    {
+        const char* At = B;
+        
+        for (yd_umm Index = 0; Index < ACount; ++Index)
+        {
+            if ((*At == 0) || (A[Index] != *At))
+            {
+                return false;
+            }
+        }
+        
+        Result = (*At == 0);
+    }
+    else
+    {
+        Result = (ACount == 0);
+    }
+    
+    return Result;
+}
+
+yd_b32
+StringsMatch(const char* A, yd_umm ACount,
+             const char* B, yd_umm BCount)
+{
+    b32 Result = (ACount == BCount);
+    
+    if (Result)
+    {
+        for (yd_umm Index = 0; Index < ACount; ++Index)
+        {
+            if (A[Index] != B[Index])
+            {
+                Result = false;
+                break;
+            }
+        }
+    }
+    
+    return Result;
+}
+
+yd_b32
+StringsMatch(string A, const char* B, yd_umm Count)
+{
+    b32 Result = true;
+    
+    for (yd_umm Index = 0; Index < Count; ++Index)
+    {
+        if (A.Data[Index] != B[Index])
+        {
+            Result = false;
+            break;
         }
     }
     
