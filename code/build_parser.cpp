@@ -1,8 +1,8 @@
-#define AstGetToken(File) (File)->Token = GetToken(&(File)->Tokenizer)
-#define AstPeekToken(File) PeekToken(&(File)->Tokenizer)
-#define AstGetTokenOfType(File, Type) GetTokenOfType(&(File)->Tokenizer, Type, &(File)->Token)
-#define AstRequireToken(File, Type) (File)->Token = RequireToken(&(File)->Tokenizer, Type)
-#define AstOptionalToken(File, Type) OptionalToken(&(File)->Tokenizer, Type, &(File)->Token)
+#define AST_GET_TOKEN(parser) (parser)->token = get_token(&(parser)->tokenizer)
+#define AST_PEEK_TOKEN(parser) peek_token(&(parser)->tokenizer)
+#define AST_GET_TOKEN_CHECK_TYPE(parser, type) get_token_check_type(&(parser)->tokenizer, type, &(parser)->token)
+#define AST_REQUIRE_TOKEN(parser, type) (File)->token = require_token(&(parser)->tokenizer, type)
+#define AST_OPTIONAL_TOKEN(parser, type) optional_token(&(parser)->Tokenizer, type, &(parser)->token)
 
 #define DefaultTypes \
 DefaultType(Void, BundleZ("void")) \
@@ -23,10 +23,9 @@ DefaultTypes
 #define EndAstDumpBlock --GlobalIndentation;
 
 global u32 GlobalIndentation = 0;
-global memory_arena* ParserArena = 0;
 
 internal ast*
-AstNew(ast_type Type, ast_file* File, token* Token = 0)
+AstNew(ast_type Type, ast_translation_unit* File, token* Token = 0)
 {
     ast* Result = PushStruct(ParserArena, ast);
     u32 UnsignedInt = 0;
@@ -47,7 +46,7 @@ AstNew(ast_type Type, ast_file* File, token* Token = 0)
 
 internal ast*
 AstNewDecl(ast_declaration_type Type,
-           ast_file* File, token* Token = 0)
+           ast_translation_unit* File, token* Token = 0)
 {
     ast* Result = AstNew(Ast_Declaration, File, Token);
     Result->Decl.Type = Type;
@@ -56,7 +55,7 @@ AstNewDecl(ast_declaration_type Type,
 
 internal ast*
 AstNewTypeDef(ast_type_definition_type Type,
-              ast_file* File, token* Token = 0)
+              ast_translation_unit* File, token* Token = 0)
 {
     ast* Result = AstNew(Ast_TypeDefinition, File, Token);
     Result->TypeDef.Type = Type;
@@ -65,7 +64,7 @@ AstNewTypeDef(ast_type_definition_type Type,
 
 internal ast*
 AstNewStmt(ast_statement_type Type,
-           ast_file* File, token* Token = 0)
+           ast_translation_unit* File, token* Token = 0)
 {
     ast* Result = AstNew(Ast_Statement, File, Token);
     Result->Stmt.Type = Type;
@@ -74,7 +73,7 @@ AstNewStmt(ast_statement_type Type,
 
 internal ast*
 AstNewExpr(ast_expression_type Type,
-           ast_file* File, token* Token = 0)
+           ast_translation_unit* File, token* Token = 0)
 {
     ast* Result = AstNew(Ast_Expression, File, Token);
     Result->Expr.Type = Type;
@@ -249,7 +248,7 @@ DumpAstDeclaration(ast* DeclAst)
 }
 
 internal void
-DumpAstFile(ast_file* File)
+DumpAstFile(ast_translation_unit* File)
 {
     ast_block* GlobalScope = &File->GlobalScope.Block;
     
@@ -271,7 +270,7 @@ FindType(ast* Scope, string TypeName)
         
         while (CurrScope)
         {
-            For (CurrScope->Block.Decls)
+            ArrayFor (CurrScope->Block.Decls)
             {
                 if (It)
                 {
@@ -296,13 +295,13 @@ FindType(ast* Scope, string TypeName)
 }
 
 internal ast*
-ParseDeclaration(ast_file* File, ast* Scope);
+ParseDeclaration(parser* Parser, ast* Scope);
 
 internal ast*
-ParseCompoundStatement(ast_file* File, ast* Scope);
+ParseCompoundStatement(parser* Parser, ast* Scope);
 
 internal ast*
-ParseStatement(ast_file* File, ast* ParentScope)
+ParseStatement(parser* Parser, ast* ParentScope)
 {
     ast* Result = 0;
     
@@ -530,7 +529,7 @@ ParseStatement(ast_file* File, ast* ParentScope)
 }
 
 internal ast*
-ParseCompoundStatement(ast_file* File, ast* Scope)
+ParseCompoundStatement(parser* Parser, ast* Scope)
 {
     ast* FirstStmt = ParseStatement(File, Scope);
     ast* PrevStmt = FirstStmt;
@@ -555,7 +554,7 @@ ParseCompoundStatement(ast_file* File, ast* Scope)
 }
 
 internal ast*
-ParseTypeDeclaration(ast_file* File, ast* ParentScope,
+ParseTypeDeclaration(parser* Parser, ast* ParentScope,
                      ast_type_definition_type Type)
 {
     ast* Result = AstNewDecl(AstDecl_Type, File);
@@ -618,7 +617,7 @@ ParseTypeDeclaration(ast_file* File, ast* ParentScope,
 }
 
 internal ast*
-ParseDeclaration(ast_file* File, ast* Scope)
+ParseDeclaration(parser* Parser, ast* Scope)
 {
     ast* Result = 0;
     
@@ -722,7 +721,7 @@ ParseDeclaration(ast_file* File, ast* Scope)
 }
 
 internal void
-ParseTopLevel(ast_file* File)
+ParseTopLevel(parser* Parser)
 {
     ast* Decl = ParseDeclaration(File, &File->GlobalScope);
     
@@ -737,13 +736,15 @@ internal ast*
 ParseTranslationUnit(parser* Parser, string FileName, string FileContents)
 {
     ast_translation_unit* TranslationUnit = PushStruct(ast_translation_unit,
-                                                       Parser->MemoryArena);
+                                                       &Parser->ParserArena);
+    
+    Parser->TranslationUnit = TranslationUnit;
     Parser->Tokenizer = Tokenize(FileName, FileContents);
     
     while (!AstGetTokenOfType(File, Token_EndOfStream))
     {
-        ParseTopLevel(File);
+        ParseTopLevel(Parser);
     }
     
-    return File;
+    return TranslationUnit;
 };

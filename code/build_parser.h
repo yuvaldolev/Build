@@ -1,322 +1,289 @@
 #if !defined(BUILD_PARSER_H)
 
-struct ast;
-struct ast_file;
+struct Ast;
+struct Ast_Translation_Unit;
 
 // TODO(yuval): @Replace all of fixed size arrays with resizable arrays
 
 ///////////////////////////////
 //        Expressions        //
 ///////////////////////////////
-enum ast_expression_type
-{
-    AstExpr_Operator,
-    AstExpr_DeclRef,
-    AstExpr_Assignment,
-    AstExpr_Binary,
-    AstExpr_Cast,
-    AstExpr_Constant
+enum Ast_Expression_Type {
+    AST_EXPR_OPERATOR,
+    AST_EXPR_DECL_REF,
+    AST_EXPR_ASSIGNMENT,
+    AST_EXPR_BINARY,
+    AST_EXPR_CAST,
+    AST_EXPR_CONSTANT
 };
 
-enum ast_operator
-{
-    AstOp_None,
+enum Ast_Operator {
+    AST_OP_NONE,
     
-    AstOp_Amp,
-    AstOp_AmpAmp,
-    AstOp_AmpEqual,
+    AST_OP_AMP,
+    AST_OP_AMP_AMP,
+    AST_OP_AMP_EQUAL,
     
-    AstOp_Star,
-    AstOp_StarEqual,
+    AST_OP_START,
+    AST_OP_START_EQUAL,
     
-    AstOp_Plus,
-    AstOp_PlusPlus,
-    AstOp_PlusEqual,
+    AST_OP_PLUS,
+    AST_OP_PLUS_PLUS,
+    AST_OP_PLUS_EQUAL,
     
-    AstOp_Minus,
-    AstOp_MinusMinus,
-    AstOp_MinusEqual,
-    AstOp_Arrow,
+    AST_OP_MINUS,
+    AST_OP_MINUS_MINUS,
+    AST_OP_MINUS_EQUAL,
     
-    AstOp_Not,
-    AstOp_NotEqual,
+    AST_OP_ARROW,
     
-    AstOp_Percent,
-    AstOp_PercentEqual,
+    AST_OP_NOT,
+    AST_OP_NOT_EQUAL,
     
-    AstOp_Less,
-    AstOp_LessEqual,
+    AST_OP_PERCENT,
+    AST_OP_PERCENT_EQUAL,
     
-    AstOp_Greater,
-    AstOp_GreaterEqual,
+    AST_OP_LESS,
+    AST_OP_LESS_EQUAL,
     
-    AstOp_Caret,
-    AstOp_CaretCaret,
-    AstOp_CaretEqual,
+    AST_OP_GREATER,
+    AST_OP_GREATER_EQUAL,
     
-    AstOp_Pipe,
-    AstOp_PipePipe,
-    AstOp_PipeEqual,
+    AST_OP_CARET,
+    AST_OP_CARET_CARET,
+    AST_OP_CARET_EQUAL,
     
-    AstOp_Colon,
-    AstOp_ColonColon,
+    AST_OP_PIPE,
+    AST_OP_PIPE_PIPE,
+    AST_OP_PIPE_EQUAL,
     
-    AstOp_Equal,
-    AstOp_EqualEqual,
+    AST_OP_COLON,
+    AST_OP_COLON_COLON,
     
-    AstOp_Hash,
-    AstOp_HashHash
+    AST_OP_EQUAL,
+    AST_OP_EQUAL_EQUAL,
+    
+    AST_OP_HASH,
+    AST_OP_HASH_HASH
 };
 
-struct ast_constant
-{
-    union
-    {
-        u64 IntConst;
-        f64 FloatConst;
-        string StringLiteral;
-        char CharConstant;
-        b32 BoolConstant;
+struct Ast_Constant {
+    union {
+        u64 int_constant;
+        f64 float_constant;
+        String string_literal;
+        char char_constant;
+        b32 bool_constant;
     };
 };
 
-struct ast_cast
-{
-    ast* CastedExpr; // Expression
-    ast* CastType; // Expression
+struct Ast_Cast {
+    Ast* casted_expr; // Expression
+    Ast* cast_type; // Expression
 };
 
-struct ast_assignment
-{
-    ast* Decl; // Declaration
-    ast* Expression; // Expression
+struct Ast_Assignment {
+    Ast* decl; // Declaration
+    Ast* expression; // Expression
 };
 
-struct ast_decl_ref
-{
-    ast* DeclRef; // Declaration
+struct Ast_Decl_Ref {
+    Ast* decl_ref; // Declaration
 };
 
-struct ast_expression
-{
-    ast_expression_type Type;
+struct Ast_Expression {
+    Ast_Expression_Type type;
     
-    union
-    {
-        ast_operator Operator;
-        ast_decl_ref DeclRef;
-        ast_assignment Assignment;
-        ast_cast Cast;
-        ast_constant Const;
+    union {
+        Ast_Operator operator_expr;
+        Ast_Decl_Ref decl_ref;
+        Ast_Assignment assignment;
+        Ast_Cast cast;
+        Ast_Constant constant;
     };
 };
 
 //////////////////////////////
 //        Statements        //
 //////////////////////////////
-enum ast_statement_type
-{
-    AstStmt_Decl,
-    AstStmt_ExprStmt,
-    AstStmt_If,
-    AstStmt_Switch,
-    AstStmt_Case,
-    AstStmt_Default,
-    AstStmt_For,
-    AstStmt_While,
-    AstStmt_DoWhile,
-    AstStmt_Break,
-    AstStmt_Continue,
-    AstStmt_Return
+enum Ast_Statement_Type {
+    AST_STMT_DECL,
+    AST_STMT_EXPR_STMT,
+    AST_STMT_IF,
+    AST_STMT_SWITCH,
+    AST_STMT_CASE,
+    AST_STMT_DEFAULT,
+    AST_STMT_FOR,
+    AST_STMT_WHILE,
+    AST_STMT_DO_WHILE,
+    AST_STMT_BREAK,
+    AST_STMT_CONTINUE,
+    AST_STMT_RETURN
 };
 
-struct ast_return
-{
-    ast* Expression;
+struct Ast_Return {
+    Ast* expression;
 };
 
-struct ast_while
-{
-    ast* Condition; // Expression
-    ast* Body; // Statement
+struct Ast_While {
+    Ast* condition; // Expression
+    Ast* body; // Statement
 };
 
-struct ast_for
-{
-    ast* Init; // Statement
-    ast* Condition; // Expression
-    ast* Inc; // Expression
+struct Ast_For {
+    Ast* init; // Statement
+    Ast* condition; // Expression
+    Ast* inc; // Expression
     
-    ast* Body;
+    Ast* body;
 };
 
-struct ast_default
-{
-    ast* Body; // Statement
+struct Ast_Default {
+    Ast* body; // Statement
 };
 
-struct ast_case
-{
-    ast* Value; // Expression
-    ast* Body; // Statement
+struct Ast_Case {
+    Ast* value; // Expression
+    Ast* body; // Statement
 };
 
-struct ast_switch
-{
-    ast* Condition; // Expression
-    ast* FirstCase; // Case
+struct Ast_Switch {
+    Ast* condition_expr; // Expression
+    Ast* first_case; // Case
 };
 
-struct ast_if
-{
-    ast* Condition; // Expression
-    ast* Then; // Statement
-    ast* Else; // Statement
+struct Ast_If {
+    Ast* condition_expr; // Expression
+    Ast* then_stmt; // Statement
+    Ast* else_stmt; // Statement
 };
 
-struct ast_expr_statement
-{
+struct Ast_Expr_Statement {
     
 };
 
-struct ast_decl_statement
-{
-    ast* Decl; // Declaration
-    ast* Expression; // Expression
+struct Ast_Decl_Statement {
+    Ast* decl; // Declaration
+    Ast* expression; // Expression
 };
 
-struct ast_statement
-{
-    ast_statement_type Type;
-    ast* MyScope; // Block
+struct Ast_Statement {
+    Ast_Statement_Type type;
+    Ast* my_scope; // Block
     
-    union
-    {
-        ast_decl_statement DeclStmt;
-        ast_assignment Assignment;
-        ast_expr_statement ExprStmt;
-        ast_if If;
-        ast_switch Switch;
-        ast_case Case;
-        ast_default Default;
-        ast_for ForStmt;
-        ast_while While;
-        ast_return Return;
+    union {
+        Ast_Decl_Statement decl_stmt;
+        Ast_Assignment assignment;
+        Ast_Expr_Statement expr_stmt;
+        Ast_If if_stmt;
+        Ast_Switch switch_stmt;
+        Ast_Case case_stmt;
+        Ast_Default default_stmt;
+        Ast_For for_stmt;
+        Ast_While while_stmt;
+        ast_return return_stmt;
     };
 };
 
 //////////////////////////////////
 //       Type Definitions       //
 //////////////////////////////////
-enum ast_type_definition_type
-{
-    AstTypeDef_Default,
-    AstTypeDef_Pointer,
-    AstTypeDef_Struct,
-    AstTypeDef_Enum,
-    AstTypeDef_Union,
+enum Ast_Type_Definition_Type {
+    AST_TYPE_DEF_DEFAULT,
+    AST_TYPE_DEF_POINTER,
+    AST_TYPE_DEF_STRUCT,
+    AST_TYPE_DEF_ENUM,
+    AST_TYPE_DEF_UNION
 };
 
-struct ast_union
-{
+struct Ast_Union {
     // NOTE(yuval): Declarations
-    ast* Decls[512]; // Declaration
-    u32 DeclIndex;
+    Ast* decls[512]; // Declaration
+    umm count;
 };
 
-struct ast_enum
-{
+struct Ast_Enum {
     // NOTE(yuval): Declarations
-    ast* Decls[512]; // Declaration
-    u32 DeclIndex;
+    Ast* decls[512]; // Declaration
+    umm count;
 };
 
-struct ast_struct
-{
+struct Ast_Struct {
     // NOTE(yuval): Members
-    ast* Members[512]; // Declaration
-    u32 MemberIndex;
+    Ast* members[512]; // Declaration
+    umm count;
 };
 
-struct ast_type_definition
-{
-    ast_type_definition_type Type;
+struct Ast_Type_Definition {
+    Ast_Type_Definition_Type type;
     
-    ast* MyDecl; // Declaration
+    Ast* my_decl; // Declaration
     
     // NOTE(yuval): Pointer
-    ast* PointerTo; // Type Definition
-    s32 PointerLevel;
+    Ast* pointer_to; // Type Definition
+    s32 pointer_level;
     
-    union
-    {
-        string DefaultTypeName;
-        ast_struct Struct;
-        ast_enum Enum;
-        ast_union Union;
+    union {
+        String default_type_name;
+        Ast_Struct struct_type_def;
+        Ast_Enum enum_type_def;
+        Ast_Union union_type_def;
     };
 };
 
 ////////////////////////////////
 //        Declarations        //
 ////////////////////////////////
-enum ast_declaration_type
-{
-    AstDecl_Type,
-    AstDecl_Func,
-    AstDecl_Var
+enum Ast_Declaration_Type {
+    AST_DECL_TYPE,
+    AST_DECL_FUNC,
+    AST_DECL_VAR
 };
 
-struct ast_tag
-{
-    string Tag;
+struct Ast_Tag {
+    String tag;
 };
 
-struct ast_identifier
-{
-    string MyName;
+struct Ast_Identifier {
+    String my_name;
 };
 
-struct ast_function
-{
+struct Ast_Function {
     // NOTE(yuval): If the function is both declared and defined
-    b32 IsFunctionDefinition;
+    b32 is_function_definition;
     
-    ast* ReturnType; // Type Definition
+    Ast* return_type; // Type Definition
     
-    ast* Params[512]; // Declaration
-    u32 ParamIndex;
+    Ast* params[512]; // Declaration
+    umm param_count;
     
-    ast* MyBody; // Statement
+    Ast* MyBody; // Statement
 };
 
-struct ast_declaration
-{
-    ast_declaration_type Type;
+struct Ast_Declaration {
+    Ast_Declaration_Type type;
     
-    ast_identifier* Identifier;
-    ast* MyScope; // Block
+    Ast_Identifier* identifier;
+    Ast* my_scope; // Block
     
     // NOTE(yuval): Tags
-    ast_tag* MyTags[16];
+    Ast_Tag* my_tags[16];
     
-    union
-    {
-        ast* MyType; // Type Definition
-        ast_function Func;
+    union {
+        Ast* my_type; // Type Definition
+        Ast_Function func;
     };
 };
 
 ///////////////////////////////
 //           Block           //
 ///////////////////////////////
-struct ast_block
-{
-    ast* Parent; // Block
-    ast* OwningDecl; // Declaration
+struct Ast_Block {
+    Ast* parent; // Block
+    Ast* owning_decl; // Declaration
     
-    ast* Decls[512]; // Declaration
-    u32 DeclIndex;
+    Ast* decls[512]; // Declaration
+    umm decl_count;
     
     // TODO(yuval): @Add array for child blocks
 };
@@ -324,44 +291,53 @@ struct ast_block
 /////////////////////////////
 //           AST           //
 /////////////////////////////
-enum ast_type
-{
-    Ast_Block,
-    Ast_Declaration,
-    Ast_TypeDefinition,
-    Ast_Statement,
-    Ast_Expression
+enum Ast_Type {
+    AST_BLOCK,
+    AST_DECLARATION,
+    AST_TYPE_DEFINITION,
+    AST_STATEMENT,
+    AST_EXPRESSION
 };
 
-struct ast
-{
-    ast_type Type;
+struct Ast {
+    Ast_Type type;
     
-    ast_file* MyFile;
-    s32 MyLine;
-    s32 MyColumn;
+    Ast_Translation_Unit* my_translation_unit;
     
-    ast* Left;
-    ast* Right;
+    String my_file_name;
+    s32 my_line;
+    s32 my_column;
     
-    union
-    {
-        ast_translation_unit TranslationUnit;
-        ast_block Block;
-        ast_declaration Decl;
-        ast_type_definition TypeDef;
-        ast_statement Stmt;
-        ast_expression Expr;
+    Ast* left;
+    Ast* right;
+    
+    union {
+        Ast_Translation_Unit translation_unit;
+        Ast_Block block;
+        Ast_Declaration decl;
+        Ast_Type_Definition type_def;
+        Ast_Statement stmt;
+        Ast_Expression Expr;
     };
 };
 
 ////////////////////////////////////
 //      AST Translation Unit      //
 ////////////////////////////////////
-struct ast_translation_unit
-{
-    ast GlobalScope;
+struct Ast_Translation_Unit {
+    Ast global_scope;
 };
+
+////////////////////////////
+//         Parser         //
+////////////////////////////
+struct Parser {
+    Memory_Arena parser_arena;
+    
+    Ast_Translation_Unit* translation_unit;
+    Tokenizer* tokenizer;
+    Token token;
+}
 
 #define BUILD_PARSER_H
 #endif // #if !defined(BUILD_PARSER_H)
