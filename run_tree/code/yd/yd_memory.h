@@ -89,143 +89,136 @@ typedef uintptr_t yd_umm;
 // NOTE(yuval): Utility Macros
 //
 
-#if !defined(YDAssert)
-# define YDAssert(Expression) if (!(Expression)) { *(volatile int*)0 = 0; }
-#endif // #if !defined(YDAssert)
+#if !defined(YD_ASSERT)
+# define YD_ASSERT(expression) if (!(expression)) { *(volatile int*)0 = 0; }
+#endif // #if !defined(YD_ASSERT)
 
-#if !defined(YDMinimum)
-#define YDMinimum(A, B) (((A) < (B)) ? (A) : (B))
-#endif // #if !defined(YDMinimum)
+#if !defined(YD_MINIMUM)
+#define YD_MINIMUM(a, b) (((a) < (b)) ? (a) : (b))
+#endif // #if !defined(YD_MINIMUM)
 
-#if !defined(YDMaximum)
-# define YDMaximum(A, B) (((A) > (B)) ? (A) : (B))
-#endif // #if !defined(YDMaximum)
+#if !defined(YD_MAXIMUM)
+# define YD_MAXIMUM(A, B) (((a) > (b)) ? (a) : (b))
+#endif // #if !defined(YD_MAXIMUM)
 
-#if !defined(YDAlignPow2)
-# define YDAlignPow2(Value, Alignment) ((Value + ((Alignment) - 1)) & \
-~((Value - Value) + (Alignment) - 1))
-#endif // #if !defined(YDAlignPow2)
+#if !defined(YD_ALIGN_POW2)
+# define YD_ALIGN_POW2(value, alignment) ((value + ((alignment) - 1)) & \
+~((value - value) + (alignment) - 1))
+#endif // #if !defined(YD_ALIGN_POW2)
 
-#if !defined(YDOffsetOf)
-# define YDOffsetOf(Type, Member) (umm)&(((Type*)0)->Member)
-#endif // #if !defined(YDOffsetOf)
+#if !defined(YD_OFFSET_OF)
+# define YD_OFFSET_OF(type, member) (umm)&(((type*)0)->member)
+#endif // #if !defined(YD_OFFSET_OF)
 
 //
 // NOTE(yuval): Type Definitions
 //
 
-enum memory_block_flags
-{
-    MemoryBlockFlag_NotRestored = 0x1,
-    MemoryBlockFlag_OverflowCheck = 0x2,
-    MemoryBlockFlag_UnderflowCheck = 0x4
+enum Memory_Block_Flags {
+    MEMORY_BLOCK_FLAG_NOT_RESTORED = 0x1,
+    MEMORY_BLOCK_FLAG_OVERFLOW_CHECK = 0x2,
+    MEMORY_BLOCK_FLAG_UNDERFLOW_CHECK = 0x4
 };
 
-struct memory_block
-{
-    yd_u64 Flags;
+struct Memory_Block {
+    yd_u64 flags;
     
-    yd_u8* Base;
-    yd_umm Size;
-    yd_umm Used;
+    yd_u8* base;
+    yd_umm size;
+    yd_umm used;
     
-    yd_umm TotalAllocatedSize;
+    yd_umm total_allocated_size;
     
-    memory_block* Prev;
+    Memory_Block* prev;
 };
 
-struct memory_arena
-{
-    memory_block* CurrentBlock;
-    yd_umm MinimumBlockSize;
+struct Memory_Arena {
+    Memory_Block* current_block;
+    yd_umm minimum_block_size;
     
-    yd_u64 AllocationFlags;
-    yd_s32 TempCount;
+    yd_u64 allocation_flags;
+    yd_s32 temp_count;
 };
 
-struct temporary_memory
-{
-    memory_arena* Arena;
-    memory_block* Block;
-    yd_umm Used;
+struct Temporary_Memory {
+    Memory_Arena* arena;
+    Memory_Block* block;
+    yd_umm used;
 };
 
-enum arena_push_flags
-{
-    ArenaFlag_ClearToZero = 0x1
+enum Arena_Push_Flags {
+    ARENA_FLAG_CLEAR_TO_ZERO = 0x1
 };
 
-struct arena_push_params
-{
-    yd_u32 Flags;
-    yd_u32 Alignment;
+struct Arena_Push_Params {
+    yd_u32 flags;
+    yd_u32 alignment;
 };
 
-struct arena_bootstrap_params
-{
-    yd_u64 AllocationFlags;
-    yd_umm MinimumBlockSize;
+struct Arena_Bootstrap_Params {
+    yd_u64 allocation_flags;
+    yd_umm minimum_block_size;
 };
 
 //
 // NOTE(yuval): Memory Block Allocation & Deallocation Function Types
 //
 
-#define ALLOCATE_MEMORY(Name) memory_block* Name(yd_umm Size, yd_u64 Flags)
-typedef ALLOCATE_MEMORY(allocate_memory);
+#define ALLOCATE_MEMORY(name) Memory_Block* name(yd_umm size, yd_u64 flags)
+typedef ALLOCATE_MEMORY(Allocate_Memory);
 
-#define DEALLOCATE_MEMORY(Name) void Name(memory_block* Block)
-typedef DEALLOCATE_MEMORY(deallocate_memory);
+#define DEALLOCATE_MEMORY(Name) void Name(Memory_Block* block)
+typedef DEALLOCATE_MEMORY(Deallocate_Memory);
 
-extern allocate_memory* YDAllocateMemory;
-extern deallocate_memory* YDDeallocateMemory;
+extern Allocate_Memory* yd_allocate_memory;
+extern Deallocate_Memory* yd_deallocate_memory;
 
 //
 // NOTE(yuval): Public API Function Declarations
 //
 
-void* Copy(void* DestInit, const void* SourceInit, yd_umm Size);
+void* copy(void* dest_init, const void* source_init, yd_umm size);
 
-#if !defined(CopyArray)
-# define CopyArray(Dest, Source, Count) Copy((Dest), (Source), (Count) * sizeof(*(Source)))
-#endif // #if !defined(CopyArray)
+#if !defined(COPY_ARRAY)
+# define COPY_ARRAY(dest, source, count) Copy((dest), (source), (count) * sizeof(*(source)))
+#endif // #if !defined(COPY_ARRAY)
 
-void ZeroSize(void* Ptr, yd_umm Size);
+void zero_size(void* ptr, yd_umm size);
 
-#if !defined(ZeroStruct)
-# define ZeroStruct(Instance) ZeroSize(&(Instance), sizeof(Instance))
-#endif // #if !defined(ZeroStruct)
+#if !defined(ZERO_STRUCT)
+# define ZERO_STRUCT(instance) zero_size(&(instance), sizeof(instance))
+#endif // #if !defined(ZERO_STRUCT)
 
-#if !defined(ZeroArray)
-# define ZeroArray(Pointer, Count) ZeroSize(Pointer, (Count) * sizeof(*(Pointer)))
-#endif // #if !defined(ZeroArray)
+#if !defined(ZERO_ARRAY)
+# define ZERO_ARRAY(pointer, count) zero_size(pointer, (count) * sizeof(*(pointer)))
+#endif // #if !defined(ZERO_ARRAY)
 
 // NOTE(yuval): This function declaration is an inline function and it's declared here only
 // because PushSize_'s declaration uses it
-yd_internal inline arena_push_params DefaultArenaParams();
+yd_internal inline Arena_Push_Params default_arena_params();
 
-void* PushSize_(memory_arena* Arena, yd_umm SizeInit,
-                arena_push_params Params = DefaultArenaParams());
+void* push_size_(Memory_Arena* arena, yd_umm size_init,
+                 Arena_Push_Params params = default_arena_params());
 
-#if !defined(PushSize)
-# define PushSize(Arena, Size, ...) PushSize_(Arena, Size, ## __VA_ARGS__)
-#endif // #if !defined(PushSize)
+#if !defined(PUSH_SIZE)
+# define PUSH_SIZE(arena, size, ...) push_size_(arena, size, ## __VA_ARGS__)
+#endif // #if !defined(PUSH_SIZE)
 
-#if !defined(PushStruct)
-# define PushStruct(Arena, Type, ...) (Type*)PushSize_(Arena, sizeof(Type), ## __VA_ARGS__)
-#endif // #if !defined(PushStruct)
+#if !defined(PUSH_STRUCT)
+# define PUSH_STRUCT(arena, type, ...) (type*)push_size_(arena, sizeof(type), ## __VA_ARGS__)
+#endif // #if !defined(PUSH_STRUCT)
 
-#if !defined(PushArray)
-# define PushArray(Arena, Type, Count, ...) (Type*)PushSize_(Arena, (Count) * sizeof(Type), \
+#if !defined(PUSH_ARRAY)
+# define PUSH_ARRAY(arena, type, count, ...) (Type*)push_size_(arena, (count) * sizeof(type), \
 ## __VA_ARGS__)
-#endif // #if !defined(PushArray)
+#endif // #if !defined(PUSH_ARRAY)
 
-#if !defined(PushCopy)
-# define PushCopy(Arena, Source, Size, ...) Copy(PushSize_(Arena, Size, ## __VA_ARGS__), \
-(Source), Size)
-#endif // #if !defined(PushCopy)
+#if !defined(PUSH_COPY)
+# define PUSH_COPY(arena, source, size, ...) copy(push_size_(arena, size, ## __VA_ARGS__), \
+(source), size)
+#endif // #if !defined(PUSH_COPY)
 
-void Clear(memory_arena* Arena);
+void clear(Memory_Arena* arena);
 
 //
 // NOTE(yuval): Public API Inline Functions
@@ -235,76 +228,66 @@ void Clear(memory_arena* Arena);
 // NOTE(yuval): Arena & Memory Parameters
 //
 
-yd_internal inline arena_push_params
-DefaultArenaParams()
-{
-    arena_push_params Params;
-    Params.Flags = ArenaFlag_ClearToZero;
-    Params.Alignment = 4;
+yd_internal inline Arena_Push_Params
+default_arena_params() {
+    Arena_Push_Params params;
+    params.flags = ARENA_FLAG_CLEAR_TO_ZERO;
+    params.alignment = 4;
     
-    return Params;
+    return params;
 }
 
-yd_internal inline arena_push_params
-ArenaAlignClear(yd_u32 Alignment)
-{
-    arena_push_params Params = DefaultArenaParams();
-    Params.Flags |= ArenaFlag_ClearToZero;
-    Params.Alignment = Alignment;
+yd_internal inline Arena_Push_Params
+arena_align_clear(yd_u32 alignment) {
+    Arena_Push_Params params = default_arena_params();
+    params.flags |= ARENA_FLAG_CLEAR_TO_ZERO;
+    params.alignment = alignment;
     
-    return Params;
+    return params;
 }
 
-yd_internal inline arena_push_params
-ArenaAlignNoClear(yd_u32 Alignment)
-{
-    arena_push_params Params = DefaultArenaParams();
-    Params.Flags &= ~ArenaFlag_ClearToZero;
-    Params.Alignment = Alignment;
+yd_internal inline Arena_Push_Params
+arena_align_no_clear(yd_u32 alignment) {
+    Arena_Push_Params params = default_arena_params();
+    params.flags &= ~ARENA_FLAG_CLEAR_TO_ZERO;
+    params.alignment = alignment;
     
-    return Params;
+    return params;
 }
 
-yd_internal inline arena_push_params
-ArenaAlign(yd_u32 Alignment, yd_b32 ShouldClear)
-{
-    arena_push_params Params;
+yd_internal inline Arena_Push_Params
+ArenaAlign(yd_u32 alignment, yd_b32 should_clear) {
+    Arena_Push_Params params;
     
-    if (ShouldClear)
-    {
-        Params = ArenaAlignClear(Alignment);
-    }
-    else
-    {
-        Params = ArenaAlignNoClear(Alignment);
+    if (should_clear) {
+        params = arena_align_clear(alignment);
+    } else {
+        params = arena_align_no_clear(alignment);
     }
     
-    return Params;
+    return params;
 }
 
-yd_internal inline arena_push_params
-ArenaNoClear()
-{
-    arena_push_params Params = DefaultArenaParams();
-    Params.Flags &= ~ArenaFlag_ClearToZero;
+yd_internal inline Arena_Push_Params
+arena_no_clear() {
+    Arena_Push_Params params = default_arena_params();
+    params.flags &= ~ARENA_FLAG_CLEAR_TO_ZERO;
     
-    return Params;
+    return params;
 }
 
-yd_internal inline arena_bootstrap_params
-DefaultBootstrapParams()
-{
-    arena_bootstrap_params Params = {};
-    return Params;
+yd_internal inline Arena_Bootstrap_Params
+default_bootstrap_params() {
+    Arena_Bootstrap_Params params = {};
+    return params;
 };
 
-yd_internal inline arena_bootstrap_params
-NonRestoredArena()
-{
-    arena_bootstrap_params Params = DefaultBootstrapParams();
-    Params.AllocationFlags = MemoryBlockFlag_NotRestored;
+yd_internal inline Arena_Bootstrap_Params
+no_restored_arena() {
+    Arena_Bootstrap_Params params = default_bootstrap_params();
+    params.AllocationFlags = MEMORY_BLOCK_FLAG_NOT_RESTORED;
     
-    return Params;
+    return params;
 }
 
 //
@@ -312,82 +295,73 @@ NonRestoredArena()
 //
 
 yd_internal inline yd_umm
-GetAlignmentOffset(memory_arena* Arena, yd_umm Alignment)
-{
-    yd_umm AlignmentOffset = 0;
-    yd_umm TailPointer = (yd_umm)Arena->CurrentBlock->Base + Arena->CurrentBlock->Used;
-    yd_umm AlignmentMask = Alignment - 1;
+get_alignment_offset(Memory_Arena* arena, yd_umm alignment) {
+    yd_umm alignment_offset = 0;
+    yd_umm tail_pointer = (yd_umm)arena->current_block->base + arena->current_block->used;
+    yd_umm alignment_mask = alignment - 1;
     
-    if (TailPointer & AlignmentMask)
-    {
-        AlignmentOffset = Alignment - (TailPointer & AlignmentMask);
+    if (tail_pointer & alignment_mask) {
+        alignment_offset = alignment - (tail_pointer & alignment_mask);
     }
     
-    return AlignmentOffset;
+    return alignment_offset;
 }
 
 yd_internal inline yd_umm
-GetEffectiveSizeFor(memory_arena* Arena, yd_umm SizeInit, arena_push_params Params)
-{
-    yd_umm AlignmentOffset = GetAlignmentOffset(Arena, Params.Alignment);
-    yd_umm Size = SizeInit + AlignmentOffset;
-    YDAssert(Size >= SizeInit);
+get_effective_size_for(Memory_Arena* arena, yd_umm size_init, Arena_Push_Params params) {
+    yd_umm alignment_offset = get_alignment_offset(arena, params.alignment);
+    yd_umm size = size_init + alignment_offset;
+    YD_ASSERT(size >= size_init);
     
-    return Size;
+    return size;
 }
 
 //
 // NOTE(yuval): Temporary Arena Memory
 //
 
-yd_internal inline temporary_memory
-BeginTemporaryMemory(memory_arena* Arena)
-{
-    temporary_memory Result;
+yd_internal inline Temporary_Memory
+begin_temporary_memory(Memory_Arena* arena) {
+    Temporary_Memory result;
     
-    Result.Arena = Arena;
-    Result.Block = Arena->CurrentBlock;
-    Result.Used = Arena->CurrentBlock ? Arena->CurrentBlock->Used : 0;
+    result.arena = arena;
+    result.block = arena->current_block;
+    result.used = arena->current_block ? arena->current_block->used : 0;
     
-    ++Arena->TempCount;
+    ++arena->temp_count;
     
-    return Result;
+    return result;
 }
 
 yd_internal inline void
-YDMemoryFreeLastBlock(memory_arena* Arena)
-{
-    memory_block* ToFree = Arena->CurrentBlock;
-    Arena->CurrentBlock = ToFree->Prev;
+yd_memory__free_last_block(Memory_Arena* arena) {
+    Memory_Block* to_free = arena->current_block;
+    arena->current_block = to_free->prev;
     
-    YDAssert(YDDeallocateMemory);
-    YDDeallocateMemory(ToFree);
+    YD_ASSERT(yd_deallocate_memory);
+    yd_deallocate_memory(to_free);
 }
 
 yd_internal inline void
-EndTemporaryMemory(temporary_memory TempMem)
-{
-    memory_arena* Arena = TempMem.Arena;
+end_temporary_memory(Temporary_Memory temp_mem) {
+    Memory_Arena* arena = temp_mem.arena;
     
-    while (Arena->CurrentBlock != TempMem.Block)
-    {
-        YDMemoryFreeLastBlock(Arena);
+    while (arena->current_block != temp_mem.block) {
+        yd_memory__free_last_block(arena);
     }
     
-    if (Arena->CurrentBlock)
-    {
-        YDAssert(Arena->CurrentBlock->Used >= TempMem.Used);
-        Arena->CurrentBlock->Used = TempMem.Used;
+    if (arena->current_block) {
+        YD_ASSERT(arena->current_block->used >= temp_mem.used);
+        arena->current_block->used = temp_mem.used;
     }
     
-    YDAssert(Arena->TempCount > 0);
-    --Arena->TempCount;
+    YD_ASSERT(arena->temp_count > 0);
+    --arena->temp_count;
 }
 
 yd_internal inline void
-CheckArena(memory_arena* Arena)
-{
-    YDAssert(Arena->TempCount == 0);
+CheckArena(Memory_Arena* Arena) {
+    YD_ASSERT(arena->temp_count == 0);
 }
 
 //
@@ -395,25 +369,24 @@ CheckArena(memory_arena* Arena)
 //
 
 yd_internal inline void*
-BootstrapPushSize_(yd_umm Size, yd_umm OffsetToArena,
-                   arena_bootstrap_params BootstrapParams = DefaultBootstrapParams(),
-                   arena_push_params PushParams = DefaultArenaParams())
-{
-    memory_arena Bootstrap = {};
-    Bootstrap.AllocationFlags = BootstrapParams.AllocationFlags;
-    Bootstrap.MinimumBlockSize = BootstrapParams.MinimumBlockSize;
+bootstrap_push_size_(yd_umm size, yd_umm offset_to_arena,
+                     Arena_Bootstrap_Params bootstrap_params = default_bootstrap_params(),
+                     Arena_Push_Params push_params = default_arena_params()) {
+    Memory_Arena bootstrap = {};
+    bootstrap.allocation_flags = bootstrap_params.allocation_flags;
+    bootstrap.minimum_block_size = bootstrap_params.minimum_block_size;
     
-    void* Result = PushSize(&Bootstrap, Size, PushParams);
-    *(memory_arena*)((yd_u8*)Result + OffsetToArena) = Bootstrap;
+    void* result = push_size(&bootstrap, size, push_params);
+    *(Memory_Arena*)((yd_u8*)result + offset_to_arena) = bootstrap;
     
-    return Result;
+    return result;
 }
 
-#if !defined(BootstrapPushStruct)
-# define BootstrapPushStruct(Type, Member, ...) (Type*)BootstrapPushSize_(sizeof(Type), \
-YDOffsetOf(Type, Member), \
+#if !defined(BOOTSTRAP_PUSH_STRUCT)
+# define BootstrapPushStruct(type, member, ...) (Type*)bootstrap_push_size_(sizeof(type), \
+YD_OFFSET_OF(type, member), \
 ## __VA_ARGS__)
-#endif // #if !defined(BootstrapPushStruct)
+#endif // #if !defined(BOOTSTRAP_PUSH_STRUCT)
 
 #define YD_MEMORY
 #endif // #if !defined(YD_MEMORY)
@@ -428,119 +401,108 @@ YDOffsetOf(Type, Member), \
 // NOTE(yuval): Memory Allocation & Deallocation
 //
 
-ALLOCATE_MEMORY(YDAllocateMemory_)
-{
+ALLOCATE_MEMORY(yd_allocate_memory_) {
 #if 0
     // NOTE(yuval): We require the memory block headers not to change the cache
     // line alignment of an allocation
-    YDAssert(sizeof(memory_block) == 64);
+    YD_ASSERT(sizeof(Memory_Block) == 64);
 #endif // #if 0
     
-    yd_umm PageSize = 4096;
-    yd_umm TotalSize = Size + sizeof(memory_block);
-    yd_umm BaseOffset = sizeof(memory_block);
-    yd_umm ProtectOffset = 0;
+    yd_umm page_size = 4096;
+    yd_umm total_size = size + sizeof(Memory_Block);
+    yd_umm base_offset = sizeof(Memory_Block);
+    yd_umm protect_offset = 0;
     
-    if (Flags & MemoryBlockFlag_UnderflowCheck)
-    {
-        TotalSize = Size + 2 * PageSize;
-        BaseOffset = 2 * PageSize;
-        ProtectOffset = PageSize;
-    }
-    else if (Flags & MemoryBlockFlag_OverflowCheck)
-    {
-        yd_umm SizeRoundedUp = YDAlignPow2(Size, PageSize);
-        TotalSize = SizeRoundedUp + 2 * PageSize;
-        BaseOffset = PageSize + SizeRoundedUp - Size;
-        ProtectOffset = PageSize + SizeRoundedUp;
+    if (flags & MEMORY_BLOCK_FLAG_UNDERFLOW_CHECK) {
+        total_size = size + 2 * page_size;
+        base_offset = 2 * page_size;
+        protect_offset = page_size;
+    } else if (flags & MEMORY_BLOCK_FLAG_OVERFLOW_CHECK) {
+        yd_umm size_rounded_up = YD_ALIGN_POW2(size, page_size);
+        total_size = size_rounded_up + 2 * page_size;
+        base_offset = page_size + size_rounded_up - size;
+        protect_offset = page_size + size_rounded_up;
     }
     
-    memory_block* Block = 0;
+    Memory_Block* block = 0;
     
 #if YD_WIN32
-    Block = (memory_block*)VirtualAlloc(0, TotalSize,
+    block = (Memory_Block*)VirtualAlloc(0, total_size,
                                         MEM_RESERVE | MEM_COMMIT,
                                         PAGE_READWRITE);
 #elif YD_MACOS || YD_LINUX
-    Block = (memory_block*)mmap(0, TotalSize,
+    Block = (memory_block*)mmap(0, total_size,
                                 PROT_READ | PROT_WRITE,
                                 MAP_PRIVATE | MAP_ANONYMOUS,
                                 -1, 0);
-    YDAssert(Block != MAP_FAILED);
+    YD_ASSERT(block != MAP_FAILED);
 #endif // #if YD_WIN32
     
-    YDAssert(Block);
-    Block->Base = (yd_u8*)Block + BaseOffset;
-    YDAssert(Block->Used == 0);
-    YDAssert(Block->Prev == 0);
+    YD_ASSERT(block);
+    block->base = (yd_u8*)block + base_offset;
+    YD_ASSERT(block->used == 0);
+    YD_ASSERT(block->prev == 0);
     
-    if (Flags & (MemoryBlockFlag_OverflowCheck | MemoryBlockFlag_UnderflowCheck))
-    {
+    if (flags & (MEMORY_BLOCK_FLAG_OVERFLOW_CHECK | MEMORY_BLOCK_FLAG_UNDERFLOW_CHECK)) {
 #if YD_WIN32
-        DWORD OldProtect = 0;
-        BOOL IsProtected = VirtualProtect((yd_u8*)Block + ProtectOffset, PageSize,
-                                          PAGE_NOACCESS, &OldProtect);
-        YDAssert(IsProtected);
+        DWORD old_protect = 0;
+        BOOL is_protected = VirtualProtect((yd_u8*)block + protect_offset, page_size,
+                                           PAGE_NOACCESS, &old_protect);
+        YD_ASSERT(IsProtected);
 #elif YD_MACOS || YD_LINUX
-        yd_s32 ProtectResult = mprotect((yd_u8*)Block + ProtectOffset, PageSize, PROT_NONE);
-        YDAssert(ProtectResult == 0);
+        yd_s32 protect_result = mprotect((yd_u8*)block + protect_offset, page_size, PROT_NONE);
+        YD_ASSERT(protect_result == 0);
 #endif // #if YD_WIN32
     }
     
-    Block->Flags = Flags;
-    Block->Size = Size;
-    Block->TotalAllocatedSize = TotalSize;
+    block->flags = flags;
+    block->size = size;
+    block->total_allocated_size = total_size;
     
-    return Block;
+    return block;
 }
 
-DEALLOCATE_MEMORY(YDDeallocateMemory_)
-{
+DEALLOCATE_MEMORY(yd_deallocate_memory_) {
 #if YD_WIN32
-    BOOL Result = VirtualFree(Block, 0, MEM_RELEASE);
-    YDAssert(Result);
+    BOOL result = VirtualFree(block, 0, MEM_RELEASE);
+    YD_ASSERT(result);
 #elif YD_MACOS || YD_LINUX
-    yd_s32 Result = munmap(Block, Block->TotalAllocatedSize);
-    YDAssert(Result == 0);
+    yd_s32 result = munmap(block, block->total_allocated_size);
+    YD_ASSERT(result == 0);
 #endif // #if YD_WIN32
 }
 
-allocate_memory* YDAllocateMemory = YDAllocateMemory_;
-deallocate_memory* YDDeallocateMemory = YDDeallocateMemory_;
+Allocate_Memory* yd_allocate_memory = yd_allocate_memory_;
+Deallocate_Memory* yd_deallocate_memory = yd_deallocate_memory_;
 
 //
 // NOTE(yuval): Memory Utility Functions
 //
 
 void*
-Copy(void* DestInit, const void* SourceInit, yd_umm Size)
-{
-    void* Result = 0;
+copy(void* dest_init, const void* source_init, yd_umm size) {
+    void* result = 0;
     
-    if (DestInit && SourceInit)
-    {
-        const yd_u8* Source = (const yd_u8*)SourceInit;
-        yd_u8* Dest = (yd_u8*)DestInit;
+    if (dest_init && source_init) {
+        const yd_u8* source = (const yd_u8*)source_init;
+        yd_u8* dest = (yd_u8*)dest_init;
         
-        while (Size--)
-        {
-            *Dest++ = *Source++;
+        while (size--) {
+            *dest++ = *source++;
         }
         
-        Result = DestInit;
+        result = dest_init;
     }
     
-    return Result;
+    return result;
 }
 
 void
-ZeroSize(void* Ptr, yd_umm Size)
-{
-    yd_u8* Byte = (yd_u8*)Ptr;
+zero_size(void* ptr, yd_umm size) {
+    yd_u8* byte = (yd_u8*)ptr;
     
-    while (Size--)
-    {
-        *Byte++ = 0;
+    while (size--) {
+        *byte++ = 0;
     }
 }
 
@@ -549,65 +511,60 @@ ZeroSize(void* Ptr, yd_umm Size)
 //
 
 yd_internal inline yd_b32
-YDMemoryIsPow2(yd_u32 Value)
-{
-    yd_b32 Result = ((Value & ~(Value - 1)) == Value);
-    return Result;
+yd_memory__is_pow2(yd_u32 value) {
+    yd_b32 result = ((value & ~(value - 1)) == value);
+    return result;
 }
 
 void*
-PushSize_(memory_arena* Arena, yd_umm SizeInit, arena_push_params Params)
+push_size_(Memory_Arena* arena, yd_umm size_init, Arena_Push_Params params)
 {
-    YDAssert(Params.Alignment <= 128);
-    YDAssert(YDMemoryIsPow2(Params.Alignment));
+    YD_ASSERT(params.alignment <= 128);
+    YD_ASSERT(yd_memory__is_pow2(params.alignment));
     
-    yd_umm Size = 0;
-    if (Arena->CurrentBlock)
-    {
-        Size = GetEffectiveSizeFor(Arena, SizeInit, Params);
+    yd_umm size = 0;
+    if (arena->current_block) {
+        size = get_effective_size_for(arena, size_init, params);
     }
     
-    if (!Arena->CurrentBlock ||
-        ((Arena->CurrentBlock->Used + Size) > Arena->CurrentBlock->Size))
-    {
-        Size = SizeInit; // NOTE(yuval): The base will automatically be aligned now!
+    if (!arena->current_block ||
+        ((arena->current_block->used + size) > arena->current_block->size)) {
+        size = size_init; // NOTE(yuval): The base will automatically be aligned now!
         
-        if (Arena->AllocationFlags & (MemoryBlockFlag_OverflowCheck |
-                                      MemoryBlockFlag_UnderflowCheck))
-        {
-            Arena->MinimumBlockSize = 0;
-            Size = YDAlignPow2(Size, Params.Alignment);
+        if (arena->allocation_flags & (MEMORY_BLOCK_FLAG_OVERFLOW_CHECK |
+                                       MEMORY_BLOCK_FLAG_UNDERFLOW_CHECK)) {
+            arena->minimum_block_size = 0;
+            size = YD_ALIGN_POW2(size, params.alignment);
         }
-        else if (Arena->MinimumBlockSize == 0)
-        {
+        else if (arena->minimum_block_size == 0) {
             // TODO(yuval): Tune default block size
-            Arena->MinimumBlockSize = 1024 * 1024;
+            arena->minimum_block_size = 1024 * 1024;
         }
         
-        yd_umm BlockSize = YDMaximum(Size, Arena->MinimumBlockSize);
+        yd_umm block_size = YD_MAXIMUM(size, arena->minimum_block_size);
         
-        YDAssert(YDAllocateMemory);
-        memory_block* NewBlock = YDAllocateMemory(BlockSize, Arena->AllocationFlags);
-        NewBlock->Prev = Arena->CurrentBlock;
-        Arena->CurrentBlock = NewBlock;
+        YD_ASSERT(yd_allocate_memory);
+        Memory_Block* new_block = yd_allocate_memory(block_size, arena->allocation_flags);
+        new_block->prev = arena->current_block;
+        arena->current_block = new_block;
     }
     
-    YDAssert((Arena->CurrentBlock->Used + Size) <= Arena->CurrentBlock->Size);
+    YD_ASSERT((arena->current_block->used + size) <= arena->current_block->size);
     
-    yd_umm AlignmentOffset = GetAlignmentOffset(Arena, Params.Alignment);
-    void* Result = Arena->CurrentBlock->Base + Arena->CurrentBlock->Used + AlignmentOffset;
-    Arena->CurrentBlock->Used += Size;
+    yd_umm alignment_offset = get_alignment_offset(arena, params.alignment);
+    void* result = arena->current_block->base + arena->current_block->used + alignment_offset;
+    arena->current_block->used += size;
     
     // NOTE(yuval): This is just to guarantee that nobody passed in an alignment
     // on their first allocation that was _greater_ than the page alignment
-    YDAssert(Arena->CurrentBlock->Used <= Arena->CurrentBlock->Size);
+    YD_ASSERT(arena->current_block->used <= arena->current_block->size);
     
-    if (Params.Flags & ArenaFlag_ClearToZero)
+    if (params.flags & ARENA_FLAG_CLEAR_TO_ZERO)
     {
-        ZeroSize(Result, SizeInit);
+        zero_size(result, size_init);
     }
     
-    return Result;
+    return result;
 }
 
 //
@@ -615,14 +572,14 @@ PushSize_(memory_arena* Arena, yd_umm SizeInit, arena_push_params Params)
 //
 
 void
-Clear(memory_arena* Arena)
+clear(Memory_Arena* arena)
 {
     for (;;)
     {
-        b32 IsLastBlock = (Arena->CurrentBlock->Prev == 0);
-        YDMemoryFreeLastBlock(Arena);
+        b32 is_last_block = (arena->current_block->prev == 0);
+        yd_memory_free_last_block(arena);
         
-        if (IsLastBlock)
+        if (is_last_block)
         {
             break;
         }
