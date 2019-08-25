@@ -517,8 +517,7 @@ yd_memory__is_pow2(yd_u32 value) {
 }
 
 void*
-push_size_(Memory_Arena* arena, yd_umm size_init, Arena_Push_Params params)
-{
+push_size_(Memory_Arena* arena, yd_umm size_init, Arena_Push_Params params) {
     YD_ASSERT(params.alignment <= 128);
     YD_ASSERT(yd_memory__is_pow2(params.alignment));
     
@@ -572,15 +571,12 @@ push_size_(Memory_Arena* arena, yd_umm size_init, Arena_Push_Params params)
 //
 
 void
-clear(Memory_Arena* arena)
-{
-    for (;;)
-    {
+clear(Memory_Arena* arena) {
+    for (;;) {
         b32 is_last_block = (arena->current_block->prev == 0);
         yd_memory_free_last_block(arena);
         
-        if (is_last_block)
-        {
+        if (is_last_block) {
             break;
         }
     }

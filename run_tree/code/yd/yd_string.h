@@ -42,173 +42,171 @@ typedef uintptr_t yd_umm;
 #define YD_TYPES
 #endif // #if !defined(YD_TYPES)
 
-#if !defined(YDAssert)
-# define YDAssert(Expression) if (!(Expression)) { *(volatile int*)0 = 0; }
-#endif // #if !defined(YDAssert)
+#if !defined(YD_ASSERT)
+# define YDAssert(expression) if (!(expression)) { *(volatile int*)0 = 0; }
+#endif // #if !defined(YD_ASSERT)
 
-struct string
+struct String
 {
-    char* Data;
-    yd_umm Count;
-    yd_umm MemorySize;
+    char* data;
+    yd_umm count;
+    yd_umm capacity;
 };
 
 // TODO(yuval): Maybe create A UTF8 string struct
 
-#if !defined(Literal)
-# define Literal(Str) (Str), (sizeof(Str) - 1)
-#endif // #if !defined(Literal)
+#if !defined(LITERIAL)
+# define LITERAL(str) (str), (sizeof(str) - 1)
+#endif // #if !defined(LITERIAL)
 
-#if !defined(ExpandString)
-# define ExpandString(Str) ((Str).Data), ((Str).Count)
-#endif // #if !defined(ExpandString)
+#if !defined(EXPAND_STRING)
+# define EXPAND_STRING(str) ((str).data), ((str).count)
+#endif // #if !defined(EXPAND_STRING)
 
-#if !defined(PrintableString)
-# define PrintableString(Str) ((yd_s32)((Str).Count)), ((Str).Data)
-#endif // #if !defined(PrintableString)
+#if !defined(PRINTABLE_STRING)
+# define PRINTABLE_STRING(str) ((yd_s32)((str).count)), ((str).data)
+#endif // #if !defined(PRINTABLE_STRING)
 
 //
 // NOTE(yuval): Flags And Constants
 //
 
-yd_global const string NULL_STRING = {};
+yd_global const String NULL_STRING = {};
 yd_global const yd_umm STRING_NOT_FOUND = -1;
 
 //
 // NOTE(yuval): Public API Function Declarations
 //
 
-string SkipWhitespace(string Str, yd_umm* OutSkipCount);
-string ChopWhitespace(string Str);
-string SkipChopWhitespace(string Str);
-string SkipChopWhitespace(string Str, yd_umm* OutSkipCount);
+String skip_whitespace(String str, yd_umm* out_skip_count);
+String chop_whitespace(String str);
 
-yd_b32 StringsMatch(const char* A, const char* B);
-yd_b32 StringsMatch(string A, const char* B);
-yd_b32 StringsMatch(string A, string B);
-yd_b32 StringsMatch(const char* A, yd_umm ACount, const char* B);
-yd_b32 StringsMatch(const char* A, yd_umm ACount,
-                    const char* B, yd_umm BCount);
-yd_b32 StringsMatch(string A, const char* B, yd_umm Count);
-yd_b32 StringsMatchPart(const char* A, const char* B, yd_umm* OutCount);
-yd_b32 StringsMatchPart(string A, const char* B, yd_umm* OutCount);
-yd_b32 StringsMatchPart(const char* A, string B, yd_umm* OutCount);
-yd_b32 StringsMatchPart(string A, string B, yd_umm* OutCount);
-yd_b32 StringsMatchInsensitive(const char* A, const char* B);
-yd_b32 StringsMatchInsensitive(string A, const char* B);
-yd_b32 StringsMatchInsensitive(string A, string B);
-yd_b32 StringsMatchPartInsensitive(const char* A, const char* B, yd_umm* OutCount);
-yd_b32 StringsMatchPartInsensitive(string A, const char* B, yd_umm* OutCount);
-yd_b32 StringsMatchPartInsensitive(const char* A, string B, yd_umm* OutCount);
-yd_b32 StringsMatchPartInsensitive(string A, string B, yd_umm* OutCount);
-yd_b32 StringSetMatch(void* StrSet, yd_umm ItemSize, yd_umm Count,
-                      string Str, yd_umm* OutMatchIndex);
+yd_b32 strings_match(const char* a, const char* b);
+yd_b32 strings_match(String a, const char* b);
+yd_b32 strings_match(String a, String b);
+yd_b32 strings_match(const char* a, yd_umm a_count, const char* b);
+yd_b32 strings_match(const char* a, yd_umm a_count,
+                     const char* b, yd_umm b_count);
+yd_b32 strings_match(String a, const char* b, yd_umm count);
+yd_b32 strings_match_part(const char* a, const char* b, yd_umm* out_count);
+yd_b32 strings_match_part(String a, const char* b, yd_umm* out_count);
+yd_b32 strings_match_part(const char* a, String b, yd_umm* out_count);
+yd_b32 strings_match_part(String a, String b, yd_umm* out_count);
+yd_b32 strings_match_insensitive(const char* a, const char* b);
+yd_b32 strings_match_insensitive(String a, const char* b);
+yd_b32 strings_match_insensitive(String a, String b);
+yd_b32 strings_match_part_insensitive(const char* a, const char* b, yd_umm* out_count);
+yd_b32 strings_match_part_insensitive(String a, const char* b, yd_umm* out_count);
+yd_b32 strings_match_part_insensitive(const char* a, String b, yd_umm* out_count);
+yd_b32 strings_match_part_insensitive(String a, String b, yd_umm* out_count);
+yd_b32 string_set_match(void* str_set, yd_umm item_size, yd_umm count,
+                        String str, yd_umm* out_match_index);
 
-yd_s32 Compare(const char* A, const char* B);
-yd_s32 Compare(string A, const char* B);
-yd_s32 Compare(string A, string B);
+yd_s32 compare(const char* a, const char* b);
+yd_s32 compare(String a, const char* b);
+yd_s32 compare(String a, String b);
 
-yd_umm Find(const char* Str, char Character, yd_umm Start);
-yd_umm Find(string Str, char Character, yd_umm Start);
-yd_umm Find(const char* Str, string Seek, yd_umm Start);
-yd_umm Find(string Str, string Seek, yd_umm Start);
-yd_umm RFind(const char* Str, yd_umm Count, char Character, yd_umm Start);
-yd_umm RFind(string Str, char Character, yd_umm Start);
-yd_umm RFind(const char* Str, yd_umm Count, string Seek, yd_umm Start);
-yd_umm RFind(string Str, string Seek, yd_umm Start);
-yd_umm FindFirstOf(const char* Str, const char* Characters, yd_umm Start);
-yd_umm FindFirstOf(string Str, const char* Characters,  yd_umm Start);
-yd_umm FindInsensitive(const char* Str, char Character, yd_umm Start);
-yd_umm FindInsensitive(string Str, char Character, yd_umm Start);
-yd_umm FindInsensitive(const char* Str, string Seek, yd_umm Start);
-yd_umm FindInsensitive(string Str, string Seek, yd_umm Start);
+yd_umm find(const char* str, char character, yd_umm start);
+yd_umm find(String str, char character, yd_umm start);
+yd_umm find(const char* str, String Seek, yd_umm start);
+yd_umm find(String str, String seek, yd_umm start);
+yd_umm rfind(const char* str, yd_umm count, char character, yd_umm start);
+yd_umm rfind(String str, char character, yd_umm start);
+yd_umm rfind(const char* str, yd_umm count, String seek, yd_umm start);
+yd_umm rfind(String str, String seek, yd_umm start);
+yd_umm find_first_of(const char* str, const char* characters, yd_umm start);
+yd_umm find_first_of(String str, const char* characters,  yd_umm start);
+yd_umm find_insensitive(const char* str, char character, yd_umm start);
+yd_umm find_insensitive(String str, char character, yd_umm start);
+yd_umm find_insensitive(const char* str, String seek, yd_umm start);
+yd_umm find_insensitive(String str, String seek, yd_umm start);
 
-string GetFirstDoubleLine(string Source);
-string GetNextDoubleLine(string Source, string Line);
-string GetNextWord(string Source, string PrevWord);
+String get_first_double_line(String source);
+String get_next_double_line(String source, String line);
+String get_next_word(String source, String prev_word);
 
-yd_umm CopyFastUnsafe(char* Dest, const char* Source);
-yd_umm CopyFastUnsafe(char* Dest, string Source);
-yd_b32 CopyChecked(string* Dest, string Source);
-yd_b32 CopyChecked(char* Dest, yd_umm DestCap, string Source);
-yd_b32 CopyPartial(string* Dest, const char* Source);
-yd_b32 CopyPartial(string* Dest, string Source);
-yd_b32 CopyPartial(char* Dest, yd_umm DestCap, string Source);
+yd_umm copy_fast_unsafe(char* dest, const char* source);
+yd_umm copy_fast_unsafe(char* dest, String source);
+yd_b32 copy_checked(String* dest, String source);
+yd_b32 copy_checked(char* dest, yd_umm dest_cap, String source);
+yd_b32 copy_partial(String* dest, const char* source);
+yd_b32 copy_partial(String* dest, String source);
+yd_b32 copy_partial(char* dest, yd_umm dest_cap, String source);
 
-yd_b32 AppendChecked(string* Dest, string Source);
-yd_b32 AppendPartial(string* Dest, const char* Source);
-yd_b32 AppendPartial(string* Dest, string Source);
-yd_b32 Append(string* Dest, char C);
-yd_b32 TerminateWithNull(string* Str);
-yd_b32 AppendPadding(string* Dest, char C, yd_umm TargetCount);
+yd_b32 append_checked(String* dest, String source);
+yd_b32 append_partial(String* dest, const char* source);
+yd_b32 append_partial(String* dest, String source);
+yd_b32 append(String* dest, char c);
+yd_b32 terminate_with_null(String* str);
+yd_b32 append_padding(String* dest, char c, yd_umm target_count);
 
-yd_b32 ConcatStrings(string* Dest, string SourceA, string SourceB);
+yd_b32 concat(String* dest, String source_a, String source_b);
 
-void ReplaceRange(string* Str, yd_umm First, yd_umm OnePastLast, char With);
-void ReplaceRange(string* Str, yd_umm First, yd_umm OnePastLast, const char* With);
-void ReplaceRange(string* Str, yd_umm First, yd_umm OnePastLast, string With);
-void Replace(string* Str, char ToReplace, char With);
-void Replace(string* Str, const char* ToReplace, const char* With);
-void Replace(string* Str, const char* ToReplace, string With);
-void Replace(string* Str, string ToReplace, const char* With);
-void Replace(string* Str, string ToReplace, string With);
-void StringInterpretEscapes(char* Dest, string Source);
+void replace_range(String* str, yd_umm first, yd_umm one_past_last, char with);
+void replace_range(String* str, yd_umm first, yd_umm one_past_last, const char* with);
+void replace_range(String* str, yd_umm first, yd_umm one_past_last, String with);
+void replace(String* str, char to_replace, char ׳ith);
+void replace(String* str, const char* to_replace, const char* with);
+void replace(String* str, const char* to_replace, String with);
+void replace(String* str, String to_replace, const char* with);
+void replace(String* str, String to_replace, String with);
+void string_interpret_escapes(char* dest, String source);
 
 #if defined(YD_MEMORY)
-char* PushZ(memory_arena* Arena, yd_umm Count,
-            arena_push_params Params = DefaultArenaParams());
-string PushString(memory_arena* Arena, yd_umm MemorySize,
-                  arena_push_params Params = DefaultArenaParams());
-char* PushCopyZ(memory_arena* Arena, const char* Source,
-                arena_push_params Params = DefaultArenaParams());
-string PushCopyString(memory_arena* Arena, const char* Source,
-                      arena_push_params Params = DefaultArenaParams());
-char* PushCopyZ(memory_arena* Arena, string Source,
-                arena_push_params Params = DefaultArenaParams());
-string PushCopyString(memory_arena* Arena, string Source,
-                      arena_push_params Params = DefaultArenaParams());
+char* push_z(Memory_Arena* arena, yd_umm count,
+             Arena_Push_Params params = default_arena_params());
+String push_string(Memory_Arena* arena, yd_umm capacity,
+                   Arena_Push_Params params = default_arena_params());
+char* push_copy_z(Memory_Arena* arena, const char* source,
+                  Arena_Push_Params params = default_arena_params());
+String push_copy_string(Memory_Arena* arena, const char* source,
+                        Arena_Push_Params params = default_arena_params());
+char* push_copy_z(Memory_Arena* arena, String source,
+                  Arena_Push_Params params = default_arena_params());
+String push_copy_string(Memory_Arena* arena, String source,
+                        Arena_Push_Params params = default_arena_params());
 #endif // #if defined(YD_MEMORY)
 
-void ToLower(char* Str);
-void ToLower(string* Str);
-void ToLower(char* Dest, const char* Source);
-void ToLower(string* Dest, const char* Source);
-void ToLower(char* Dest, string Source);
-void ToLower(string* Dest, string Source);
-void ToUpper(char* Str);
-void ToUpper(string* Str);
-void ToUpper(char* Dest, const char* Source);
-void ToUpper(string* Dest, const char* Source);
-void ToUpper(char* Dest, string Source);
-void ToUpper(string* Dest, string Source);
-void ToCamel(char* Str);
-void ToCamel(string* Str);
-void ToCamel(char* Dest, const char* Source);
-void ToCamel(string* Dest, const char* Source);
-void ToCamel(char* Dest, string Source);
-void ToCamel(string* Dest, string Source);
-yd_umm U64ToStringCount(yd_u64 Value);
-yd_b32 U64ToString(string* Dest, yd_u64 Value);
-yd_b32 AppendU64ToString(string* Dest, yd_u64 Value);
-yd_umm S32ToStringCount(yd_s32 Value);
-yd_b32 S32ToString(string* Dest, yd_s32 Value);
-yd_b32 AppendS32ToString(string* Dest, yd_s32 Value);
-yd_umm F32ToStringCount(yd_f32 Value, yd_u32 MaxPrecision);
-yd_b32 F32ToString(string* Dest, yd_f32 Value, yd_u32 MaxPrecision);
-yd_b32 AppendF32ToString(string* Dest, yd_f32 Value, yd_u32 MaxPrecision);
-yd_u32 HexStringToU32(string Str);
-yd_b32 ColorToHexString(string* Dest, yd_u32 Color);
-yd_b32 HexStringToColor(yd_u32* Dest, string Str);
+void to_lower(char* str);
+void to_lower(String* str);
+void to_lower(char* dest, const char* source);
+void to_lower(String* Dest, const char* source);
+void to_lower(char* dest, String source);
+void to_lower(String* dest, String source);
+void to_upper(char* str);
+void to_upper(String* str);
+void to_upper(char* dest, const char* source);
+void to_upper(String* dest, const char* source);
+void to_upper(char* dest, String source);
+void to_upper(String* dest, String source);
+void to_camel(char* str);
+void to_camel(String* str);
+void to_camel(char* dest, const char* source);
+void to_camel(String* dest, const char* source);
+void to_camel(char* dest, String source);
+void to_camel(String* dest, String source);
+yd_umm u64_to_string_count(yd_u64 value);
+yd_b32 u64_to_string(String* dest, yd_u64 value);
+yd_b32 append_u64_to_string(String* dest, yd_u64 value);
+yd_umm s32_to_string_count(yd_s32 value);
+yd_b32 s32_to_string(String* dest, yd_s32 value);
+yd_b32 append_s32_to_string(String* dest, yd_s32 value);
+yd_umm f32_to_string_count(yd_f32 value, yd_u32 max_precision);
+yd_b32 f32_to_string(String* dest, yd_f32 value, yd_u32 max_precision);
+yd_b32 append_f32_to_string(String* dest, yd_f32 value, yd_u32 max_precision);
+yd_u32 hex_string_to_u32(String str);
+yd_b32 color_to_hex_string(String* dest, yd_u32 color);
+yd_b32 hex_string_to_color(yd_u32* dest, String str);
 
-yd_umm ReverseSeekSlash(string Str, yd_umm ShiftFromLastChar);
-yd_umm ReverseSeekSlash(string Str);
-yd_b32 SetLastFolder(string* Dir, const char* FolderName, char Slash);
-yd_b32 SetLastFolder(string* Dir, string FolderName, char Slash);
-yd_b32 RemoveLastFolder(string* Dir);
-string FileExtension(string FileName);
-yd_b32 SetExtension(string* FileName, const char* Extension);
-yd_b32 SetExtension(string* FileName, string Extension);
-yd_b32 RemoveExtension(string* FileName);
+yd_umm reverse_seek_slash(String str, yd_umm shift_from_last_char);
+yd_umm reverse_seek_slash(String str);
+yd_b32 set_last_folder(String* dir, const char* folder_name, char slash);
+yd_b32 set_last_folder(String* dir, String folder_name, char slash);
+yd_b32 remove_last_folder(String* dir);
+String file_extension(String filename);
+yd_b32 set_extension(String* filename, const char* extension);
+yd_b32 set_extension(String* filename, String extension);
+yd_b32 remove_extension(String* filename);
 
 //
 // NOTE(yuval): Public API Inline Functions
@@ -218,21 +216,21 @@ yd_b32 RemoveExtension(string* FileName);
 // NOTE(yuval): String Making Functions
 //
 
-yd_internal inline string
-MakeString(void* Data, yd_umm Count, yd_umm MemorySize)
+yd_internal inline String
+MakeString(void* Data, yd_umm Count, yd_umm capacity)
 {
-    string Result;
+    String Result;
     Result.Data = (char*)Data;
     Result.Count = Count;
-    Result.MemorySize = MemorySize;
+    Result.capacity = capacity;
     
     return Result;
 }
 
-yd_internal inline string
+yd_internal inline String
 MakeString(void* Data, yd_umm Count)
 {
-    string Result = MakeString(Data, Count, Count);
+    String Result = MakeString(Data, Count, Count);
     return Result;
 }
 
@@ -249,13 +247,13 @@ StringLength(const char* Str)
     return Count;
 }
 
-yd_internal inline string
+yd_internal inline String
 MakeStringSlowly(const void* Str)
 {
-    string Result;
+    String Result;
     Result.Data = (char*)Str;
     Result.Count = StringLength((const char*)Str);
-    Result.MemorySize = Result.Count + 1;
+    Result.capacity = Result.Count + 1;
     
     return Result;
 }
@@ -273,11 +271,11 @@ MakeStringSlowly(const void* Str)
 //
 
 yd_internal inline yd_b32
-IsNullString(string Str)
+IsNullString(String Str)
 {
     yd_b32 Result = ((Str.Data = NULL_STRING.Data) &&
                      (Str.Count == NULL_STRING.Count) &&
-                     (Str.MemorySize == NULL_STRING.MemorySize));
+                     (Str.capacity == NULL_STRING.capacity));
     
     return Result;
 }
@@ -286,25 +284,25 @@ IsNullString(string Str)
 // NOTE(yuval): String Slicing Functions
 //
 
-yd_internal inline string
-Substr(string Str, yd_umm Start)
+yd_internal inline String
+Substr(String Str, yd_umm Start)
 {
     YDAssert((Start >= 0) && (Start <= Str.Count));
     
-    string Result;
+    String Result;
     Result.Data = Str.Data + Start;
     Result.Count = Str.Count - Start;
-    Result.MemorySize = 0;
+    Result.capacity = 0;
     
     return Result;
 }
 
-yd_internal inline string
-Substr(string Str, yd_umm Start, yd_umm Count)
+yd_internal inline String
+Substr(String Str, yd_umm Start, yd_umm Count)
 {
     YDAssert((Start >= 0) && (Start <= Str.Count));
     
-    string Result;
+    String Result;
     Result.Data = Str.Data + Start;
     
     Result.Count = Count;
@@ -314,44 +312,60 @@ Substr(string Str, yd_umm Start, yd_umm Count)
         Result.Count = Str.Count - Start;
     }
     
-    Result.MemorySize = 0;
+    Result.capacity = 0;
     
     return Result;
 }
 
-yd_internal inline string
-SkipWhitespace(string Str)
+yd_internal inline String
+SkipWhitespace(String Str)
 {
     yd_umm Ignored;
-    string Result = SkipWhitespace(Str, &Ignored);
+    String Result = SkipWhitespace(Str, &Ignored);
     return Result;
 }
 
-yd_internal inline string
-TailStr(string Str)
+yd_internal inline String
+SkipChopWhitespace(String Str, yd_umm* OutSkipCount)
 {
-    string Result;
+    String Result = SkipWhitespace(Str, OutSkipCount);
+    Result = ChopWhitespace(Result);
+    return Result;
+}
+
+yd_internal inline String
+SkipChopWhitespace(String Str)
+{
+    yd_umm Ignored;
+    String Result = SkipChopWhitespace(Str, &Ignored);
+    return Result;
+}
+
+yd_internal inline String
+TailStr(String Str)
+{
+    String Result;
     Result.Data = Str.Data + Str.Count;
     Result.Count = 0;
-    Result.MemorySize = Str.MemorySize - Str.Count;
+    Result.capacity = Str.capacity - Str.Count;
     
     return Result;
 }
 
 yd_internal inline void
-AdvanceString(string* Value, yd_umm Count)
+AdvanceString(String* Value, yd_umm Count)
 {
     if (Value->Count >= Count)
     {
         Value->Data += Count;
         Value->Count -= Count;
-        Value->MemorySize -= (Count * sizeof(char));
+        Value->capacity -= (Count * sizeof(char));
     }
     else
     {
         Value->Data += Value->Count;
         Value->Count = 0;
-        Value->MemorySize = 0;
+        Value->capacity = 0;
     }
 }
 
@@ -360,7 +374,7 @@ AdvanceString(string* Value, yd_umm Count)
 //
 
 yd_internal inline yd_b32
-StringsMatch(const char* A, string B)
+StringsMatch(const char* A, String B)
 {
     yd_b32 Result = StringsMatch(B, A);
     return Result;
@@ -374,7 +388,7 @@ StringsMatch(const char* A, const char* B, yd_umm BCount)
 }
 
 yd_internal inline yd_b32
-StringsMatch(const char* A, string B, yd_umm Count)
+StringsMatch(const char* A, String B, yd_umm Count)
 {
     yd_b32 Result = StringsMatch(B, A, Count);
     return Result;
@@ -389,7 +403,7 @@ StringsMatchPart(const char* A, const char* B)
 }
 
 yd_internal inline yd_b32
-StringsMatchPart(string A, const char* B)
+StringsMatchPart(String A, const char* B)
 {
     yd_umm Ignored;
     yd_b32 Result = StringsMatchPart(A, B, &Ignored);
@@ -397,7 +411,7 @@ StringsMatchPart(string A, const char* B)
 }
 
 yd_internal inline yd_b32
-StringsMatchPart(const char* A, string B)
+StringsMatchPart(const char* A, String B)
 {
     yd_umm Ignored;
     yd_b32 Result = StringsMatchPart(A, B, &Ignored);
@@ -405,7 +419,7 @@ StringsMatchPart(const char* A, string B)
 }
 
 yd_internal inline yd_b32
-StringsMatchPart(string A, string B)
+StringsMatchPart(String A, String B)
 {
     yd_umm Ignored;
     yd_b32 Result = StringsMatchPart(A, B, &Ignored);
@@ -413,7 +427,7 @@ StringsMatchPart(string A, string B)
 }
 
 yd_internal inline yd_b32
-StringsMatchInsensitive(const char* A, string B)
+StringsMatchInsensitive(const char* A, String B)
 {
     yd_b32 Result = StringsMatchInsensitive(B, A);
     return Result;
@@ -428,7 +442,7 @@ StringsMatchPartInsensitive(const char* A, const char* B)
 }
 
 yd_internal inline yd_b32
-StringsMatchPartInsensitive(string A, const char* B)
+StringsMatchPartInsensitive(String A, const char* B)
 {
     yd_umm Ignored;
     yd_b32 Result = StringsMatchPartInsensitive(A, B, &Ignored);
@@ -436,7 +450,7 @@ StringsMatchPartInsensitive(string A, const char* B)
 }
 
 yd_internal inline yd_b32
-StringsMatchPartInsensitive(const char* A, string B)
+StringsMatchPartInsensitive(const char* A, String B)
 {
     yd_umm Ignored;
     yd_b32 Result = StringsMatchPartInsensitive(A, B, &Ignored);
@@ -444,7 +458,7 @@ StringsMatchPartInsensitive(const char* A, string B)
 }
 
 yd_internal inline yd_b32
-StringsMatchPartInsensitive(string A, string B)
+StringsMatchPartInsensitive(String A, String B)
 {
     yd_umm Ignored;
     yd_b32 Result = StringsMatchPartInsensitive(A, B, &Ignored);
@@ -452,22 +466,22 @@ StringsMatchPartInsensitive(string A, string B)
 }
 
 yd_internal inline yd_b32
-StringSetMatch(string* StrSet, yd_umm Count, string Str, yd_umm* OutMatchIndex)
+StringSetMatch(String* StrSet, yd_umm Count, String Str, yd_umm* OutMatchIndex)
 {
-    yd_b32 Result = StringSetMatch(StrSet, sizeof(string), Count,
+    yd_b32 Result = StringSetMatch(StrSet, sizeof(String), Count,
                                    Str, OutMatchIndex);
     return Result;
 }
 
 yd_internal inline yd_s32
-Compare(const char* A, string B)
+Compare(const char* A, String B)
 {
     yd_s32 Result = -Compare(B, A);
     return Result;
 }
 
 //
-// NOTE(yuval): Functions For Finding Characters And Substrings
+// NOTE(yuval): Functions For Finding Characters And SubStrings
 //
 
 yd_internal inline yd_umm
@@ -478,21 +492,21 @@ Find(const char* Str, char Character)
 }
 
 yd_internal inline yd_umm
-Find(string Str, char Character)
+Find(String Str, char Character)
 {
     yd_umm Result = Find(Str, Character, 0);
     return Result;
 }
 
 yd_internal inline yd_umm
-Find(const char* Str, string Seek)
+Find(const char* Str, String Seek)
 {
     yd_umm Result = Find(Str, Seek, 0);
     return Result;
 }
 
 yd_internal inline yd_umm
-Find(string Str, string Seek)
+Find(String Str, String Seek)
 {
     yd_umm Result = Find(Str, Seek, 0);
     return Result;
@@ -506,21 +520,21 @@ RFind(const char* Str, yd_umm Count, char Character)
 }
 
 yd_internal inline yd_umm
-RFind(string Str, char Character)
+RFind(String Str, char Character)
 {
     yd_umm Result = RFind(Str, Character, Str.Count - 1);
     return Result;
 }
 
 yd_internal inline yd_umm
-RFind(const char* Str, yd_umm Count, string Seek)
+RFind(const char* Str, yd_umm Count, String Seek)
 {
     yd_umm Result = RFind(Str, Count, Seek, Count - 1);
     return Result;
 }
 
 yd_internal inline yd_umm
-RFind(string Str, string Seek)
+RFind(String Str, String Seek)
 {
     yd_umm Result = RFind(Str, Seek, Str.Count - 1);
     return Result;
@@ -534,7 +548,7 @@ FindFirstOf(const char* Str, const char* Characters)
 }
 
 yd_internal inline yd_umm
-FindFirstOf(string Str, const char* Characters)
+FindFirstOf(String Str, const char* Characters)
 {
     yd_umm Result = FindFirstOf(Str, Characters, 0);
     return Result;
@@ -548,59 +562,59 @@ FindInsensitive(const char* Str, char Character)
 }
 
 yd_internal inline yd_umm
-FindInsensitive(string Str, char Character)
+FindInsensitive(String Str, char Character)
 {
     yd_umm Result = FindInsensitive(Str, Character, 0);
     return Result;
 }
 
 yd_internal inline yd_umm
-FindInsensitive(const char* Str, string Seek)
+FindInsensitive(const char* Str, String Seek)
 {
     yd_umm Result = FindInsensitive(Str, Seek, 0);
     return Result;
 }
 
 yd_internal inline yd_umm
-FindInsensitive(string Str, string Seek)
+FindInsensitive(String Str, String Seek)
 {
     yd_umm Result = FindInsensitive(Str, Seek, 0);
     return Result;
 }
 
 yd_internal inline yd_b32
-HasSubstr(const char* Str, string Seek)
+HasSubstr(const char* Str, String Seek)
 {
     yd_b32 Result = (Find(Str, Seek) != STRING_NOT_FOUND);
     return Result;
 }
 
 yd_internal inline yd_b32
-HasSubstr(string Str, string Seek)
+HasSubstr(String Str, String Seek)
 {
     yd_b32 Result = (Find(Str, Seek) != STRING_NOT_FOUND);
     return Result;
 }
 
 yd_internal inline yd_b32
-HasSubstrInsensitive(const char* Str, string Seek)
+HasSubstrInsensitive(const char* Str, String Seek)
 {
     yd_b32 Result = (FindInsensitive(Str, Seek) != STRING_NOT_FOUND);
     return Result;
 }
 
 yd_internal inline yd_b32
-HasSubstrInsensitive(string Str, string Seek)
+HasSubstrInsensitive(String Str, String Seek)
 {
     yd_b32 Result = (FindInsensitive(Str, Seek) != STRING_NOT_FOUND);
     return Result;
 }
 
-yd_internal inline string
-GetFirstWord(string Source)
+yd_internal inline String
+GetFirstWord(String Source)
 {
-    string Start = MakeString(Source.Data, 0);
-    string Result = GetNextWord(Source, Start);
+    String Start = MakeString(Source.Data, 0);
+    String Result = GetNextWord(Source, Start);
     return Result;
 }
 
@@ -616,33 +630,33 @@ Copy(char* Dest, const char* Source)
 }
 
 yd_internal inline yd_umm
-Copy(char* Dest, string Source)
+Copy(char* Dest, String Source)
 {
     yd_umm Result = CopyFastUnsafe(Dest, Source);
     return Result;
 }
 
 yd_internal inline void
-Copy(string* Dest, string Source)
+Copy(String* Dest, String Source)
 {
     CopyChecked(Dest, Source);
 }
 
 yd_internal inline void
-Copy(string* Dest, const char* Source)
+Copy(String* Dest, const char* Source)
 {
     CopyPartial(Dest, Source);
 }
 
 yd_internal inline yd_b32
-Append(string* Dest, const char* Source)
+Append(String* Dest, const char* Source)
 {
     yd_b32 Result = AppendPartial(Dest, Source);
     return Result;
 }
 
 yd_internal inline yd_b32
-Append(string* Dest, string Source)
+Append(String* Dest, String Source)
 {
     yd_b32 Result = AppendPartial(Dest, Source);
     return Result;
@@ -657,9 +671,9 @@ ConcatStrings(char* Dest, yd_umm DestCount,
               const char* SourceA, yd_umm SourceACount,
               const char* SourceB, yd_umm SourceBCount)
 {
-    string DestString = MakeString(Dest, DestCount - 1);
-    string SourceAString = MakeString((char*)SourceA, SourceACount);
-    string SourceBString = MakeString((char*)SourceB, SourceBCount);
+    String DestString = MakeString(Dest, DestCount - 1);
+    String SourceAString = MakeString((char*)SourceA, SourceACount);
+    String SourceBString = MakeString((char*)SourceB, SourceBCount);
     
     yd_b32 Result = ConcatStrings(&DestString, SourceAString, SourceBString);
     Dest[DestString.Count] = 0;
@@ -669,9 +683,9 @@ ConcatStrings(char* Dest, yd_umm DestCount,
 
 yd_internal inline yd_b32
 ConcatStrings(char* Dest, yd_umm DestCount,
-              string SourceA, string SourceB)
+              String SourceA, String SourceB)
 {
-    string DestString = MakeString(Dest, DestCount - 1);
+    String DestString = MakeString(Dest, DestCount - 1);
     
     yd_b32 Result = ConcatStrings(&DestString, SourceA, SourceB);
     Dest[DestString.Count] = 0;
@@ -680,12 +694,12 @@ ConcatStrings(char* Dest, yd_umm DestCount,
 }
 
 yd_internal inline yd_b32
-ConcatStrings(string* Dest,
+ConcatStrings(String* Dest,
               const char* SourceA, yd_umm SourceACount,
               const char* SourceB, yd_umm SourceBCount)
 {
-    string SourceAString = MakeString((char*)SourceA, SourceACount);
-    string SourceBString = MakeString((char*)SourceB, SourceBCount);
+    String SourceAString = MakeString((char*)SourceA, SourceACount);
+    String SourceBString = MakeString((char*)SourceB, SourceBCount);
     
     yd_b32 Result = ConcatStrings(Dest, SourceAString, SourceBString);
     return Result;
@@ -720,7 +734,7 @@ IsLower(const char* Str)
 }
 
 yd_internal inline yd_b32
-IsLower(string Str)
+IsLower(String Str)
 {
     yd_b32 Result = true;
     
@@ -783,7 +797,7 @@ IsUpper(const char* Str)
 }
 
 yd_internal inline yd_b32
-IsUpper(string Str)
+IsUpper(String Str)
 {
     yd_b32 Result = true;
     
@@ -866,7 +880,7 @@ IsAlphaTrue(const char* Str)
 }
 
 yd_internal inline yd_b32
-IsAlphaTrue(string Str)
+IsAlphaTrue(String Str)
 {
     yd_b32 Result = true;
     
@@ -914,7 +928,7 @@ IsAlpha(const char* Str)
 }
 
 yd_internal inline yd_b32
-IsAlpha(string Str)
+IsAlpha(String Str)
 {
     yd_b32 Result = true;
     
@@ -962,7 +976,7 @@ IsNumeric(const char* Str)
 }
 
 yd_internal inline yd_b32
-IsNumeric(string Str)
+IsNumeric(String Str)
 {
     yd_b32 Result = true;
     
@@ -993,14 +1007,14 @@ F32ToStringCount(yd_f32 Value)
 }
 
 yd_internal inline yd_b32
-F32ToString(string* Dest, yd_f32 Value)
+F32ToString(String* Dest, yd_f32 Value)
 {
     yd_b32 Result = F32ToString(Dest, Value, 8);
     return Result;
 }
 
 yd_internal inline yd_b32
-AppendF32ToString(string* Dest, yd_f32 Value)
+AppendF32ToString(String* Dest, yd_f32 Value)
 {
     yd_b32 Result = AppendF32ToString(Dest, Value, 8);
     return Result;
@@ -1031,7 +1045,7 @@ IsAlphaNumeric(const char* Str)
 }
 
 yd_internal inline yd_b32
-IsAlphaNumeric(string Str)
+IsAlphaNumeric(String Str)
 {
     yd_b32 Result = true;
     
@@ -1079,7 +1093,7 @@ IsAlphaNumericTrue(const char* Str)
 }
 
 yd_internal inline yd_b32
-IsAlphaNumericTrue(string Str)
+IsAlphaNumericTrue(String Str)
 {
     yd_b32 Result = true;
     
@@ -1129,7 +1143,7 @@ IsHex(const char* Str)
 }
 
 yd_internal inline yd_b32
-IsHex(string Str)
+IsHex(String Str)
 {
     yd_b32 Result = true;
     
@@ -1191,7 +1205,7 @@ S32ToHexChar(yd_s32 Value)
 }
 
 //
-// NOTE(yuval): File / Directory strings Management Functions
+// NOTE(yuval): File / Directory Strings Management Functions
 //
 
 yd_internal inline yd_b32
@@ -1201,22 +1215,22 @@ IsSlash(char C)
     return Result;
 }
 
-yd_internal inline string
-FrontOfDirectory(string Dir)
+yd_internal inline String
+FrontOfDirectory(String Dir)
 {
-    string Result = Substr(Dir, ReverseSeekSlash(Dir) + 1);
+    String Result = Substr(Dir, ReverseSeekSlash(Dir) + 1);
     return Result;
 }
 
-yd_internal inline string
-PathOfDirectory(string Dir)
+yd_internal inline String
+PathOfDirectory(String Dir)
 {
-    string Result = Substr(Dir, 0, ReverseSeekSlash(Dir) + 1);
+    String Result = Substr(Dir, 0, ReverseSeekSlash(Dir) + 1);
     return Result;
 }
 
 yd_internal inline yd_b32
-IsH(string Extension)
+IsH(String Extension)
 {
     yd_b32 Result = (StringsMatch(Extension, "h") ||
                      StringsMatch(Extension, "hpp") ||
@@ -1225,14 +1239,14 @@ IsH(string Extension)
 }
 
 yd_internal inline yd_b32
-IsC(string Extension)
+IsC(String Extension)
 {
     yd_b32 Result = StringsMatch(Extension, "C");
     return Result;
 }
 
 yd_internal inline yd_b32
-IsCPP(string Extension)
+IsCPP(String Extension)
 {
     yd_b32 Result = (StringsMatch(Extension, "cpp") ||
                      StringsMatch(Extension, "cc") ||
@@ -1241,7 +1255,7 @@ IsCPP(string Extension)
 }
 
 yd_internal inline yd_b32
-IsObjectiveC(string Extension)
+IsObjectiveC(String Extension)
 {
     yd_b32 Result = (StringsMatch(Extension, "m") ||
                      StringsMatch(Extension, "mm"));
@@ -1249,7 +1263,7 @@ IsObjectiveC(string Extension)
 }
 
 yd_internal inline yd_b32
-IsShader(string Extension)
+IsShader(String Extension)
 {
     yd_b32 Result = (StringsMatch(Extension, "ps") ||
                      StringsMatch(Extension, "vs") ||
@@ -1260,70 +1274,70 @@ IsShader(string Extension)
 }
 
 yd_internal inline yd_b32
-IsINL(string Extension)
+IsINL(String Extension)
 {
     yd_b32 Result = StringsMatch(Extension, "inl");
     return Result;
 }
 
 yd_internal inline yd_b32
-IsJava(string Extension)
+IsJava(String Extension)
 {
     yd_b32 Result = StringsMatch(Extension, "java");
     return Result;
 }
 
 yd_internal inline yd_b32
-IsCSharp(string Extension)
+IsCSharp(String Extension)
 {
     yd_b32 Result = StringsMatch(Extension, "cs");
     return Result;
 }
 
 yd_internal inline yd_b32
-IsPython(string Extension)
+IsPython(String Extension)
 {
     yd_b32 Result = StringsMatch(Extension, "py");
     return Result;
 }
 
 yd_internal inline yd_b32
-IsSwift(string Extension)
+IsSwift(String Extension)
 {
     yd_b32 Result = StringsMatch(Extension, "swift");
     return Result;
 }
 
 yd_internal inline yd_b32
-IsJavascript(string Extension)
+IsJavascript(String Extension)
 {
     yd_b32 Result = StringsMatch(Extension, "js");
     return Result;
 }
 
 yd_internal inline yd_b32
-IsBAT(string Extension)
+IsBAT(String Extension)
 {
     yd_b32 Result = StringsMatch(Extension, "bat");
     return Result;
 }
 
 yd_internal inline yd_b32
-IsBash(string Extension)
+IsBash(String Extension)
 {
     yd_b32 Result = StringsMatch(Extension, "sh");
     return Result;
 }
 
 yd_internal inline yd_b32
-IsTXT(string Extension)
+IsTXT(String Extension)
 {
     yd_b32 Result = StringsMatch(Extension, "txt");
     return Result;
 }
 
 yd_internal inline yd_b32
-IsCode(string Extension)
+IsCode(String Extension)
 {
     yd_b32 Result = (IsH(Extension) || IsC(Extension) || IsCPP(Extension) ||
                      IsObjectiveC(Extension) || IsShader(Extension) ||
@@ -1334,24 +1348,24 @@ IsCode(string Extension)
 }
 
 yd_internal inline yd_b32
-IsDoc(string Extension)
+IsDoc(String Extension)
 {
     yd_b32 Result = IsTXT(Extension);
     return Result;
 }
 
 yd_internal inline yd_b32
-IsCodeFile(string FileName)
+IsCodeFile(String FileName)
 {
-    string Extension = FileExtension(FileName);
+    String Extension = FileExtension(FileName);
     yd_b32 Result = IsCode(Extension);
     return Result;
 }
 
 yd_internal inline yd_b32
-IsDocFile(string FileName)
+IsDocFile(String FileName)
 {
-    string Extension = FileExtension(FileName);
+    String Extension = FileExtension(FileName);
     yd_b32 Result = IsDoc(Extension);
     return Result;
 }
@@ -1369,41 +1383,25 @@ IsDocFile(string FileName)
 // NOTE(yuval): String Slicing Functions
 //
 
-string
-SkipWhitespace(string Str, yd_umm* OutSkipCount)
+String
+SkipWhitespace(String Str, yd_umm* OutSkipCount)
 {
     yd_umm SkipCount = 0;
     for (; SkipCount < Str.Count && IsWhitespace(Str.Data[SkipCount]); ++SkipCount);
     
     *OutSkipCount = SkipCount;
-    string Result = Substr(Str, SkipCount);
+    String Result = Substr(Str, SkipCount);
     
     return Result;
 }
 
-string
-ChopWhitespace(string Str)
+String
+ChopWhitespace(String Str)
 {
     yd_umm ChopIndex = Str.Count;
     for (; ChopIndex > 0 && IsWhitespace(Str.Data[ChopIndex - 1]); --ChopIndex);
     
-    string Result = Substr(Str, 0, ChopIndex);
-    return Result;
-}
-
-string
-SkipChopWhitespace(string Str, yd_umm* OutSkipCount)
-{
-    string Result = SkipWhitespace(Str, OutSkipCount);
-    Result = ChopWhitespace(Result);
-    return Result;
-}
-
-string
-SkipChopWhitespace(string Str)
-{
-    yd_umm Ignored;
-    string Result = SkipChopWhitespace(Str, &Ignored);
+    String Result = Substr(Str, 0, ChopIndex);
     return Result;
 }
 
@@ -1431,7 +1429,7 @@ StringsMatch(const char* A, const char* B)
 }
 
 yd_b32
-StringsMatch(string A, const char* B)
+StringsMatch(String A, const char* B)
 {
     yd_b32 Result = false;
     
@@ -1461,7 +1459,7 @@ StringsMatch(string A, const char* B)
 }
 
 yd_b32
-StringsMatch(string A, string B)
+StringsMatch(String A, String B)
 {
     yd_b32 Result = (A.Count == B.Count);
     
@@ -1529,7 +1527,7 @@ StringsMatch(const char* A, yd_umm ACount,
 }
 
 yd_b32
-StringsMatch(string A, const char* B, yd_umm Count)
+StringsMatch(String A, const char* B, yd_umm Count)
 {
     b32 Result = true;
     
@@ -1546,7 +1544,7 @@ StringsMatch(string A, const char* B, yd_umm Count)
 }
 
 yd_b32
-StringsMatchPart(const char* A, const char* B, yd_umm* OutCount)
+StringsMatchPart(const char* A, const char* B, yd_umm* out_count)
 {
     yd_b32 Result = (*A == *B);
     yd_umm MatchCount = 0;
@@ -1563,12 +1561,12 @@ StringsMatchPart(const char* A, const char* B, yd_umm* OutCount)
         Result = (*B == 0);
     }
     
-    *OutCount = MatchCount;
+    *out_count = MatchCount;
     return Result;
 }
 
 yd_b32
-StringsMatchPart(string A, const char* B, yd_umm* OutCount)
+StringsMatchPart(String A, const char* B, yd_umm* out_count)
 {
     yd_b32 Result = false;
     yd_umm Index = 0;
@@ -1591,12 +1589,12 @@ StringsMatchPart(string A, const char* B, yd_umm* OutCount)
         Result = (A.Count == 0);
     }
     
-    *OutCount = Index;
+    *out_count = Index;
     return Result;
 }
 
 yd_b32
-StringsMatchPart(const char* A, string B, yd_umm* OutCount)
+StringsMatchPart(const char* A, String B, yd_umm* out_count)
 {
     yd_b32 Result = false;
     yd_umm Index = 0;
@@ -1618,12 +1616,12 @@ StringsMatchPart(const char* A, string B, yd_umm* OutCount)
         Result = (B.Count == 0);
     }
     
-    *OutCount = Index;
+    *out_count = Index;
     return Result;
 }
 
 yd_b32
-StringsMatchPart(string A, string B, yd_umm* OutCount)
+StringsMatchPart(String A, String B, yd_umm* out_count)
 {
     yd_b32 Result = (A.Count >= B.Count);
     yd_umm Index = 0;
@@ -1641,7 +1639,7 @@ StringsMatchPart(string A, string B, yd_umm* OutCount)
         }
     }
     
-    *OutCount = Index;
+    *out_count = Index;
     return Result;
 }
 
@@ -1665,7 +1663,7 @@ StringsMatchInsensitive(const char* A, const char* B)
 }
 
 yd_b32
-StringsMatchInsensitive(string A, const char* B)
+StringsMatchInsensitive(String A, const char* B)
 {
     yd_b32 Result = false;
     
@@ -1693,7 +1691,7 @@ StringsMatchInsensitive(string A, const char* B)
 }
 
 yd_b32
-StringsMatchInsensitive(string A, string B)
+StringsMatchInsensitive(String A, String B)
 {
     yd_b32 Result = (A.Count == B.Count);
     
@@ -1713,7 +1711,7 @@ StringsMatchInsensitive(string A, string B)
 }
 
 yd_b32
-StringsMatchPartInsensitive(const char* A, const char* B, yd_umm* OutCount)
+StringsMatchPartInsensitive(const char* A, const char* B, yd_umm* out_count)
 {
     yd_b32 Result = (*A == *B);
     yd_umm MatchCount = 0;
@@ -1730,12 +1728,12 @@ StringsMatchPartInsensitive(const char* A, const char* B, yd_umm* OutCount)
         Result = (*B == 0);
     }
     
-    *OutCount = MatchCount;
+    *out_count = MatchCount;
     return Result;
 }
 
 yd_b32
-StringsMatchPartInsensitive(string A, const char* B, yd_umm* OutCount)
+StringsMatchPartInsensitive(String A, const char* B, yd_umm* out_count)
 {
     yd_b32 Result = false;
     yd_umm Index = 0;
@@ -1758,11 +1756,11 @@ StringsMatchPartInsensitive(string A, const char* B, yd_umm* OutCount)
         Result = (A.Count == 0);
     }
     
-    *OutCount = Index;
+    *out_count = Index;
     return Result;
 }
 yd_b32
-StringsMatchPartInsensitive(const char* A, string B, yd_umm* OutCount)
+StringsMatchPartInsensitive(const char* A, String B, yd_umm* out_count)
 {
     yd_b32 Result = false;
     yd_umm Index = 0;
@@ -1784,12 +1782,12 @@ StringsMatchPartInsensitive(const char* A, string B, yd_umm* OutCount)
         Result = (B.Count == 0);
     }
     
-    *OutCount = Index;
+    *out_count = Index;
     return Result;
 }
 
 yd_b32
-StringsMatchPartInsensitive(string A, string B, yd_umm* OutCount)
+StringsMatchPartInsensitive(String A, String B, yd_umm* out_count)
 {
     yd_b32 Result = (A.Count >= B.Count);
     yd_umm Index = 0;
@@ -1806,20 +1804,20 @@ StringsMatchPartInsensitive(string A, string B, yd_umm* OutCount)
         }
     }
     
-    *OutCount = Index;
+    *out_count = Index;
     return Result;
 }
 
 yd_b32
 StringSetMatch(void* StrSet, yd_umm ItemSize, yd_umm Count,
-               string Str, yd_umm* OutMatchIndex)
+               String Str, yd_umm* OutMatchIndex)
 {
     yd_b32 Result = false;
     yd_u8* At = (yd_u8*)StrSet;
     
     for (yd_umm Index = 0; Index < Count; ++Index, At += ItemSize)
     {
-        if (StringsMatch(*((string*)At), Str))
+        if (StringsMatch(*((String*)At), Str))
         {
             *OutMatchIndex = Index;
             Result = true;
@@ -1845,7 +1843,7 @@ Compare(const char* A, const char* B)
 }
 
 yd_s32
-Compare(string A, const char* B)
+Compare(String A, const char* B)
 {
     yd_umm Index = 0;
     while ((Index < A.Count) && B[Index] &&
@@ -1875,7 +1873,7 @@ Compare(string A, const char* B)
 }
 
 yd_s32
-Compare(string A, string B)
+Compare(String A, String B)
 {
     yd_umm MinCount = A.Count;
     if (B.Count < MinCount)
@@ -1903,7 +1901,7 @@ Compare(string A, string B)
 }
 
 //
-// NOTE(yuval): Functions For Finding Characters And Substrings
+// NOTE(yuval): Functions For Finding Characters And SubStrings
 //
 
 yd_umm
@@ -1923,7 +1921,7 @@ Find(const char* Str, char Character, yd_umm Start)
 }
 
 yd_umm
-Find(string Str, char Character, yd_umm Start)
+Find(String Str, char Character, yd_umm Start)
 {
     YDAssert((Start >= 0) && (Start < Str.Count));
     
@@ -1939,7 +1937,7 @@ Find(string Str, char Character, yd_umm Start)
 }
 
 yd_umm
-Find(const char* Str, string Seek, yd_umm Start)
+Find(const char* Str, String Seek, yd_umm Start)
 {
     YDAssert(Start >= 0);
     
@@ -1978,7 +1976,7 @@ Find(const char* Str, string Seek, yd_umm Start)
 }
 
 yd_umm
-Find(string Str, string Seek, yd_umm Start)
+Find(String Str, String Seek, yd_umm Start)
 {
     YDAssert((Start >= 0) && (Start < Str.Count));
     
@@ -2032,7 +2030,7 @@ RFind(const char* Str, yd_umm Count, char Character, yd_umm Start)
 }
 
 yd_umm
-RFind(string Str, char Character, yd_umm Start)
+RFind(String Str, char Character, yd_umm Start)
 {
     YDAssert((Start >= 0) && (Start < Str.Count));
     
@@ -2049,7 +2047,7 @@ RFind(string Str, char Character, yd_umm Start)
 }
 
 yd_umm
-RFind(const char* Str, yd_umm Count, string Seek, yd_umm Start)
+RFind(const char* Str, yd_umm Count, String Seek, yd_umm Start)
 {
     YDAssert((Start >= 0) && (Start < Count));
     
@@ -2092,7 +2090,7 @@ RFind(const char* Str, yd_umm Count, string Seek, yd_umm Start)
 }
 
 yd_umm
-RFind(string Str, string Seek, yd_umm Start)
+RFind(String Str, String Seek, yd_umm Start)
 {
     YDAssert((Start >= 0) && (Start < Str.Count));
     
@@ -2159,7 +2157,7 @@ FindFirstOf(const char* Str, const char* Characters, yd_umm Start)
 }
 
 yd_umm
-FindFirstOf(string Str, const char* Characters, yd_umm Start)
+FindFirstOf(String Str, const char* Characters, yd_umm Start)
 {
     YDAssert((Start >= 0) && (Start < Str.Count));
     
@@ -2199,7 +2197,7 @@ FindInsensitive(const char* Str, char Character, yd_umm Start)
 }
 
 yd_umm
-FindInsensitive(string Str, char Character, yd_umm Start)
+FindInsensitive(String Str, char Character, yd_umm Start)
 {
     YDAssert((Start >= 0) && (Start < Str.Count));
     
@@ -2215,7 +2213,7 @@ FindInsensitive(string Str, char Character, yd_umm Start)
 }
 
 yd_umm
-FindInsensitive(const char* Str, string Seek, yd_umm Start)
+FindInsensitive(const char* Str, String Seek, yd_umm Start)
 {
     YDAssert(Start >= 0);
     
@@ -2250,7 +2248,7 @@ FindInsensitive(const char* Str, string Seek, yd_umm Start)
 }
 
 yd_umm
-FindInsensitive(string Str, string Seek, yd_umm Start)
+FindInsensitive(String Str, String Seek, yd_umm Start)
 {
     YDAssert((Start >= 0) && (Start < Str.Count));
     
@@ -2286,10 +2284,10 @@ FindInsensitive(string Str, string Seek, yd_umm Start)
     return STRING_NOT_FOUND;
 }
 
-string
-GetFirstDoubleLine(string Source)
+String
+GetFirstDoubleLine(String Source)
 {
-    string Result = {};
+    String Result = {};
     
     yd_umm Pos = Find(Source, MakeLitString("\n\n"));
     if (Pos == STRING_NOT_FOUND)
@@ -2305,10 +2303,10 @@ GetFirstDoubleLine(string Source)
     return Result;
 }
 
-string
-GetNextDoubleLine(string Source, string Line)
+String
+GetNextDoubleLine(String Source, String Line)
 {
-    string Result = {};
+    String Result = {};
     
     yd_umm LineEndIndex = (yd_umm)(Line.Data - Source.Data) + Line.Count;
     YDAssert((Source.Data[LineEndIndex] == '\n') || (Source.Data[LineEndIndex] == '\r'));
@@ -2335,10 +2333,10 @@ GetNextDoubleLine(string Source, string Line)
     return Result;
 }
 
-string
-GetNextWord(string Source, string PrevWord)
+String
+GetNextWord(String Source, String PrevWord)
 {
-    string Result = {};
+    String Result = {};
     yd_umm Pos0 = (yd_umm)(PrevWord.Data - Source.Data) + PrevWord.Count;
     
     for (; Pos0 < Source.Count; ++Pos0)
@@ -2391,7 +2389,7 @@ CopyFastUnsafe(char* Dest, const char* Source)
 }
 
 yd_umm
-CopyFastUnsafe(char* Dest, string Source)
+CopyFastUnsafe(char* Dest, String Source)
 {
     for (yd_umm Index = 0; Index < Source.Count; ++Index)
     {
@@ -2403,9 +2401,9 @@ CopyFastUnsafe(char* Dest, string Source)
 }
 
 yd_b32
-CopyChecked(string* Dest, string Source)
+CopyChecked(String* Dest, String Source)
 {
-    if (Dest->MemorySize < Source.Count)
+    if (Dest->capacity < Source.Count)
     {
         return false;
     }
@@ -2420,7 +2418,7 @@ CopyChecked(string* Dest, string Source)
 }
 
 yd_b32
-CopyChecked(char* Dest, yd_umm DestCap, string Source)
+CopyChecked(char* Dest, yd_umm DestCap, String Source)
 {
     if (DestCap < Source.Count + 1)
     {
@@ -2437,14 +2435,14 @@ CopyChecked(char* Dest, yd_umm DestCap, string Source)
 }
 
 yd_b32
-CopyPartial(string* Dest, const char* Source)
+CopyPartial(String* Dest, const char* Source)
 {
     yd_b32 Result = true;
     yd_umm Index = 0;
     
     for (; Source[Index]; ++Index)
     {
-        if (Index >= Dest->MemorySize)
+        if (Index >= Dest->capacity)
         {
             Result = false;
             break;
@@ -2458,14 +2456,14 @@ CopyPartial(string* Dest, const char* Source)
 }
 
 yd_b32
-CopyPartial(string* Dest, string Source)
+CopyPartial(String* Dest, String Source)
 {
     yd_b32 Result = true;
     yd_umm Index = 0;
     
     for (; Index < Source.Count; ++Index)
     {
-        if (Index >= Dest->MemorySize)
+        if (Index >= Dest->capacity)
         {
             Result = false;
             break;
@@ -2479,7 +2477,7 @@ CopyPartial(string* Dest, string Source)
 }
 
 yd_b32
-CopyPartial(char* Dest, yd_umm DestCap, string Source)
+CopyPartial(char* Dest, yd_umm DestCap, String Source)
 {
     yd_b32 Result = true;
     yd_umm Index = 0;
@@ -2500,38 +2498,38 @@ CopyPartial(char* Dest, yd_umm DestCap, string Source)
 }
 
 yd_b32
-AppendChecked(string* Dest, string Source)
+AppendChecked(String* Dest, String Source)
 {
-    string End = TailStr(*Dest);
+    String End = TailStr(*Dest);
     yd_b32 Result = CopyChecked(&End, Source);
     Dest->Count += End.Count;
     return Result;
 }
 
 yd_b32
-AppendPartial(string* Dest, const char* Source)
+AppendPartial(String* Dest, const char* Source)
 {
-    string End = TailStr(*Dest);
+    String End = TailStr(*Dest);
     yd_b32 Result = CopyPartial(&End, Source);
     Dest->Count += End.Count;
     return Result;
 }
 
 yd_b32
-AppendPartial(string* Dest, string Source)
+AppendPartial(String* Dest, String Source)
 {
-    string End = TailStr(*Dest);
+    String End = TailStr(*Dest);
     yd_b32 Result = CopyPartial(&End, Source);
     Dest->Count += End.Count;
     return Result;
 }
 
 yd_b32
-Append(string* Dest, char C)
+Append(String* Dest, char C)
 {
     yd_b32 Result = false;
     
-    if (Dest->Count < Dest->MemorySize)
+    if (Dest->Count < Dest->capacity)
     {
         Dest->Data[Dest->Count++] = C;
         Result = true;
@@ -2541,11 +2539,11 @@ Append(string* Dest, char C)
 }
 
 yd_b32
-TerminateWithNull(string* Str)
+TerminateWithNull(String* Str)
 {
     yd_b32 Result = false;
     
-    if (Str->Count < Str->MemorySize)
+    if (Str->Count < Str->capacity)
     {
         Str->Data[Str->Count] = 0;
         Result = true;
@@ -2555,7 +2553,7 @@ TerminateWithNull(string* Str)
 }
 
 yd_b32
-AppendPadding(string* Dest, char C, yd_umm TargetCount)
+AppendPadding(String* Dest, char C, yd_umm TargetCount)
 {
     yd_b32 Result = true;
     
@@ -2576,9 +2574,9 @@ AppendPadding(string* Dest, char C, yd_umm TargetCount)
 //
 
 yd_b32
-ConcatStrings(string* Dest, string SourceA, string SourceB)
+ConcatStrings(String* Dest, String SourceA, String SourceB)
 {
-    yd_b32 CanFitConcat = (Dest->MemorySize >= SourceA.Count + SourceB.Count);
+    yd_b32 CanFitConcat = (Dest->capacity >= SourceA.Count + SourceB.Count);
     
     if (CanFitConcat)
     {
@@ -2609,7 +2607,7 @@ ConcatStrings(string* Dest, string SourceA, string SourceB)
 //
 
 void
-ReplaceRange(string* Str, yd_umm First, yd_umm OnePastLast, char With)
+ReplaceRange(String* Str, yd_umm First, yd_umm OnePastLast, char With)
 {
     YDAssert((First >= 0) && (First < Str->Count));
     YDAssert((OnePastLast > 0) && (OnePastLast <= Str->Count));
@@ -2622,9 +2620,9 @@ ReplaceRange(string* Str, yd_umm First, yd_umm OnePastLast, char With)
 }
 
 void
-ReplaceRange(string* Str, yd_umm First, yd_umm OnePastLast, const char* With)
+ReplaceRange(String* Str, yd_umm First, yd_umm OnePastLast, const char* With)
 {
-    string WithStr = MakeStringSlowly(With);
+    String WithStr = MakeStringSlowly(With);
     ReplaceRange(Str, First, OnePastLast, WithStr);
 }
 
@@ -2657,7 +2655,7 @@ YDStringBlockMove(void* Dest_init, const void* Source_init, yd_umm size)
 }
 
 void
-ReplaceRange(string* Str, yd_umm First, yd_umm OnePastLast, string With)
+ReplaceRange(String* Str, yd_umm First, yd_umm OnePastLast, String With)
 {
     YDAssert((First >= 0) && (First < Str->Count));
     YDAssert((OnePastLast > 0) && (OnePastLast <= Str->Count));
@@ -2666,7 +2664,7 @@ ReplaceRange(string* Str, yd_umm First, yd_umm OnePastLast, string With)
     yd_s64 shift = With.Count - (OnePastLast - First);
     yd_umm new_Count = Str->Count + shift;
     
-    if (new_Count <= Str->MemorySize)
+    if (new_Count <= Str->capacity)
     {
         if (shift != 0)
         {
@@ -2682,7 +2680,7 @@ ReplaceRange(string* Str, yd_umm First, yd_umm OnePastLast, string With)
 }
 
 void
-Replace(string* Str, char ToReplace, char With)
+Replace(String* Str, char ToReplace, char With)
 {
     for (yd_umm Index = 0; Index < Str->Count; ++Index)
     {
@@ -2694,25 +2692,25 @@ Replace(string* Str, char ToReplace, char With)
 }
 
 void
-Replace(string* Str, const char* ToReplace, const char* With)
+Replace(String* Str, const char* ToReplace, const char* With)
 {
     Replace(Str, MakeStringSlowly(ToReplace), MakeStringSlowly(With));
 }
 
 void
-Replace(string* Str, const char* ToReplace, string With)
+Replace(String* Str, const char* ToReplace, String With)
 {
     Replace(Str, MakeStringSlowly(ToReplace), With);
 }
 
 void
-Replace(string* Str, string ToReplace, const char* With)
+Replace(String* Str, String ToReplace, const char* With)
 {
     Replace(Str, ToReplace, MakeStringSlowly(With));
 }
 
 void
-Replace(string* Str, string ToReplace, string With)
+Replace(String* Str, String ToReplace, String With)
 {
     yd_umm Index = 0;
     
@@ -2730,7 +2728,7 @@ Replace(string* Str, string ToReplace, string With)
 }
 
 void
-StringInterpretEscapes(char* Dest, string Source)
+StringInterpretEscapes(char* Dest, String Source)
 {
     yd_s32 Mode = 0;
     yd_umm DestIndex = 0;
@@ -2791,16 +2789,16 @@ PushZ(memory_arena* Arena, yd_umm Count, arena_push_params Params)
     return Result;
 }
 
-string
-PushString(memory_arena* Arena, yd_umm MemorySize, arena_push_params Params)
+String
+PushString(memory_arena* Arena, yd_umm capacity, arena_push_params Params)
 {
-    string Result = {};
-    Result.Data = PushArray(Arena, char, MemorySize, Params);
+    String Result = {};
+    Result.Data = PushArray(Arena, char, capacity, Params);
     Result.Count = 0;
     
     if (Result.Data)
     {
-        Result.MemorySize = MemorySize;
+        Result.capacity = capacity;
     }
     
     return Result;
@@ -2815,10 +2813,10 @@ PushCopyZ(memory_arena* Arena, const char* Source, arena_push_params Params)
     return Result;
 }
 
-string
+String
 PushCopyString(memory_arena* Arena, const char* Source, arena_push_params Params)
 {
-    string Result = {};
+    String Result = {};
     
     yd_umm Size = StringLength(Source);
     Result.Data = (char*)PushCopy(Arena, Source, Size, Params);
@@ -2826,14 +2824,14 @@ PushCopyString(memory_arena* Arena, const char* Source, arena_push_params Params
     if (Result.Data)
     {
         Result.Count = Size;
-        Result.MemorySize = Size;
+        Result.capacity = Size;
     }
     
     return Result;
 }
 
 char*
-PushCopyZ(memory_arena* Arena, string Source, arena_push_params Params)
+PushCopyZ(memory_arena* Arena, String Source, arena_push_params Params)
 {
     char* Result = PushArray(Arena, char, Source.Count + 1, Params);
     
@@ -2847,16 +2845,16 @@ PushCopyZ(memory_arena* Arena, string Source, arena_push_params Params)
 }
 
 
-string
-PushCopyString(memory_arena* Arena, string Source, arena_push_params Params)
+String
+PushCopyString(memory_arena* Arena, String Source, arena_push_params Params)
 {
-    string Result = {};
+    String Result = {};
     Result.Data = (char*)PushCopy(Arena, Source.Data, Source.Count, Params);
     
     if (Result.Data)
     {
         Result.Count = Source.Count;
-        Result.MemorySize = Source.Count;
+        Result.capacity = Source.Count;
     }
     
     return Result;
@@ -2877,7 +2875,7 @@ ToLower(char* Str)
 }
 
 void
-ToLower(string* Str)
+ToLower(String* Str)
 {
     for (yd_umm Index = 0; Index < Str->Count; ++Index)
     {
@@ -2900,7 +2898,7 @@ ToLower(char* Dest, const char* Source)
 }
 
 void
-ToLower(string* Dest, const char* Source)
+ToLower(String* Dest, const char* Source)
 {
     yd_umm Index = 0;
     
@@ -2913,7 +2911,7 @@ ToLower(string* Dest, const char* Source)
 }
 
 void
-ToLower(char* Dest, string Source)
+ToLower(char* Dest, String Source)
 {
     for (yd_umm Index = 0; Index < Source.Count; ++Index)
     {
@@ -2924,9 +2922,9 @@ ToLower(char* Dest, string Source)
 }
 
 void
-ToLower(string* Dest, string Source)
+ToLower(String* Dest, String Source)
 {
-    if (Dest->MemorySize >= Source.Count)
+    if (Dest->capacity >= Source.Count)
     {
         for (yd_umm Index = 0; Index < Source.Count; ++Index)
         {
@@ -2947,7 +2945,7 @@ ToUpper(char* Str)
 }
 
 void
-ToUpper(string* Str)
+ToUpper(String* Str)
 {
     for (yd_umm Index = 0; Index < Str->Count; ++Index)
     {
@@ -2970,7 +2968,7 @@ ToUpper(char* Dest, const char* Source)
 }
 
 void
-ToUpper(string* Dest, const char* Source)
+ToUpper(String* Dest, const char* Source)
 {
     yd_umm Index = 0;
     
@@ -2983,7 +2981,7 @@ ToUpper(string* Dest, const char* Source)
 }
 
 void
-ToUpper(char* Dest, string Source)
+ToUpper(char* Dest, String Source)
 {
     for (yd_umm Index = 0; Index < Source.Count; ++Index)
     {
@@ -2994,9 +2992,9 @@ ToUpper(char* Dest, string Source)
 }
 
 void
-ToUpper(string* Dest, string Source)
+ToUpper(String* Dest, String Source)
 {
-    if (Dest->MemorySize >= Source.Count)
+    if (Dest->capacity >= Source.Count)
     {
         for (yd_umm Index = 0; Index < Source.Count; ++Index)
         {
@@ -3032,7 +3030,7 @@ ToCamel(char* Str)
 }
 
 void
-ToCamel(string* Str)
+ToCamel(String* Str)
 {
     yd_b32 IsFirst = true;
     
@@ -3088,7 +3086,7 @@ ToCamel(char* Dest, const char* Source)
 }
 
 void
-ToCamel(string* Dest, const char* Source)
+ToCamel(String* Dest, const char* Source)
 {
     yd_umm Index = 0;
     yd_b32 IsFirst = true;
@@ -3121,7 +3119,7 @@ ToCamel(string* Dest, const char* Source)
 }
 
 void
-ToCamel(char* Dest, string Source)
+ToCamel(char* Dest, String Source)
 {
     yd_b32 IsFirst = true;
     
@@ -3153,9 +3151,9 @@ ToCamel(char* Dest, string Source)
 }
 
 void
-ToCamel(string* Dest, string Source)
+ToCamel(String* Dest, String Source)
 {
-    if (Dest->MemorySize >= Source.Count)
+    if (Dest->capacity >= Source.Count)
     {
         yd_b32 IsFirst = true;
         
@@ -3201,14 +3199,14 @@ U64ToStringCount(yd_u64 Value)
 }
 
 yd_b32
-U64ToString(string* Dest, yd_u64 Value)
+U64ToString(String* Dest, yd_u64 Value)
 {
     yd_b32 Result = false;
     yd_umm Count = 0;
     
     do
     {
-        if (Count == Dest->MemorySize)
+        if (Count == Dest->capacity)
         {
             Result = false;
             break;
@@ -3244,9 +3242,9 @@ U64ToString(string* Dest, yd_u64 Value)
 }
 
 yd_b32
-AppendU64ToString(string* Dest, yd_u64 Value)
+AppendU64ToString(String* Dest, yd_u64 Value)
 {
-    string Tail = TailStr(*Dest);
+    String Tail = TailStr(*Dest);
     yd_b32 Result = U64ToString(&Tail, Value);
     
     if (Result)
@@ -3279,7 +3277,7 @@ S32ToStringCount(yd_s32 Value)
 }
 
 yd_b32
-S32ToString(string* Dest, yd_s32 Value)
+S32ToString(String* Dest, yd_s32 Value)
 {
     yd_b32 Result = true;
     
@@ -3287,7 +3285,7 @@ S32ToString(string* Dest, yd_s32 Value)
     
     if (Value < 0)
     {
-        if (Dest->MemorySize > 0)
+        if (Dest->capacity > 0)
         {
             Dest->Data[Dest->Count++] = '-';
             Value = -Value;
@@ -3307,9 +3305,9 @@ S32ToString(string* Dest, yd_s32 Value)
 }
 
 yd_b32
-AppendS32ToString(string* Dest, yd_s32 Value)
+AppendS32ToString(String* Dest, yd_s32 Value)
 {
-    string Tail = TailStr(*Dest);
+    String Tail = TailStr(*Dest);
     yd_b32 Result = S32ToString(&Tail, Value);
     
     if (Result)
@@ -3357,7 +3355,7 @@ F32ToStringCount(yd_f32 Value, yd_u32 MaxPrecision)
 }
 
 yd_b32
-F32ToString(string* Dest, yd_f32 Value, yd_u32 MaxPrecision)
+F32ToString(String* Dest, yd_f32 Value, yd_u32 MaxPrecision)
 {
     yd_s32 IntegerPart = (yd_s32)Value;
     yd_b32 Result = S32ToString(Dest, IntegerPart);
@@ -3398,9 +3396,9 @@ F32ToString(string* Dest, yd_f32 Value, yd_u32 MaxPrecision)
 }
 
 yd_b32
-AppendF32ToString(string* Dest, yd_f32 Value, yd_u32 MaxPrecision)
+AppendF32ToString(String* Dest, yd_f32 Value, yd_u32 MaxPrecision)
 {
-    string Tail = TailStr(*Dest);
+    String Tail = TailStr(*Dest);
     yd_b32 Result = F32ToString(&Tail, Value, MaxPrecision);
     
     if (Result)
@@ -3412,7 +3410,7 @@ AppendF32ToString(string* Dest, yd_f32 Value, yd_u32 MaxPrecision)
 }
 
 yd_u32
-HexStringToU32(string Str)
+HexStringToU32(String Str)
 {
     yd_u32 Result = 0;
     
@@ -3426,25 +3424,25 @@ HexStringToU32(string Str)
 }
 
 yd_b32
-ColorToHexString(string* Dest, yd_u32 Color)
+ColorToHexString(String* Dest, yd_u32 Color)
 {
     // TODO(yuval): Implement This
     return false;
 }
 
 yd_b32
-HexStringToColor(yd_u32* Dest, string Str)
+HexStringToColor(yd_u32* Dest, String Str)
 {
     // TODO(yuval): Implement This
     return false;
 }
 
 //
-// NOTE(yuval): File / Directory strings Management Functions
+// NOTE(yuval): File / Directory Strings Management Functions
 //
 
 yd_umm
-ReverseSeekSlash(string Str, yd_umm ShiftFromLastChar)
+ReverseSeekSlash(String Str, yd_umm ShiftFromLastChar)
 {
     yd_umm Index = Str.Count - ShiftFromLastChar - 1;
     while (Index--)
@@ -3459,7 +3457,7 @@ ReverseSeekSlash(string Str, yd_umm ShiftFromLastChar)
 }
 
 yd_umm
-ReverseSeekSlash(string Str)
+ReverseSeekSlash(String Str)
 {
     yd_umm Result = ReverseSeekSlash(Str, 0);
     return Result;
@@ -3484,7 +3482,7 @@ SetLastFolder(char* Dir, yd_umm Count, const char* FolderName, char Slash)
 #endif // #if 0
 
 yd_b32
-SetLastFolder(string* Dir, const char* FolderName, char Slash)
+SetLastFolder(String* Dir, const char* FolderName, char Slash)
 {
     yd_b32 Result = false;
     yd_umm LastSlashIndex = ReverseSeekSlash(*Dir);
@@ -3513,14 +3511,14 @@ SetLastFolder(string* Dir, const char* FolderName, char Slash)
 
 #if 0
 yd_b32
-SetLastFolder(char* Dir, yd_umm Count, string FolderName, char Slash)
+SetLastFolder(char* Dir, yd_umm Count, String FolderName, char Slash)
 {
     
 }
 #endif // #if 0
 
 yd_b32
-SetLastFolder(string* Dir, string FolderName, char Slash)
+SetLastFolder(String* Dir, String FolderName, char Slash)
 {
     yd_b32 Result = false;
     yd_umm LastSlashIndex = ReverseSeekSlash(*Dir);
@@ -3548,7 +3546,7 @@ SetLastFolder(string* Dir, string FolderName, char Slash)
 }
 
 yd_b32
-RemoveLastFolder(string* path)
+RemoveLastFolder(String* path)
 {
     yd_b32 Result = false;
     yd_umm LastSlashIndex = ReverseSeekSlash(*path, 1);
@@ -3562,10 +3560,10 @@ RemoveLastFolder(string* path)
     return Result;
 }
 
-string
-FileExtension(string FileName)
+String
+FileExtension(String FileName)
 {
-    string Result = {};
+    String Result = {};
     yd_umm DotIndex = RFind(FileName, '.');
     
     if (DotIndex != STRING_NOT_FOUND)
@@ -3578,7 +3576,7 @@ FileExtension(string FileName)
 }
 
 yd_b32
-SetExtension(string* FileName, const char* Extension)
+SetExtension(String* FileName, const char* Extension)
 {
     yd_b32 Result = false;
     yd_umm LastDotIndex = RFind(*FileName, '.');
@@ -3603,7 +3601,7 @@ SetExtension(string* FileName, const char* Extension)
 }
 
 yd_b32
-SetExtension(string* FileName, string Extension)
+SetExtension(String* FileName, String Extension)
 {
     yd_b32 Result = false;
     yd_umm LastDotIndex = RFind(*FileName, '.');
@@ -3628,7 +3626,7 @@ SetExtension(string* FileName, string Extension)
 }
 
 yd_b32
-RemoveExtension(string* FileName)
+RemoveExtension(String* FileName)
 {
     yd_b32 Result = false;
     yd_umm LastDotIndex = RFind(*FileName, '.');
