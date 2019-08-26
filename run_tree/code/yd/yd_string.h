@@ -43,7 +43,7 @@ typedef uintptr_t yd_umm;
 #endif // #if !defined(YD_TYPES)
 
 #if !defined(YD_ASSERT)
-# define YDAssert(expression) if (!(expression)) { *(volatile int*)0 = 0; }
+# define YD_ASSERT(expression) if (!(expression)) { *(volatile int*)0 = 0; }
 #endif // #if !defined(YD_ASSERT)
 
 struct String
@@ -108,7 +108,7 @@ yd_s32 compare(String a, String b);
 
 yd_umm find(const char* str, char character, yd_umm start);
 yd_umm find(String str, char character, yd_umm start);
-yd_umm find(const char* str, String Seek, yd_umm start);
+yd_umm find(const char* str, String seek, yd_umm start);
 yd_umm find(String str, String seek, yd_umm start);
 yd_umm rfind(const char* str, yd_umm count, char character, yd_umm start);
 yd_umm rfind(String str, char character, yd_umm start);
@@ -280,7 +280,7 @@ is_null_string(String str) {
 
 yd_internal inline String
 substr(String str, yd_umm start) {
-    YDAssert((start >= 0) && (start <= str.count));
+    YD_ASSERT((start >= 0) && (start <= str.count));
     
     String result;
     result.data = str.data + start;
@@ -291,8 +291,8 @@ substr(String str, yd_umm start) {
 }
 
 yd_internal inline String
-substr(String str, yd_umm Start, yd_umm count) {
-    YDAssert((Start >= 0) && (Start <= str.count));
+substr(String str, yd_umm start, yd_umm count) {
+    YD_ASSERT((start >= 0) && (start <= str.count));
     
     String result;
     result.data = str.data + start;
@@ -456,7 +456,7 @@ compare(const char* a, String b) {
 
 yd_internal inline yd_umm
 find(const char* str, char character) {
-    yd_umm result = Find(str, Character, 0);
+    yd_umm result = find(str, character, 0);
     return result;
 }
 
@@ -498,7 +498,7 @@ rfind(const char* str, yd_umm count, String seek) {
 
 yd_internal inline yd_umm
 rfind(String str, String seek) {
-    yd_umm result = RFind(str, seek, str.count - 1);
+    yd_umm result = find(str, seek, str.count - 1);
     return result;
 }
 
@@ -563,7 +563,7 @@ has_substr_insensitive(String str, String seek) {
 }
 
 yd_internal inline String
-get_first_word(String Source) {
+get_first_word(String source) {
     String start = make_string(source.data, 0);
     String result = get_next_word(source, start);
     return result;
@@ -639,7 +639,7 @@ concat_strings(char* dest, yd_umm dest_count,
 yd_internal inline yd_b32
 concat_strings(String* dest,
                const char* source_a, yd_umm source_a_count,
-               const char* Source_b, yd_umm source_b_count) {
+               const char* source_b, yd_umm source_b_count) {
     String source_a_string = make_string((char*)source_a, source_a_count);
     String source_b_string = make_string((char*)source_b, source_b_count);
     
@@ -1207,8 +1207,7 @@ is_code_file(String filename) {
 }
 
 yd_internal inline yd_b32
-is_doc_file(String filename)
-{
+is_doc_file(String filename) {
     String extension = file_extension(filename);
     yd_b32 result = is_doc(extension);
     return result;
@@ -1228,24 +1227,22 @@ is_doc_file(String filename)
 //
 
 String
-SkipWhitespace(String str, yd_umm* OutSkipcount)
-{
-    yd_umm Skipcount = 0;
-    for (; Skipcount < str.count && is_whitespace(str.data[Skipcount]); ++Skipcount);
+skip_whitespace(String str, yd_umm* out_skip_count) {
+    yd_umm skip_count = 0;
+    for (; skip_count < str.count && is_whitespace(str.data[skip_count]); ++skip_count);
     
-    *OutSkipcount = Skipcount;
-    String result = substr(str, Skipcount);
+    *out_skip_count = skip_count;
+    String result = substr(str, skip_count);
     
     return result;
 }
 
 String
-ChopWhitespace(String str)
-{
-    yd_umm Chopindex = str.count;
-    for (; Chopindex > 0 && is_whitespace(str.data[Chopindex - 1]); --Chopindex);
+chop_whitespace(String str) {
+    yd_umm chop_index = str.count;
+    for (; chop_index > 0 && is_whitespace(str.data[chop_index - 1]); --chop_index);
     
-    String result = substr(str, 0, Chopindex);
+    String result = substr(str, 0, chop_index);
     return result;
 }
 
@@ -1254,48 +1251,36 @@ ChopWhitespace(String str)
 //
 
 yd_b32
-strings_match(const char* A, const char* B)
-{
-    yd_b32 result = (A == B);
+strings_match(const char* a, const char* b) {
+    yd_b32 result = (a == b);
     
-    if (A && B)
-    {
-        while (*A && *B && (*A == *B))
-        {
-            ++A;
-            ++B;
+    if (a && b) {
+        while (*a && *b && (*a == *b)) {
+            ++a;
+            ++b;
         }
         
-        result = ((*A == 0) && (*B == 0));
+        result = ((*a == 0) && (*b == 0));
     }
     
     return result;
 }
 
 yd_b32
-strings_match(String A, const char* B)
-{
+strings_match(String a, const char* b) {
     yd_b32 result = false;
     
-    if (B)
-    
-    {
-        const char* at = B;
+    if (b) {
+        const char* at = b;
         
-        for (yd_umm index = 0;
-             index < A.count;
-             ++index, ++at)
-        {
-            if ((*at == 0) || (A.data[index] != *at))
-            {
+        for (yd_umm index = 0; index < a.count; ++index, ++at) {
+            if ((*at == 0) || (a.data[index] != *at)) {
                 return false;
             }
         }
         
         result = (*at == 0);
-    }
-    else
-    {
+    } else {
         result = (A.count == 0);
     }
     
@@ -1303,16 +1288,12 @@ strings_match(String A, const char* B)
 }
 
 yd_b32
-strings_match(String A, String B)
-{
-    yd_b32 result = (A.count == B.count);
+strings_match(String a, String b) {
+    yd_b32 result = (a.count == b.count);
     
-    if (result)
-    {
-        for (yd_umm index = 0; index < A.count; ++index)
-        {
-            if (A.data[index] != B.data[index])
-            {
+    if (result) {
+        for (yd_umm index = 0; index < a.count; ++index) {
+            if (a.data[index] != b.data[index]) {
                 result = false;
                 break;
             }
@@ -1323,26 +1304,20 @@ strings_match(String A, String B)
 }
 
 yd_b32
-strings_match(const char* A, yd_umm a_count, const char* B)
-{
+strings_match(const char* a, yd_umm a_count, const char* b) {
     yd_b32 result = false;
     
-    if (B)
-    {
+    if (b) {
         const char* at = B;
         
-        for (yd_umm index = 0; index < a_count; ++index)
-        {
-            if ((*at == 0) || (A[index] != *at))
-            {
+        for (yd_umm index = 0; index < a_count; ++index) {
+            if ((*at == 0) || (a[index] != *at)) {
                 return false;
             }
         }
         
         result = (*at == 0);
-    }
-    else
-    {
+    } else {
         result = (a_count == 0);
     }
     
@@ -1350,17 +1325,13 @@ strings_match(const char* A, yd_umm a_count, const char* B)
 }
 
 yd_b32
-strings_match(const char* A, yd_umm a_count,
-              const char* B, yd_umm b_count)
-{
+strings_match(const char* a, yd_umm a_count,
+              const char* b, yd_umm b_count) {
     b32 result = (a_count == b_count);
     
-    if (result)
-    {
-        for (yd_umm index = 0; index < a_count; ++index)
-        {
-            if (A[index] != B[index])
-            {
+    if (result) {
+        for (yd_umm index = 0; index < a_count; ++index) {
+            if (a[index] != b[index]) {
                 result = false;
                 break;
             }
@@ -1371,14 +1342,11 @@ strings_match(const char* A, yd_umm a_count,
 }
 
 yd_b32
-strings_match(String A, const char* B, yd_umm count)
-{
+strings_match(String a, const char* b, yd_umm count) {
     b32 result = true;
     
-    for (yd_umm index = 0; index < count; ++index)
-    {
-        if (A.data[index] != B[index])
-        {
+    for (yd_umm index = 0; index < count; ++index) {
+        if (a.data[index] != b[index]) {
             result = false;
             break;
         }
@@ -1388,21 +1356,18 @@ strings_match(String A, const char* B, yd_umm count)
 }
 
 yd_b32
-strings_match_part(const char* A, const char* B, yd_umm* out_count)
-{
-    yd_b32 result = (*A == *B);
+strings_match_part(const char* a, const char* b, yd_umm* out_count) {
+    yd_b32 result = (*a == *b);
     yd_umm match_count = 0;
     
-    if (*A && *B)
-    {
-        while (*B && (*A == *B))
-        {
-            ++A;
-            ++B;
+    if (*a && *b) {
+        while (*b && (*a == *b)) {
+            ++a;
+            ++b;
             ++match_count;
         }
         
-        result = (*B == 0);
+        result = (*b == 0);
     }
     
     *out_count = match_count;
@@ -1410,26 +1375,20 @@ strings_match_part(const char* A, const char* B, yd_umm* out_count)
 }
 
 yd_b32
-strings_match_part(String A, const char* B, yd_umm* out_count)
-{
+strings_match_part(String a, const char* b, yd_umm* out_count) {
     yd_b32 result = false;
     yd_umm index = 0;
     
-    if (B)
-    {
-        for (; B[index]; ++index)
-        {
-            if ((index == A.count) ||
-                (A.data[index] != B[index]))
-            {
+    if (b) {
+        for (; b[index]; ++index) {
+            if ((index == a.count) ||
+                (a.data[index] != b[index])) {
                 return false;
             }
         }
         
         result = true;
-    }
-    else
-    {
+    } else {
         result = (A.count == 0);
     }
     
@@ -1438,26 +1397,21 @@ strings_match_part(String A, const char* B, yd_umm* out_count)
 }
 
 yd_b32
-strings_match_part(const char* A, String B, yd_umm* out_count)
-{
+strings_match_part(const char* a, String b, yd_umm* out_count) {
     yd_b32 result = false;
     yd_umm index = 0;
     
-    if (A)
+    if (a)
     {
-        for (; index < B.count; ++index)
-        {
-            if (A[index] != B.data[index])
-            {
+        for (; index < b.count; ++index) {
+            if (a[index] != b.data[index]) {
                 return false;
             }
         }
         
         result = true;
-    }
-    else
-    {
-        result = (B.count == 0);
+    } else {
+        result = (b.count == 0);
     }
     
     *out_count = index;
@@ -1465,18 +1419,13 @@ strings_match_part(const char* A, String B, yd_umm* out_count)
 }
 
 yd_b32
-strings_match_part(String A, String B, yd_umm* out_count)
-{
+strings_match_part(String a, String b, yd_umm* out_count) {
     yd_b32 result = (A.count >= B.count);
     yd_umm index = 0;
     
-    if (result)
-    {
-        for (; index < B.count; ++index)
-        {
-            if (A.data[index] != B.data[index])
-            
-            {
+    if (result) {
+        for (; index < B.count; ++index) {
+            if (a.data[index] != b.data[index]) {
                 result = false;
                 break;
             }
@@ -1488,14 +1437,11 @@ strings_match_part(String A, String B, yd_umm* out_count)
 }
 
 yd_b32
-strings_matchInsensitive(const char* A, const char* B)
-{
-    yd_b32 result = (A == B);
+strings_match_insensitive(const char* a, const char* b) {
+    yd_b32 result = (a == b);
     
-    if (A && B)
-    {
-        while (*A && *B && (to_lower(*A) == to_lower(*B)))
-        {
+    if (a && b) {
+        while (*a && *b && (to_lower(*a) == to_lower(*b))) {
             ++A;
             ++B;
         }
@@ -1507,44 +1453,33 @@ strings_matchInsensitive(const char* A, const char* B)
 }
 
 yd_b32
-strings_matchInsensitive(String A, const char* B)
-{
+strings_match_insensitive(String a, const char* b) {
     yd_b32 result = false;
     
-    if (B)
-    {
-        const char* at = B;
+    if (b) {
+        const char* at = b;
         
-        for (yd_umm index = 0; index < A.count; ++index, ++at)
-        {
-            if ((*at == 0) || (to_lower(A.data[index]) != to_lower(*at)))
-            
-            {
+        for (yd_umm index = 0; index < a.count; ++index, ++at) {
+            if ((*at == 0) || (to_lower(a.data[index]) != to_lower(*at))) {
                 return false;
             }
         }
         
         result = (*at == 0);
-    }
-    else
-    {
-        result = (A.count == 0);
+    } else {
+        result = (a.count == 0);
     }
     
     return result;
 }
 
 yd_b32
-strings_matchInsensitive(String A, String B)
-{
+strings_match_insensitive(String a, String b) {
     yd_b32 result = (A.count == B.count);
     
-    if (result)
-    {
-        for (yd_umm index = 0; index < A.count; ++index)
-        {
-            if (to_lower(A.data[index]) != to_lower(B.data[index]))
-            {
+    if (result) {
+        for (yd_umm index = 0; index < a.count; ++index) {
+            if (to_lower(a.data[index]) != to_lower(b.data[index])) {
                 result = false;
                 break;
             }
@@ -1555,21 +1490,18 @@ strings_matchInsensitive(String A, String B)
 }
 
 yd_b32
-strings_match_part_insensitive(const char* A, const char* B, yd_umm* out_count)
-{
-    yd_b32 result = (*A == *B);
+strings_match_part_insensitive(const char* a, const char* b, yd_umm* out_count) {
+    yd_b32 result = (*a == *b);
     yd_umm match_count = 0;
     
-    if (*A && *B)
-    {
-        while (*B && (to_lower(*A) == to_lower(*B)))
-        {
-            ++A;
-            ++B;
+    if (*a && *b) {
+        while (*b && (to_lower(*a) == to_lower(*b))) {
+            ++a;
+            ++b;
             ++match_count;
         }
         
-        result = (*B == 0);
+        result = (*a == 0);
     }
     
     *out_count = match_count;
@@ -1577,26 +1509,20 @@ strings_match_part_insensitive(const char* A, const char* B, yd_umm* out_count)
 }
 
 yd_b32
-strings_match_part_insensitive(String A, const char* B, yd_umm* out_count)
-{
+strings_match_part_insensitive(String a, const char* b, yd_umm* out_count) {
     yd_b32 result = false;
     yd_umm index = 0;
     
-    if (B)
-    {
-        for (; B[index]; ++index)
-        {
-            if ((index == A.count) ||
-                (to_lower(A.data[index]) != to_lower(B[index])))
-            {
+    if (b) {
+        for (; b[index]; ++index) {
+            if ((index == a.count) ||
+                (to_lower(a.data[index]) != to_lower(b[index]))) {
                 return false;
             }
         }
         
         result = true;
-    }
-    else
-    {
+    } else {
         result = (A.count == 0);
     }
     
@@ -1604,26 +1530,20 @@ strings_match_part_insensitive(String A, const char* B, yd_umm* out_count)
     return result;
 }
 yd_b32
-strings_match_part_insensitive(const char* A, String B, yd_umm* out_count)
-{
+strings_match_part_insensitive(const char* a, String b, yd_umm* out_count) {
     yd_b32 result = false;
     yd_umm index = 0;
     
-    if (A)
-    {
-        for (; index < B.count; ++index)
-        {
-            if (to_lower(A[index]) != to_lower(B.data[index]))
-            {
+    if (a) {
+        for (; index < b.count; ++index) {
+            if (to_lower(a[index]) != to_lower(b.data[index])) {
                 return false;
             }
         }
         
         result = true;
-    }
-    else
-    {
-        result = (B.count == 0);
+    } else {
+        result = (b.count == 0);
     }
     
     *out_count = index;
@@ -1631,17 +1551,13 @@ strings_match_part_insensitive(const char* A, String B, yd_umm* out_count)
 }
 
 yd_b32
-strings_match_part_insensitive(String A, String B, yd_umm* out_count)
-{
-    yd_b32 result = (A.count >= B.count);
+strings_match_part_insensitive(String a, String b, yd_umm* out_count) {
+    yd_b32 result = (a.count >= b.count);
     yd_umm index = 0;
     
-    if (result)
-    {
-        for (; index < B.count; ++index)
-        {
-            if (to_lower(A.data[index]) != to_lower(B.data[index]))
-            {
+    if (result) {
+        for (; index < b.count; ++index) {
+            if (to_lower(a.data[index]) != to_lower(b.data[index])) {
                 result = false;
                 break;
             }
@@ -1653,17 +1569,14 @@ strings_match_part_insensitive(String A, String B, yd_umm* out_count)
 }
 
 yd_b32
-StringSetMatch(void* StrSet, yd_umm ItemSize, yd_umm count,
-               String str, yd_umm* OutMatchindex)
-{
+string_set_match(void* str_set, yd_umm item_size, yd_umm count,
+                 String str, yd_umm* out_match_index) {
     yd_b32 result = false;
-    yd_u8* at = (yd_u8*)StrSet;
+    yd_u8* at = (yd_u8*)str_set;
     
-    for (yd_umm index = 0; index < count; ++index, at += ItemSize)
-    {
-        if (strings_match(*((String*)at), str))
-        {
-            *OutMatchindex = index;
+    for (yd_umm index = 0; index < count; ++index, at += item_size) {
+        if (strings_match(*((String*)at), str)) {
+            *out_match_index = index;
             result = true;
             break;
         }
@@ -1673,42 +1586,33 @@ StringSetMatch(void* StrSet, yd_umm ItemSize, yd_umm count,
 }
 
 yd_s32
-Compare(const char* A, const char* B)
-{
+compare(const char* a, const char* b) {
     yd_umm index = 0;
-    while (A[index] && B[index] &&
-           (A[index] != B[index]))
-    {
+    while (a[index] && b[index] &&
+           (a[index] != b[index])) {
         ++index;
     }
     
-    yd_s32 result = (A[index] > B[index]) - (A[index] < B[index]);
+    yd_s32 result = (a[index] > b[index]) - (a[index] < b[index]);
     return result;
 }
 
 yd_s32
-Compare(String A, const char* B)
-{
+compare(String a, const char* b) {
     yd_umm index = 0;
-    while ((index < A.count) && B[index] &&
-           (A.data[index] == B[index]))
-    {
+    while ((index < a.count) && b[index] &&
+           (a.data[index] == b[index])) {
         ++index;
     }
     
     yd_s32 result = 0;
     
-    if (index < A.count)
-    {
-        result = (A.data[index] > B[index]) - (A.data[index] < B[index]);
-    }
-    else
-    {
-        if (B[index])
-        {
+    if (index < a.count) {
+        result = (a.data[index] > b[index]) - (a.data[index] < b[index]);
+    } else {
+        if (b[index]) {
             result = 0;
-        } else
-        {
+        } else {
             result = -1;
         }
     }
@@ -1717,28 +1621,22 @@ Compare(String A, const char* B)
 }
 
 yd_s32
-Compare(String A, String B)
-{
-    yd_umm Mincount = A.count;
-    if (B.count < Mincount)
-    {
-        Mincount = B.count;
+compare(String a, String b) {
+    yd_umm min_count = a.count;
+    if (b.count < min_count) {
+        min_count = b.count;
     }
     
     yd_umm index = 0;
-    while ((index < Mincount) && (A.data[index] == B.data[index]))
-    {
+    while ((index < min_count) && (A.data[index] == B.data[index])) {
         ++index;
     }
     
     yd_s32 result = 0;
-    if (index < Mincount)
-    {
-        result = (A.data[index] > B.data[index]) - (A.data[index] < B.data[index]);
-    }
-    else
-    {
-        result = (A.count > B.count) - (A.count < B.count);
+    if (index < min_count) {
+        result = (a.data[index] > b.data[index]) - (a.data[index] < b.data[index]);
+    } else {
+        result = (a.count > b.count) - (a.count < b.count);
     }
     
     return result;
@@ -1749,14 +1647,11 @@ Compare(String A, String B)
 //
 
 yd_umm
-Find(const char* str, char character, yd_umm Start)
-{
-    YDAssert(Start >= 0);
+find(const char* str, char character, yd_umm start) {
+    YD_ASSERT(start >= 0);
     
-    for (yd_umm index = Start; str[index]; ++index)
-    {
-        if (str[index] == Character)
-        {
+    for (yd_umm index = start; str[index]; ++index) {
+        if (str[index] == character) {
             return index;
         }
     }
@@ -1765,14 +1660,11 @@ Find(const char* str, char character, yd_umm Start)
 }
 
 yd_umm
-Find(String str, char character, yd_umm Start)
-{
-    YDAssert((Start >= 0) && (Start < str.count));
+find(String str, char character, yd_umm start) {
+    YD_ASSERT((start >= 0) && (start < str.count));
     
-    for (yd_umm index = Start; index < str.count; ++index)
-    {
-        if (str.data[index] == Character)
-        {
+    for (yd_umm index = start; index < str.count; ++index) {
+        if (str.data[index] == character) {
             return index;
         }
     }
@@ -1781,37 +1673,31 @@ Find(String str, char character, yd_umm Start)
 }
 
 yd_umm
-Find(const char* str, String Seek, yd_umm Start)
-{
-    YDAssert(Start >= 0);
+find(const char* str, String seek, yd_umm start) {
+    YD_ASSERT(start >= 0);
     
-    if (Seek.count == 0)
-    {
+    if (seek.count == 0) {
         return STRING_NOT_FOUND;
     }
     
-    for (yd_umm index = Start; str[index]; ++index)
-    {
-        yd_b32 Hit = true;
-        yd_umm Strindex = index;
+    for (yd_umm index = start; str[index]; ++index) {
+        yd_b32 hit = true;
+        yd_umm str_index = index;
         
-        for (yd_umm Seekindex = 0;
-             Seekindex < Seek.count;
-             ++Seekindex, ++Strindex)
-        {
-            if (!(str[Strindex])) {
+        for (yd_umm seek_index = 0;
+             seek_index < seek.count;
+             ++seek_index, ++str_index) {
+            if (!(str[str_index])) {
                 return STRING_NOT_FOUND;
             }
             
-            if (str[Strindex] != Seek.data[Seekindex])
-            {
-                Hit = false;
+            if (str[str_index] != seek.data[seek_index]) {
+                hit = false;
                 break;
             }
         }
         
-        if (Hit)
-        {
+        if (hit) {
             return index;
         }
     }
@@ -1820,35 +1706,29 @@ Find(const char* str, String Seek, yd_umm Start)
 }
 
 yd_umm
-Find(String str, String Seek, yd_umm Start)
-{
-    YDAssert((Start >= 0) && (Start < str.count));
+find(String str, String seek, yd_umm start) {
+    YD_ASSERT((start >= 0) && (start < str.count));
     
-    if (Seek.count == 0)
-    {
+    if (seek.count == 0) {
         return STRING_NOT_FOUND;
     }
     
-    yd_umm Stopat = str.count - Seek.count + 1;
+    yd_umm stop_at = str.count - seek.count + 1;
     
-    for (yd_umm index = Start; index < Stopat; ++index)
-    {
-        yd_b32 Hit = true;
-        yd_umm Strindex = index;
+    for (yd_umm index = start; index < stop_at; ++index) {
+        yd_b32 hit = true;
+        yd_umm str_index = index;
         
-        for (yd_umm Seekindex = 0;
-             Seekindex < Seek.count;
-             ++Seekindex, ++Strindex)
-        {
-            if (str.data[Strindex] != Seek.data[Seekindex])
-            {
-                Hit = false;
+        for (yd_umm seek_index = 0;
+             seek_index < seek.count;
+             ++seek_index, ++str_index) {
+            if (str.data[str_index] != seek.data[seek_index]) {
+                hit = false;
                 break;
             }
         }
         
-        if (Hit)
-        {
+        if (hit) {
             return index;
         }
     }
@@ -1857,15 +1737,12 @@ Find(String str, String Seek, yd_umm Start)
 }
 
 yd_umm
-RFind(const char* str, yd_umm count, char character, yd_umm Start)
-{
-    YDAssert((Start >= 0) && (Start < count));
+rfind(const char* str, yd_umm count, char character, yd_umm start) {
+    YD_ASSERT((start >= 0) && (start < count));
     
-    yd_umm index = Start + 1;
-    while (index--)
-    {
-        if (str[index] == Character)
-        {
+    yd_umm index = start + 1;
+    while (index--) {
+        if (str[index] == character) {
             return index;
         }
     }
@@ -1874,15 +1751,12 @@ RFind(const char* str, yd_umm count, char character, yd_umm Start)
 }
 
 yd_umm
-RFind(String str, char character, yd_umm Start)
-{
-    YDAssert((Start >= 0) && (Start < str.count));
+rfind(String str, char character, yd_umm start) {
+    YD_ASSERT((start >= 0) && (start < str.count));
     
-    yd_umm index = Start + 1;
-    while (index--)
-    {
-        if (str.data[index] == Character)
-        {
+    yd_umm index = start + 1;
+    while (index--) {
+        if (str.data[index] == character) {
             return index;
         }
     }
@@ -1891,41 +1765,34 @@ RFind(String str, char character, yd_umm Start)
 }
 
 yd_umm
-RFind(const char* str, yd_umm count, String Seek, yd_umm Start)
-{
-    YDAssert((Start >= 0) && (Start < count));
+rfind(const char* str, yd_umm count, String seek, yd_umm start) {
+    YD_ASSERT((start >= 0) && (start < count));
     
-    if (count == 0)
-    {
+    if (count == 0) {
         return STRING_NOT_FOUND;
     }
     
-    // TODO(yuval): This will overflow if Seek's count is Bigger then str's count
+    // TODO(yuval): This will overflow if seek's count is Bigger then str's count
     // An additional check is needed
-    if (Start + Seek.count > count)
-    {
-        Start = count - Seek.count;
+    if (start + seek.count > count) {
+        start = count - seek.count;
     }
     
-    yd_umm index = Start + 1;
-    while (index--)
-    {
-        yd_b32 Hit = true;
-        yd_umm Strindex = index;
+    yd_umm index = start + 1;
+    while (index--) {
+        yd_b32 hit = true;
+        yd_umm str_index = index;
         
-        for (yd_umm Seekindex = 0;
-             Seekindex < Seek.count;
-             ++Seekindex, ++Strindex)
-        {
-            if (str[Strindex] != Seek.data[Seekindex])
-            {
-                Hit = false;
+        for (yd_umm seek_index = 0;
+             seek_index < seek.count;
+             ++seek_index, ++str_index) {
+            if (str[str_index] != seek.data[seek_index]) {
+                hit = false;
                 break;
             }
         }
         
-        if (Hit)
-        {
+        if (hit) {
             return index;
         }
     }
@@ -1934,41 +1801,34 @@ RFind(const char* str, yd_umm count, String Seek, yd_umm Start)
 }
 
 yd_umm
-RFind(String str, String Seek, yd_umm Start)
-{
-    YDAssert((Start >= 0) && (Start < str.count));
+rfind(String str, String seek, yd_umm start) {
+    YD_ASSERT((start >= 0) && (start < str.count));
     
-    if (Seek.count == 0)
-    {
+    if (seek.count == 0) {
         return STRING_NOT_FOUND;
     }
     
-    // TODO(yuval): This will overflow if Seek's count is Bigger then str's count
+    // TODO(yuval): This will overflow if seek's count is Bigger then str's count
     // An additional check is needed
-    if (Start + Seek.count > str.count)
-    {
-        Start = str.count - Seek.count;
+    if (start + seek.count > str.count) {
+        start = str.count - seek.count;
     }
     
-    yd_umm index = Start + 1;
-    while (index--)
-    {
-        yd_b32 Hit = true;
-        yd_umm Strindex = index;
+    yd_umm index = start + 1;
+    while (index--) {
+        yd_b32 hit = true;
+        yd_umm str_index = index;
         
-        for (yd_umm Seekindex = 0;
-             Seekindex < Seek.count;
-             ++Seekindex, ++Strindex)
-        {
-            if (str.data[Strindex] != Seek.data[Seekindex])
-            {
-                Hit = false;
+        for (yd_umm seek_index = 0;
+             seek_index < seek.count;
+             ++seek_index, ++str_index) {
+            if (str.data[str_index] != seek.data[seek_index]) {
+                hit = false;
                 break;
             }
         }
         
-        if (Hit)
-        {
+        if (hit) {
             return index;
         }
     }
@@ -1977,21 +1837,16 @@ RFind(String str, String Seek, yd_umm Start)
 }
 
 yd_umm
-FindFirstOf(const char* str, const char* Characters, yd_umm Start)
-{
-    YDAssert(Start >= 0);
+find_first_of(const char* str, const char* characters, yd_umm start) {
+    YD_ASSERT(start >= 0);
     
-    if (!(*Characters))
-    {
+    if (!(*characters)) {
         return STRING_NOT_FOUND;
     }
     
-    for (yd_umm index = Start; str[index]; ++index)
-    {
-        for (const char* at = Characters; *at; ++at)
-        {
-            if (str[index] == *at)
-            {
+    for (yd_umm index = start; str[index]; ++index) {
+        for (const char* at = characters; *at; ++at) {
+            if (str[index] == *at) {
                 return index;
             }
         }
@@ -2001,21 +1856,16 @@ FindFirstOf(const char* str, const char* Characters, yd_umm Start)
 }
 
 yd_umm
-FindFirstOf(String str, const char* Characters, yd_umm Start)
-{
-    YDAssert((Start >= 0) && (Start < str.count));
+find_first_of(String str, const char* characters, yd_umm start) {
+    YD_ASSERT((start >= 0) && (start < str.count));
     
-    if (!(*Characters))
-    {
+    if (!(*characters)) {
         return STRING_NOT_FOUND;
     }
     
-    for (yd_umm index = Start; index < str.count; ++index)
-    {
-        for (const char* at = Characters; *at; ++at)
-        {
-            if (str.data[index] == *at)
-            {
+    for (yd_umm index = start; index < str.count; ++index) {
+        for (const char* at = characters; *at; ++at) {
+            if (str.data[index] == *at) {
                 return index;
             }
         }
@@ -2025,14 +1875,11 @@ FindFirstOf(String str, const char* Characters, yd_umm Start)
 }
 
 yd_umm
-FindInsensitive(const char* str, char character, yd_umm Start)
-{
-    YDAssert(Start >= 0);
+find_insensitive(const char* str, char character, yd_umm start) {
+    YD_ASSERT(start >= 0);
     
-    for (yd_umm index = Start; str[index]; ++index)
-    {
-        if (to_lower(str[index]) == to_lower(Character))
-        {
+    for (yd_umm index = start; str[index]; ++index) {
+        if (to_lower(str[index]) == to_lower(character)) {
             return index;
         }
     }
@@ -2041,14 +1888,11 @@ FindInsensitive(const char* str, char character, yd_umm Start)
 }
 
 yd_umm
-FindInsensitive(String str, char character, yd_umm Start)
-{
-    YDAssert((Start >= 0) && (Start < str.count));
+find_insensitive(String str, char character, yd_umm start) {
+    YD_ASSERT((start >= 0) && (start < str.count));
     
-    for (yd_umm index = Start; index < str.count; ++index)
-    {
-        if (to_lower(str.data[index]) == to_lower(Character))
-        {
+    for (yd_umm index = start; index < str.count; ++index) {
+        if (to_lower(str.data[index]) == to_lower(character)) {
             return index;
         }
     }
@@ -2057,33 +1901,27 @@ FindInsensitive(String str, char character, yd_umm Start)
 }
 
 yd_umm
-FindInsensitive(const char* str, String Seek, yd_umm Start)
-{
-    YDAssert(Start >= 0);
+find_insensitive(const char* str, String seek, yd_umm start) {
+    YD_ASSERT(start >= 0);
     
-    if (Seek.count == 0)
-    {
+    if (seek.count == 0) {
         return STRING_NOT_FOUND;
     }
     
-    for (yd_umm index = Start; str[index]; ++index)
-    {
-        yd_b32 Hit = true;
-        yd_umm Strindex = index;
+    for (yd_umm index = start; str[index]; ++index) {
+        yd_b32 hit = true;
+        yd_umm str_index = index;
         
-        for (yd_umm Seekindex = 0;
-             Seekindex < Seek.count;
-             ++Seekindex, ++Strindex)
-        {
-            if (to_lower(str[Strindex]) != to_lower(Seek.data[Seekindex]))
-            {
-                Hit = false;
+        for (yd_umm seek_index = 0;
+             seek_index < seek.count;
+             ++seek_index, ++str_index) {
+            if (to_lower(str[str_index]) != to_lower(seek.data[seek_index])) {
+                hit = false;
                 break;
             }
         }
         
-        if (Hit)
-        {
+        if (hit) {
             return index;
         }
     }
@@ -2092,35 +1930,29 @@ FindInsensitive(const char* str, String Seek, yd_umm Start)
 }
 
 yd_umm
-FindInsensitive(String str, String Seek, yd_umm Start)
-{
-    YDAssert((Start >= 0) && (Start < str.count));
+find_insensitive(String str, String seek, yd_umm start) {
+    YD_ASSERT((start >= 0) && (start < str.count));
     
-    if (Seek.count == 0)
-    {
+    if (seek.count == 0) {
         return STRING_NOT_FOUND;
     }
     
-    yd_umm Stopat = str.count - Seek.count + 1;
+    yd_umm stop_at = str.count - seek.count + 1;
     
-    for (yd_umm index = Start; index < Stopat; ++index)
-    {
-        yd_b32 Hit = true;
-        yd_umm Strindex = index;
+    for (yd_umm index = start; index < stop_at; ++index) {
+        yd_b32 hit = true;
+        yd_umm str_index = index;
         
-        for (yd_umm Seekindex = 0;
-             Seekindex < Seek.count;
-             ++Seekindex, ++Strindex)
-        {
-            if (to_lower(str.data[Strindex]) != to_lower(Seek.data[Seekindex]))
-            {
-                Hit = false;
+        for (yd_umm seek_index = 0;
+             seek_index < seek.count;
+             ++seek_index, ++str_index) {
+            if (to_lower(str.data[str_index]) != to_lower(seek.data[seek_index])) {
+                hit = false;
                 break;
             }
         }
         
-        if (Hit)
-        {
+        if (hit) {
             return index;
         }
     }
@@ -2129,48 +1961,41 @@ FindInsensitive(String str, String Seek, yd_umm Start)
 }
 
 String
-GetFirstDoubleLine(String Source)
-{
+get_first_double_line(String source) {
     String result = {};
     
-    yd_umm Pos = Find(Source, MakeLitString("\n\n"));
-    if (Pos == STRING_NOT_FOUND)
-    {
-        Pos = Find(Source, MakeLitString("\r\n\r\n"));
+    yd_umm pos = find(source, MAKE_LIT_STRING("\n\n"));
+    if (pos == STRING_NOT_FOUND) {
+        pos = find(source, MAKE_LIT_STRING("\r\n\r\n"));
     }
     
-    if (Pos != STRING_NOT_FOUND)
-    {
-        result = substr(Source, 0, Pos);
+    if (pos != STRING_NOT_FOUND) {
+        result = substr(source, 0, pos);
     }
     
     return result;
 }
 
 String
-GetNextDoubleLine(String Source, String Line)
-{
+get_next_double_line(String source, String line) {
     String result = {};
     
-    yd_umm LineEndindex = (yd_umm)(Line.data - Source.data) + Line.count;
-    YDAssert((Source.data[LineEndindex] == '\n') || (Source.data[LineEndindex] == '\r'));
+    yd_umm line_end_index = (yd_umm)(line.data - source.data) + line.count;
+    YD_ASSERT((source.data[line_end_index] == '\n') || (source.data[line_end_index] == '\r'));
     
-    ++LineEndindex;
-    YDAssert((Source.data[LineEndindex] == '\n') || (Source.data[LineEndindex] == '\r'));
+    ++line_end_index;
+    YD_ASSERT((source.data[line_end_index] == '\n') || (source.data[line_end_index] == '\r'));
     
-    yd_umm Start = LineEndindex + 1;
+    yd_umm start = line_end_index + 1;
     
-    if (Start < Source.count)
-    {
-        yd_umm Pos = Find(Source, MakeLitString("\n\n"), Start);
-        if (Pos == STRING_NOT_FOUND)
-        {
-            Pos = Find(Source, MakeLitString("\r\n\r\n"), Start);
+    if (start < source.count) {
+        yd_umm pos = find(source, MAKE_LIT_STRING("\n\n"), start);
+        if (pos == STRING_NOT_FOUND) {
+            pos = find(source, MAKE_LIT_STRING("\r\n\r\n"), start);
         }
         
-        if (Pos != STRING_NOT_FOUND)
-        {
-            result = substr(Source, Start, Pos - Start);
+        if (pos != STRING_NOT_FOUND) {
+            result = substr(source, start, pos - start);
         }
     }
     
@@ -2178,34 +2003,28 @@ GetNextDoubleLine(String Source, String Line)
 }
 
 String
-GetNextWord(String Source, String PrevWord)
-{
+get_next_word(String source, String prev_word) {
     String result = {};
-    yd_umm Pos0 = (yd_umm)(PrevWord.data - Source.data) + PrevWord.count;
+    yd_umm pos0 = (yd_umm)(prev_word.data - source.data) + prev_word.count;
     
-    for (; Pos0 < Source.count; ++Pos0)
-    {
-        char c = Source.data[Pos0];
-        if (!(is_whitespace(c) || c == '(' || c == ')'))
-        {
+    for (; pos0 < source.count; ++pos0) {
+        char c = source.data[pos0];
+        if (!(is_whitespace(c) || c == '(' || c == ')')) {
             break;
         }
     }
     
-    if (Pos0 < Source.count)
-    {
-        yd_umm Pos1 = Pos0;
+    if (pos0 < source.count) {
+        yd_umm pos1 = pos0;
         
-        for (; Pos1 < Source.count; ++Pos1)
-        {
-            char c = Source.data[Pos1];
-            if (is_whitespace(c) || c == '(' || c == ')')
-            {
+        for (; pos1 < source.count; ++pos1) {
+            char c = source.data[pos1];
+            if (is_whitespace(c) || c == '(' || c == ')') {
                 break;
             }
         }
         
-        result = substr(Source, Pos0, Pos1 - Pos0);
+        result = substr(source, pos0, pos1 - pos0);
     }
     
     return result;
@@ -2216,83 +2035,71 @@ GetNextWord(String Source, String PrevWord)
 //
 
 yd_umm
-CopyFastUnsafe(char* dest, const char* Source)
-{
-    char* destat = dest;
-    const char* Sourceat = Source;
+copy_fast_unsafe(char* dest, const char* source) {
+    char* dest_at = dest;
+    const char* source_at = source;
     
-    while (*Sourceat)
-    {
-        *destat++ = *Sourceat++;
+    while (*source_at) {
+        *dest_at++ = *source_at++;
     }
     
-    *destat = 0;
+    *dest_at = 0;
     
-    yd_umm result = (destat - dest);
+    yd_umm result = (dest_at - dest);
     return result;
 }
 
 yd_umm
-CopyFastUnsafe(char* dest, String Source)
+copy_fast_unsafe(char* dest, String source)
 {
-    for (yd_umm index = 0; index < Source.count; ++index)
-    {
-        dest[index] = Source.data[index];
+    for (yd_umm index = 0; index < source.count; ++index) {
+        dest[index] = source.data[index];
     }
     
-    dest[Source.count] = 0;
-    return Source.count;
+    dest[source.count] = 0;
+    return source.count;
 }
 
 yd_b32
-CopyChecked(String* dest, String Source)
-{
-    if (dest->capacity < Source.count)
-    {
+copy_checked(String* dest, String source) {
+    if (dest->capacity < source.count) {
         return false;
     }
     
-    for (yd_umm index = 0; index < Source.count; ++index)
-    {
-        dest->data[index] = Source.data[index];
+    for (yd_umm index = 0; index < source.count; ++index) {
+        dest->data[index] = source.data[index];
     }
     
-    dest->count = Source.count;
+    dest->count = source.count;
     return true;
 }
 
 yd_b32
-CopyChecked(char* dest, yd_umm destCap, String Source)
-{
-    if (destCap < Source.count + 1)
-    {
+copy_checked(char* dest, yd_umm dest_cap, String source) {
+    if (dest_cap < source.count + 1) {
         return false;
     }
     
-    for (yd_umm index = 0; index < Source.count; ++index)
-    {
-        dest[index] = Source.data[index];
+    for (yd_umm index = 0; index < source.count; ++index) {
+        dest[index] = source.data[index];
     }
     
-    dest[Source.count] = 0;
+    dest[source.count] = 0;
     return true;
 }
 
 yd_b32
-CopyPartial(String* dest, const char* Source)
-{
+copy_partial(String* dest, const char* source) {
     yd_b32 result = true;
     yd_umm index = 0;
     
-    for (; Source[index]; ++index)
-    {
-        if (index >= dest->capacity)
-        {
+    for (; source[index]; ++index) {
+        if (index >= dest->capacity) {
             result = false;
             break;
         }
         
-        dest->data[index] = Source[index];
+        dest->data[index] = source[index];
     }
     
     dest->count = index;
@@ -2300,20 +2107,17 @@ CopyPartial(String* dest, const char* Source)
 }
 
 yd_b32
-CopyPartial(String* dest, String Source)
-{
+copy_partial(String* dest, String source) {
     yd_b32 result = true;
     yd_umm index = 0;
     
-    for (; index < Source.count; ++index)
-    {
-        if (index >= dest->capacity)
-        {
+    for (; index < source.count; ++index) {
+        if (index >= dest->capacity) {
             result = false;
             break;
         }
         
-        dest->data[index] = Source.data[index];
+        dest->data[index] = source.data[index];
     }
     
     dest->count = index;
@@ -2321,20 +2125,17 @@ CopyPartial(String* dest, String Source)
 }
 
 yd_b32
-CopyPartial(char* dest, yd_umm destCap, String Source)
-{
+copy_partial(char* dest, yd_umm dest_cap, String source) {
     yd_b32 result = true;
     yd_umm index = 0;
     
-    for (; index < Source.count; ++index)
-    {
-        if (index >= destCap - 1)
-        {
+    for (; index < source.count; ++index) {
+        if (index >= dest_cap - 1) {
             result = false;
             break;
         }
         
-        dest[index] = Source.data[index];
+        dest[index] = source.data[index];
     }
     
     dest[index] = 0;
@@ -2342,39 +2143,34 @@ CopyPartial(char* dest, yd_umm destCap, String Source)
 }
 
 yd_b32
-AppendChecked(String* dest, String Source)
-{
-    String End = TailStr(*dest);
-    yd_b32 result = CopyChecked(&End, Source);
-    dest->count += End.count;
+append_checked(String* dest, String source) {
+    String end = tailstr(*dest);
+    yd_b32 result = copy_checked(&end, source);
+    dest->count += end.count;
     return result;
 }
 
 yd_b32
-AppendPartial(String* dest, const char* Source)
-{
-    String End = TailStr(*dest);
-    yd_b32 result = CopyPartial(&End, Source);
-    dest->count += End.count;
+append_partial(String* dest, const char* source) {
+    String end = tailstr(*dest);
+    yd_b32 result = copy_partial(&end, source);
+    dest->count += end.count;
     return result;
 }
 
 yd_b32
-AppendPartial(String* dest, String Source)
-{
-    String End = TailStr(*dest);
-    yd_b32 result = CopyPartial(&End, Source);
-    dest->count += End.count;
+append_partial(String* dest, String source) {
+    String end = tailstr(*dest);
+    yd_b32 result = copy_partial(&end, source);
+    dest->count += end.count;
     return result;
 }
 
 yd_b32
-Append(String* dest, char c)
-{
+append(String* dest, char c) {
     yd_b32 result = false;
     
-    if (dest->count < dest->capacity)
-    {
+    if (dest->count < dest->capacity) {
         dest->data[dest->count++] = c;
         result = true;
     }
@@ -2383,12 +2179,10 @@ Append(String* dest, char c)
 }
 
 yd_b32
-TerminateWithNull(String* str)
-{
+terminate_with_null(String* str) {
     yd_b32 result = false;
     
-    if (str->count < str->capacity)
-    {
+    if (str->count < str->capacity) {
         str->data[str->count] = 0;
         result = true;
     }
@@ -2397,14 +2191,11 @@ TerminateWithNull(String* str)
 }
 
 yd_b32
-AppendPadding(String* dest, char c, yd_umm Targetcount)
-{
+append_padding(String* dest, char c, yd_umm target_count) {
     yd_b32 result = true;
     
-    for (yd_umm count = dest->count; count < Targetcount; ++count)
-    {
-        if (!Append(dest, c))
-        {
+    for (yd_umm count = dest->count; count < target_count; ++count) {
+        if (!append(dest, c)) {
             result = false;
             break;
         }
@@ -2418,32 +2209,28 @@ AppendPadding(String* dest, char c, yd_umm Targetcount)
 //
 
 yd_b32
-ConcatStrings(String* dest, String SourceA, String SourceB)
-{
-    yd_b32 CanFitConcat = (dest->capacity >= SourceA.count + SourceB.count);
+concat_strings(String* dest, String source_a, String source_b) {
+    yd_b32 can_fit_concat = (dest->capacity >= source_a.count + source_b.count);
     
-    if (CanFitConcat)
-    {
+    if (can_fit_concat) {
         yd_umm dest_index = 0;
         
-        for (yd_umm Sourceindex = 0;
-             Sourceindex < SourceA.count;
-             ++Sourceindex, ++dest_index)
-        {
-            dest->data[dest_index] = SourceA.data[Sourceindex];
+        for (yd_umm source_index = 0;
+             source_index < source_a.count;
+             ++source_index, ++dest_index) {
+            dest->data[dest_index] = source_a.data[source_index];
         }
         
-        for (yd_umm Sourceindex = 0;
-             Sourceindex < SourceB.count;
-             ++Sourceindex, ++dest_index)
-        {
-            dest->data[dest_index] = SourceB.data[Sourceindex];
+        for (yd_umm source_index = 0;
+             source_index < source_b.count;
+             ++source_index, ++dest_index) {
+            dest->data[dest_index] = source_b.data[source_index];
         }
         
-        dest->count = SourceA.count + SourceB.count;
+        dest->count = source_a.count + source_b.count;
     }
     
-    return CanFitConcat;
+    return can_fit_concat;
 }
 
 //
@@ -2451,152 +2238,124 @@ ConcatStrings(String* dest, String SourceA, String SourceB)
 //
 
 void
-ReplaceRange(String* str, yd_umm First, yd_umm OnePastLast, char With)
-{
-    YDAssert((First >= 0) && (First < str->count));
-    YDAssert((OnePastLast > 0) && (OnePastLast <= str->count));
-    YDAssert(First < OnePastLast);
+replace_range(String* str, yd_umm first, yd_umm one_past_last, char with) {
+    YD_ASSERT((first >= 0) && (first < str->count));
+    YD_ASSERT((one_past_last > 0) && (one_past_last <= str->count));
+    YD_ASSERT(first < one_past_last);
     
-    for (yd_umm index = First; index < OnePastLast; ++index)
-    {
-        str->data[index] = With;
+    for (yd_umm index = first; index < one_past_last; ++index) {
+        str->data[index] = with;
     }
 }
 
 void
-ReplaceRange(String* str, yd_umm First, yd_umm OnePastLast, const char* With)
-{
-    String WithStr = MakeStringSlowly(With);
-    ReplaceRange(str, First, OnePastLast, WithStr);
+replace_range(String* str, yd_umm first, yd_umm one_past_last, const char* with) {
+    String with_str = make_string_slowly(with);
+    replace_range(str, first, one_past_last, with_str);
 }
 
 // TODO(yuval): Maybe rename to block_copy?
 yd_internal void
-YDStringBlockMove(void* dest_init, const void* Source_init, yd_umm size)
+yd_string__block_move(void* dest_init, const void* source_init, yd_umm size)
 {
-    if (dest_init && Source_init)
-    {
-        const yd_u8* Source = (const yd_u8*)Source_init;
+    if (dest_init && source_init) {
+        const yd_u8* source = (const yd_u8*)source_init;
         yd_u8* dest = (yd_u8*)dest_init;
         
-        if (dest < Source)
-        {
-            while (size--)
-            {
-                *dest++ = *Source++;
+        if (dest < source) {
+            while (size--) {
+                *dest++ = *source++;
             }
-        } else if (dest > Source)
-        {
-            Source += size - 1;
+        } else if (dest > source) {
+            source += size - 1;
             dest += size - 1;
             
-            while (size--)
-            {
-                *dest-- = *Source--;
+            while (size--) {
+                *dest-- = *source--;
             }
         }
     }
 }
 
 void
-ReplaceRange(String* str, yd_umm First, yd_umm OnePastLast, String With)
-{
-    YDAssert((First >= 0) && (First < str->count));
-    YDAssert((OnePastLast > 0) && (OnePastLast <= str->count));
-    YDAssert(First < OnePastLast);
+replace_range(String* str, yd_umm first, yd_umm one_past_last, String with) {
+    YD_ASSERT((first >= 0) && (first < str->count));
+    YD_ASSERT((one_past_last > 0) && (one_past_last <= str->count));
+    YD_ASSERT(first < one_past_last);
     
-    yd_s64 shift = With.count - (OnePastLast - First);
+    yd_s64 shift = with.count - (one_past_last - first);
     yd_umm new_count = str->count + shift;
     
-    if (new_count <= str->capacity)
-    {
-        if (shift != 0)
-        {
-            char* tail = str->data + OnePastLast;
-            char* new_tail_Pos = tail + shift;
+    if (new_count <= str->capacity) {
+        if (shift != 0) {
+            char* tail = str->data + one_past_last;
+            char* new_tail_pos = tail + shift;
             // TODO(yuval): Verify that this has no bugs!!!!!!!!!
-            YDStringBlockMove(new_tail_Pos, tail, str->count - OnePastLast);
+            yd_string__block_move(new_tail_pos, tail, str->count - one_past_last);
         }
         
-        YDStringBlockMove(str->data + First, With.data, With.count);
+        yd_string__block_move(str->data + first, with.data, with.count);
         str->count += shift;
     }
 }
 
 void
-Replace(String* str, char ToReplace, char With)
-{
-    for (yd_umm index = 0; index < str->count; ++index)
-    {
-        if (str->data[index] == ToReplace)
-        {
-            str->data[index] = With;
+replace(String* str, char to_replace, char with) {
+    for (yd_umm index = 0; index < str->count; ++index) {
+        if (str->data[index] == to_replace) {
+            str->data[index] = with;
         }
     }
 }
 
 void
-Replace(String* str, const char* ToReplace, const char* With)
-{
-    Replace(str, MakeStringSlowly(ToReplace), MakeStringSlowly(With));
+replace(String* str, const char* to_replace, const char* with) {
+    replace(str, make_string_slowly(to_replace), make_string_slowly(with));
 }
 
 void
-Replace(String* str, const char* ToReplace, String With)
-{
-    Replace(str, MakeStringSlowly(ToReplace), With);
+replace(String* str, const char* to_replace, String with) {
+    replace(str, make_string_slowly(to_replace), with);
 }
 
 void
-Replace(String* str, String ToReplace, const char* With)
-{
-    Replace(str, ToReplace, MakeStringSlowly(With));
+replace(String* str, String to_replace, const char* with) {
+    replace(str, to_replace, make_string_slowly(with));
 }
 
 void
-Replace(String* str, String ToReplace, String With)
-{
+replace(String* str, String to_replace, String with) {
     yd_umm index = 0;
     
-    for (;;)
-    {
-        index = Find(*str, ToReplace, index);
-        if (index == STRING_NOT_FOUND)
-        {
+    for (;;) {
+        index = find(*str, to_replace, index);
+        if (index == STRING_NOT_FOUND) {
             break;
         }
         
-        ReplaceRange(str, index, index + ToReplace.count, With);
-        index += With.count;
+        replace_range(str, index, index + to_replace.count, with);
+        index += with.count;
     }
 }
 
 void
-StringInterpretEscapes(char* dest, String Source)
-{
-    yd_s32 Mode = 0;
+string_interpret_escapes(char* dest, String source) {
+    yd_s32 mode = 0;
     yd_umm dest_index = 0;
     
-    for (yd_umm Sourceindex = 0; Sourceindex < Source.count; ++Sourceindex)
-    {
-        switch (Mode)
-        {
-            case 0:
-            {
-                if (Source.data[Sourceindex] == '\\')
-                {
-                    Mode = 1;
-                } else
-                {
-                    dest[dest_index++] = Source.data[Sourceindex];
+    for (yd_umm source_index = 0; source_index < source.count; ++source_index) {
+        switch (mode) {
+            case 0: {
+                if (source.data[source_index] == '\\') {
+                    mode = 1;
+                } else {
+                    dest[dest_index++] = source.data[source_index];
                 }
             } break;
             
-            case 1:
-            {
-                char c = Source.data[Sourceindex];
-                switch (c)
-                {
+            case 1: {
+                char c = source.data[source_index];
+                switch (c) {
                     case '\\': { dest[dest_index++] = '\\'; } break;
                     case 'n': { dest[dest_index++] = '\n'; } break;
                     case 't': { dest[dest_index++] = '\t'; } break;
@@ -2605,7 +2364,7 @@ StringInterpretEscapes(char* dest, String Source)
                     default: { dest[dest_index++] = '\\'; dest[dest_index++] = c; } break;
                 }
                 
-                Mode = 0;
+                mode = 0;
             } break;
         }
     }
@@ -2621,12 +2380,10 @@ StringInterpretEscapes(char* dest, String Source)
 
 #if defined(YD_MEMORY)
 char*
-PushZ(memory_arena* Arena, yd_umm count, arena_push_params Params)
-{
-    char* result = PushArray(Arena, char, count + 1, Params);
+push_z(Memory_Arena* arena, yd_umm count, Arena_Push_Params params) {
+    char* result = PUSH_ARRAY(arena, char, count + 1, params);
     
-    if (result)
-    {
+    if (result) {
         result[count] = 0;
     }
     
@@ -2634,14 +2391,12 @@ PushZ(memory_arena* Arena, yd_umm count, arena_push_params Params)
 }
 
 String
-PushString(memory_arena* Arena, yd_umm capacity, arena_push_params Params)
-{
+push_string(Memory_Arena* arena, yd_umm capacity, Arena_Push_Params params) {
     String result = {};
-    result.data = PushArray(Arena, char, capacity, Params);
+    result.data = PUSH_ARRAY(arena, char, capacity, params);
     result.count = 0;
     
-    if (result.data)
-    {
+    if (result.data) {
         result.capacity = capacity;
     }
     
@@ -2649,40 +2404,35 @@ PushString(memory_arena* Arena, yd_umm capacity, arena_push_params Params)
 }
 
 char*
-PushCopyZ(memory_arena* Arena, const char* Source, arena_push_params Params)
-{
-    yd_umm Size = StringLength(Source);
-    char* result = (char*)PushCopy(Arena, Source, Size + 1, Params);
+push_copy_z(Memory_Arena* arena, const char* source, Arena_Push_Params params) {
+    yd_umm size = string_length(source);
+    char* result = (char*)PUSH_COPY(arena, source, size + 1, params);
     
     return result;
 }
 
 String
-PushCopyString(memory_arena* Arena, const char* Source, arena_push_params Params)
-{
+push_copy_string(Memory_Arena* arena, const char* source, Arena_Push_Params params) {
     String result = {};
     
-    yd_umm Size = StringLength(Source);
-    result.data = (char*)PushCopy(Arena, Source, Size, Params);
+    yd_umm size = string_length(source);
+    result.data = (char*)PUSH_COPY(arena, source, size, params);
     
-    if (result.data)
-    {
-        result.count = Size;
-        result.capacity = Size;
+    if (result.data) {
+        result.count = size;
+        result.capacity = size;
     }
     
     return result;
 }
 
 char*
-PushCopyZ(memory_arena* Arena, String Source, arena_push_params Params)
-{
-    char* result = PushArray(Arena, char, Source.count + 1, Params);
+push_copy_z(Memory_Arena* arena, String source, Arena_Push_Params params) {
+    char* result = PUSH_ARRAY(arena, char, source.count + 1, params);
     
-    if (result)
-    {
-        CopyArray(result, Source.data, Source.count);
-        result[Source.count] = 0;
+    if (result) {
+        COPY_ARRAY(result, source.data, source.count);
+        result[source.count] = 0;
     }
     
     return result;
@@ -2690,15 +2440,13 @@ PushCopyZ(memory_arena* Arena, String Source, arena_push_params Params)
 
 
 String
-PushCopyString(memory_arena* Arena, String Source, arena_push_params Params)
-{
+push_copy_string(Memory_Arena* arena, String source, Arena_Push_Params params) {
     String result = {};
-    result.data = (char*)PushCopy(Arena, Source.data, Source.count, Params);
+    result.data = (char*)PUSH_COPY(arena, source.data, source.count, params);
     
-    if (result.data)
-    {
-        result.count = Source.count;
-        result.capacity = Source.count;
+    if (result.data) {
+        result.count = source.count;
+        result.capacity = source.count;
     }
     
     return result;
@@ -2728,54 +2476,54 @@ to_lower(String* str)
 }
 
 void
-to_lower(char* dest, const char* Source)
+to_lower(char* dest, const char* source)
 {
-    const char* Sourceat = Source;
-    char* destat = dest;
+    const char* source_at = source;
+    char* dest_at = dest;
     
-    while (*Sourceat)
+    while (*source_at)
     {
-        *destat++ = to_lower(*Sourceat++);
+        *dest_at++ = to_lower(*source_at++);
     }
     
-    *destat = 0;
+    *dest_at = 0;
 }
 
 void
-to_lower(String* dest, const char* Source)
+to_lower(String* dest, const char* source)
 {
     yd_umm index = 0;
     
-    for (; Source[index]; ++index)
+    for (; source[index]; ++index)
     {
-        dest->data[index] = to_lower(Source[index]);
+        dest->data[index] = to_lower(source[index]);
     }
     
     dest->count = index;
 }
 
 void
-to_lower(char* dest, String Source)
+to_lower(char* dest, String source)
 {
-    for (yd_umm index = 0; index < Source.count; ++index)
+    for (yd_umm index = 0; index < source.count; ++index)
     {
-        dest[index] = to_lower(Source.data[index]);
+        dest[index] = to_lower(source.data[index]);
     }
     
-    dest[Source.count] = 0;
+    dest[source.count] = 0;
 }
 
 void
-to_lower(String* dest, String Source)
+to_lower(String* dest, String source)
 {
-    if (dest->capacity >= Source.count)
+    if (dest->capacity >= source.count)
     {
-        for (yd_umm index = 0; index < Source.count; ++index)
+        for (yd_umm index = 0; index < source.count; ++index)
         {
-            dest->data[index] = to_lower(Source.data[index]);
+            dest->data[index] = to_lower(source.data[index]);
         }
         
-        dest->count = Source.count;
+        dest->count = source.count;
     }
 }
 
@@ -2798,77 +2546,77 @@ to_upper(String* str)
 }
 
 void
-to_upper(char* dest, const char* Source)
+to_upper(char* dest, const char* source)
 {
-    const char* Sourceat = Source;
-    char* destat = dest;
+    const char* source_at = source;
+    char* dest_at = dest;
     
-    while (*Sourceat)
+    while (*source_at)
     {
-        *destat++ = to_upper(*Sourceat++);
+        *dest_at++ = to_upper(*source_at++);
     }
     
-    *destat = 0;
+    *dest_at = 0;
 }
 
 void
-to_upper(String* dest, const char* Source)
+to_upper(String* dest, const char* source)
 {
     yd_umm index = 0;
     
-    for (; Source[index]; ++index)
+    for (; source[index]; ++index)
     {
-        dest->data[index] = to_upper(Source[index]);
+        dest->data[index] = to_upper(source[index]);
     }
     
     dest->count = index;
 }
 
 void
-to_upper(char* dest, String Source)
+to_upper(char* dest, String source)
 {
-    for (yd_umm index = 0; index < Source.count; ++index)
+    for (yd_umm index = 0; index < source.count; ++index)
     {
-        dest[index] = to_upper(Source.data[index]);
+        dest[index] = to_upper(source.data[index]);
     }
     
-    dest[Source.count] = 0;
+    dest[source.count] = 0;
 }
 
 void
-to_upper(String* dest, String Source)
+to_upper(String* dest, String source)
 {
-    if (dest->capacity >= Source.count)
+    if (dest->capacity >= source.count)
     {
-        for (yd_umm index = 0; index < Source.count; ++index)
+        for (yd_umm index = 0; index < source.count; ++index)
         {
-            dest->data[index] = to_upper(Source.data[index]);
+            dest->data[index] = to_upper(source.data[index]);
         }
         
-        dest->count = Source.count;
+        dest->count = source.count;
     }
 }
 
 void
 ToCamel(char* str)
 {
-    yd_b32 IsFirst = true;
+    yd_b32 is_first = true;
     
     for (char* at = str; *at; ++at)
     {
         if (is_alpha_numeric_true(*at))
         {
-            if (IsFirst)
+            if (is_first)
             {
                 *at = to_upper(*at);
-                IsFirst = false;
+                is_first = false;
             } else
             {
                 *at = to_lower(*at);
             }
         } else
         {
-            IsFirst = true;
+            is_first = true;
         }
     }
 }
@@ -2876,75 +2624,75 @@ ToCamel(char* str)
 void
 ToCamel(String* str)
 {
-    yd_b32 IsFirst = true;
+    yd_b32 is_first = true;
     
     for (yd_umm index = 0; index < str->count; ++index)
     {
         if (is_alpha_numeric_true(str->data[index]))
         {
-            if (IsFirst)
+            if (is_first)
             {
                 str->data[index] = to_upper(str->data[index]);
-                IsFirst = false;
+                is_first = false;
             } else
             {
                 str->data[index] = to_lower(str->data[index]);
             }
         } else
         {
-            IsFirst = true;
+            is_first = true;
         }
     }
 }
 
 void
-ToCamel(char* dest, const char* Source)
+ToCamel(char* dest, const char* source)
 {
-    const char* Sourceat = Source;
-    char* destat = dest;
-    yd_b32 IsFirst = false;
+    const char* source_at = source;
+    char* dest_at = dest;
+    yd_b32 is_first = false;
     
-    for (; *Sourceat; ++Sourceat, ++destat)
+    for (; *source_at; ++source_at, ++dest_at)
     {
-        char c = *Sourceat;
+        char c = *source_at;
         
         if (is_alpha_numeric_true(c))
         {
-            if (IsFirst)
+            if (is_first)
             {
                 c = to_upper(c);
-                IsFirst = false;
+                is_first = false;
             } else
             {
                 c = to_lower(c);
             }
         } else
         {
-            IsFirst = true;
+            is_first = true;
         }
         
-        *destat = c;
+        *dest_at = c;
     }
     
-    *destat = 0;
+    *dest_at = 0;
 }
 
 void
-ToCamel(String* dest, const char* Source)
+ToCamel(String* dest, const char* source)
 {
     yd_umm index = 0;
-    yd_b32 IsFirst = true;
+    yd_b32 is_first = true;
     
-    for (; Source[index]; ++index)
+    for (; source[index]; ++index)
     {
-        char c = Source[index];
+        char c = source[index];
         
         if (is_alpha_numeric_true(c))
         {
-            if (IsFirst)
+            if (is_first)
             {
                 c = to_upper(c);
-                IsFirst = false;
+                is_first = false;
             }
             else
             {
@@ -2953,7 +2701,7 @@ ToCamel(String* dest, const char* Source)
         }
         else
         {
-            IsFirst = true;
+            is_first = true;
         }
         
         dest->data[index] = c;
@@ -2963,20 +2711,20 @@ ToCamel(String* dest, const char* Source)
 }
 
 void
-ToCamel(char* dest, String Source)
+ToCamel(char* dest, String source)
 {
-    yd_b32 IsFirst = true;
+    yd_b32 is_first = true;
     
-    for (yd_umm index = 0; index < Source.count; ++index)
+    for (yd_umm index = 0; index < source.count; ++index)
     {
-        char c = Source.data[index];
+        char c = source.data[index];
         
         if (is_alpha_numeric_true(c))
         {
-            if (IsFirst)
+            if (is_first)
             {
                 c = to_upper(c);
-                IsFirst = false;
+                is_first = false;
             }
             else
             {
@@ -2985,45 +2733,45 @@ ToCamel(char* dest, String Source)
         }
         else
         {
-            IsFirst = true;
+            is_first = true;
         }
         
         dest[index] = c;
     }
     
-    dest[Source.count] = 0;
+    dest[source.count] = 0;
 }
 
 void
-ToCamel(String* dest, String Source)
+ToCamel(String* dest, String source)
 {
-    if (dest->capacity >= Source.count)
+    if (dest->capacity >= source.count)
     {
-        yd_b32 IsFirst = true;
+        yd_b32 is_first = true;
         
-        for (yd_umm index = 0; index < Source.count; ++index)
+        for (yd_umm index = 0; index < source.count; ++index)
         {
-            char c = Source.data[index];
+            char c = source.data[index];
             
             if (is_alpha_numeric_true(c))
             {
-                if (IsFirst)
+                if (is_first)
                 {
                     c = to_upper(c);
-                    IsFirst = false;
+                    is_first = false;
                 } else
                 {
                     c = to_lower(c);
                 }
             } else
             {
-                IsFirst = true;
+                is_first = true;
             }
             
             dest->data[index] = c;
         }
         
-        dest->count = Source.count;
+        dest->count = source.count;
     }
 }
 
@@ -3066,13 +2814,13 @@ U64ToString(String* dest, yd_u64 value)
     
     if (result)
     {
-        for (yd_umm Startindex = 0, Endindex = count - 1;
-             Startindex < Endindex;
-             ++Startindex, --Endindex)
+        for (yd_umm start_index = 0, end_index = count - 1;
+             start_index < end_index;
+             ++start_index, --end_index)
         {
-            char Temp = dest->data[Endindex];
-            dest->data[Endindex] = dest->data[Startindex];
-            dest->data[Startindex] = Temp;
+            char Temp = dest->data[end_index];
+            dest->data[end_index] = dest->data[start_index];
+            dest->data[start_index] = Temp;
         }
         
         dest->count = count;
@@ -3086,9 +2834,9 @@ U64ToString(String* dest, yd_u64 value)
 }
 
 yd_b32
-AppendU64ToString(String* dest, yd_u64 value)
+appendU64ToString(String* dest, yd_u64 value)
 {
-    String Tail = TailStr(*dest);
+    String Tail = tailstr(*dest);
     yd_b32 result = U64ToString(&Tail, value);
     
     if (result)
@@ -3142,16 +2890,16 @@ S32ToString(String* dest, yd_s32 value)
     
     if (result)
     {
-        result = AppendU64ToString(dest, (yd_u64)value);
+        result = appendU64ToString(dest, (yd_u64)value);
     }
     
     return result;
 }
 
 yd_b32
-AppendS32ToString(String* dest, yd_s32 value)
+appendS32ToString(String* dest, yd_s32 value)
 {
-    String Tail = TailStr(*dest);
+    String Tail = tailstr(*dest);
     yd_b32 result = S32ToString(&Tail, value);
     
     if (result)
@@ -3210,7 +2958,7 @@ F32ToString(String* dest, yd_f32 value, yd_u32 MaxPrecision)
         
         if (value != 0.0f)
         {
-            Append(dest, '.');
+            append(dest, '.');
             
             for (yd_u32 Precisionindex = 0;
                  Precisionindex < MaxPrecision;
@@ -3224,7 +2972,7 @@ F32ToString(String* dest, yd_f32 value, yd_u32 MaxPrecision)
                 value *= 10.0f;
                 
                 yd_u64 Integer = (yd_u64)value;
-                result = AppendU64ToString(dest, Integer);
+                result = appendU64ToString(dest, Integer);
                 
                 if (!result)
                 {
@@ -3240,9 +2988,9 @@ F32ToString(String* dest, yd_f32 value, yd_u32 MaxPrecision)
 }
 
 yd_b32
-AppendF32ToString(String* dest, yd_f32 value, yd_u32 MaxPrecision)
+appendF32ToString(String* dest, yd_f32 value, yd_u32 MaxPrecision)
 {
-    String Tail = TailStr(*dest);
+    String Tail = tailstr(*dest);
     yd_b32 result = F32ToString(&Tail, value, MaxPrecision);
     
     if (result)
@@ -3317,9 +3065,9 @@ SetLastFolder(char* dir, yd_umm count, const char* FolderName, char Slash)
     if (LastSlashindex != STRING_NOT_FOUND)
     {
         yd_umm Newcount = LastSlashindex + 1;
-        Newcount = Append(dir, count, FolderName));
+        Newcount = append(dir, count, FolderName));
         {
-            if (Append())
+            if (append())
         }
     }
 }
@@ -3336,9 +3084,9 @@ SetLastFolder(String* dir, const char* FolderName, char Slash)
         yd_umm count = LastSlashindex + 1;
         dir->count = count;
         
-        if (Append(dir, FolderName))
+        if (append(dir, FolderName))
         {
-            if (Append(dir, Slash))
+            if (append(dir, Slash))
             {
                 result = true;
             }
@@ -3372,9 +3120,9 @@ SetLastFolder(String* dir, String FolderName, char Slash)
         yd_umm count = LastSlashindex + 1;
         dir->count = count;
         
-        if (Append(dir, FolderName))
+        if (append(dir, FolderName))
         {
-            if (Append(dir, Slash))
+            if (append(dir, Slash))
             {
                 result = true;
             }
@@ -3408,7 +3156,7 @@ String
 Fileextension(String filename)
 {
     String result = {};
-    yd_umm Dotindex = RFind(filename, '.');
+    yd_umm Dotindex = find(filename, '.');
     
     if (Dotindex != STRING_NOT_FOUND)
     {
@@ -3423,14 +3171,14 @@ yd_b32
 Setextension(String* filename, const char* extension)
 {
     yd_b32 result = false;
-    yd_umm LastDotindex = RFind(*filename, '.');
+    yd_umm LastDotindex = find(*filename, '.');
     
     if (LastDotindex != STRING_NOT_FOUND)
     {
         yd_umm count = LastDotindex;
         filename->count = count;
         
-        if (Append(filename, extension))
+        if (append(filename, extension))
         {
             result = true;
         }
@@ -3448,14 +3196,14 @@ yd_b32
 Setextension(String* filename, String extension)
 {
     yd_b32 result = false;
-    yd_umm LastDotindex = RFind(*filename, '.');
+    yd_umm LastDotindex = find(*filename, '.');
     
     if (LastDotindex != STRING_NOT_FOUND)
     {
         yd_umm count = LastDotindex + 1;
         filename->count = count;
         
-        if (Append(filename, extension))
+        if (append(filename, extension))
         {
             result = true;
         }
@@ -3473,7 +3221,7 @@ yd_b32
 Removeextension(String* filename)
 {
     yd_b32 result = false;
-    yd_umm LastDotindex = RFind(*filename, '.');
+    yd_umm LastDotindex = find(*filename, '.');
     
     if (LastDotindex != STRING_NOT_FOUND)
     {
