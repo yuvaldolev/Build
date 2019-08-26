@@ -330,8 +330,7 @@ skip_chop_whitespace(String str) {
 }
 
 yd_internal inline String
-tailstr(String str)
-{
+tailstr(String str) {
     String result;
     result.data = str.data + str.count;
     result.count = 0;
@@ -341,16 +340,12 @@ tailstr(String str)
 }
 
 yd_internal inline void
-advance_string(String* value, yd_umm count)
-{
-    if (value->count >= count)
-    {
+advance_string(String* value, yd_umm count) {
+    if (value->count >= count) {
         value->data += count;
         value->count -= count;
         value->capacity -= (count * sizeof(char));
-    }
-    else
-    {
+    } else {
         value->data += value->count;
         value->count = 0;
         value->capacity = 0;
@@ -362,110 +357,97 @@ advance_string(String* value, yd_umm count)
 //
 
 yd_internal inline yd_b32
-StringsMatch(const char* A, String B)
-{
-    yd_b32 Result = StringsMatch(B, A);
-    return Result;
+strings_match(const char* a, String b) {
+    yd_b32 result = strings_match(b, a);
+    return result;
 }
 
 yd_internal inline yd_b32
-StringsMatch(const char* A, const char* B, yd_umm BCount)
-{
-    yd_b32 Result = StringsMatch(B, BCount, A);
-    return Result;
+strings_match(const char* a, const char* b, yd_umm b_count) {
+    yd_b32 result = strings_match(b, b_count, a);
+    return result;
 }
 
 yd_internal inline yd_b32
-StringsMatch(const char* A, String B, yd_umm Count)
-{
-    yd_b32 Result = StringsMatch(B, A, Count);
-    return Result;
+strings_match(const char* a, String b, yd_umm count) {
+    yd_b32 result = strings_match(b, a, count);
+    return result;
 }
 
 yd_internal inline yd_b32
-StringsMatchPart(const char* A, const char* B)
-{
-    yd_umm Ignored;
-    yd_b32 Result = StringsMatchPart(A, B, &Ignored);
-    return Result;
+strings_match_part(const char* a, const char* b) {
+    yd_umm ignored;
+    yd_b32 result = strings_match_part(a, b, &ignored);
+    return result;
 }
 
 yd_internal inline yd_b32
-StringsMatchPart(String A, const char* B)
-{
-    yd_umm Ignored;
-    yd_b32 Result = StringsMatchPart(A, B, &Ignored);
-    return Result;
+strings_match_part(String a, const char* b) {
+    yd_umm ignored;
+    yd_b32 result = strings_match_part(a, b, &ignored);
+    return result;
 }
 
 yd_internal inline yd_b32
-StringsMatchPart(const char* A, String B)
-{
-    yd_umm Ignored;
-    yd_b32 Result = StringsMatchPart(A, B, &Ignored);
-    return Result;
+strings_match_part(const char* a, String b) {
+    yd_umm ignored;
+    yd_b32 result = strings_match_part(a, b, &ignored);
+    return result;
 }
 
 yd_internal inline yd_b32
-StringsMatchPart(String A, String B)
-{
-    yd_umm Ignored;
-    yd_b32 Result = StringsMatchPart(A, B, &Ignored);
-    return Result;
+strings_match_part(String a, String b) {
+    yd_umm ignored;
+    yd_b32 result = StringsMatchPart(a, b, &ignored);
+    return result;
 }
 
 yd_internal inline yd_b32
-StringsMatchInsensitive(const char* A, String B)
-{
-    yd_b32 Result = StringsMatchInsensitive(B, A);
-    return Result;
+strings_match_insensitive(const char* a, String b) {
+    yd_b32 result = strings_match_insensitive(b, a);
+    return result;
 }
 
 yd_internal inline yd_b32
-StringsMatchPartInsensitive(const char* A, const char* B)
-{
-    yd_umm Ignored;
-    yd_b32 Result = StringsMatchPartInsensitive(A, B, &Ignored);
-    return Result;
+strings_match_part_insensitive(const char* a, const char* b) {
+    yd_umm ignored;
+    yd_b32 result = strings_match_part_insensitive(a, b, &ignored);
+    return result;
 }
 
 yd_internal inline yd_b32
-StringsMatchPartInsensitive(String A, const char* B)
-{
-    yd_umm Ignored;
-    yd_b32 Result = StringsMatchPartInsensitive(A, B, &Ignored);
-    return Result;
+strings_match_part_insensitive(String a, const char* b) {
+    yd_umm ignored;
+    yd_b32 result = strings_match_part_insensitive(a, b, &ignored);
+    return result;
 }
 
 yd_internal inline yd_b32
-StringsMatchPartInsensitive(const char* A, String B)
-{
-    yd_umm Ignored;
-    yd_b32 Result = StringsMatchPartInsensitive(A, B, &Ignored);
-    return Result;
+strings_match_part_insensitive(const char* a, String b) {
+    yd_umm ignored;
+    yd_b32 result = strings_match_part_insensitive(a, b, &ignored);
+    return result;
 }
 
 yd_internal inline yd_b32
-StringsMatchPartInsensitive(String A, String B)
-{
-    yd_umm Ignored;
-    yd_b32 Result = StringsMatchPartInsensitive(A, B, &Ignored);
-    return Result;
+strings_match_part_insensitive(String a, String b) {
+    yd_umm ignored;
+    yd_b32 result = strings_match_part_insensitive(a, b, &ignored);
+    return result;
 }
 
 yd_internal inline yd_b32
-StringSetMatch(String* StrSet, yd_umm Count, String Str, yd_umm* OutMatchIndex)
-{
-    yd_b32 Result = StringSetMatch(StrSet, sizeof(String), Count,
-                                   Str, OutMatchIndex);
+string_set_match(String* str_set, yd_umm count,
+                 String str, yd_umm* out_match_index) {
+    yd_b32 Result = string_set_match(str_set, sizeof(String), count,
+                                     str, out_match_index);
     return Result;
 }
 
 yd_internal inline yd_s32
-Compare(const char* A, String B)
-{
-    yd_s32 Result = -Compare(B, A);
-    return Result;
+compare(const char* a, String b) {
+    yd_s32 result = -compare(b, a);
+    return result;
 }
 
 //
