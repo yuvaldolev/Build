@@ -217,65 +217,59 @@ yd_b32 remove_extension(String* filename);
 //
 
 yd_internal inline String
-MakeString(void* Data, yd_umm Count, yd_umm capacity)
-{
-    String Result;
-    Result.Data = (char*)Data;
-    Result.Count = Count;
-    Result.capacity = capacity;
+make_string(void* data, yd_umm count, yd_umm capacity) {
+    String result;
+    result.data = (char*)data;
+    result.count = count;
+    result.capacity = capacity;
     
     return Result;
 }
 
 yd_internal inline String
-MakeString(void* Data, yd_umm Count)
-{
-    String Result = MakeString(Data, Count, Count);
-    return Result;
+make_string(void* data, yd_umm count) {
+    String result = make_string(data, count, count);
+    return result;
 }
 
 yd_internal inline yd_umm
-StringLength(const char* Str)
-{
-    yd_umm Count = 0;
+string_length(const char* str) {
+    yd_umm count = 0;
     
-    if (Str)
-    {
-        for (; Str[Count]; ++Count);
+    if (str) {
+        for (; str[count]; ++count);
     }
     
-    return Count;
+    return count;
 }
 
 yd_internal inline String
-MakeStringSlowly(const void* Str)
-{
-    String Result;
-    Result.Data = (char*)Str;
-    Result.Count = StringLength((const char*)Str);
-    Result.capacity = Result.Count + 1;
+make_string_slowly(const void* str) {
+    String result;
+    result.data = (char*)str;
+    result.count = string_length((const char*)str);
+    result.capacity = result.count + 1;
     
-    return Result;
+    return result;
 }
 
-#if !defined(MakeLitString)
-# define MakeLitString(Str) (MakeString((char*)(Str), sizeof(Str) - 1, sizeof(Str)))
-#endif // #if !defined(MakeLitString)
+#if !defined(MAKE_LIT_STRING)
+# define MAKE_LIT_STRING(str) (make_string((char*)(str), sizeof(str) - 1, sizeof(str)))
+#endif // #if !defined(MAKE_LIT_STRING)
 
-#if !defined(MakeFixedWidthString)
-# define MakeFixedWidthString(Str) (MakeString((char*)(Str), 0, sizeof(Str)))
-#endif // #if !defined(MakeFixedWidthString)
+#if !defined(MAKE_FIXED_WIDTH_STRING)
+# define MAKE_FIXED_WIDTH_STRING(Str) (make_string((char*)(str), 0, sizeof(str)))
+#endif // #if !defined(MAKE_FIXED_WIDTH_STRING)
 
 //
 // NOTE(yuval): Utility String Functions
 //
 
 yd_internal inline yd_b32
-IsNullString(String Str)
-{
-    yd_b32 Result = ((Str.Data = NULL_STRING.Data) &&
-                     (Str.Count == NULL_STRING.Count) &&
-                     (Str.capacity == NULL_STRING.capacity));
+is_null_string(String str) {
+    yd_b32 Result = ((str.data = NULL_STRING.Data) &&
+                     (str.count == NULL_STRING.Count) &&
+                     (str.capacity == NULL_STRING.capacity));
     
     return Result;
 }
@@ -285,87 +279,81 @@ IsNullString(String Str)
 //
 
 yd_internal inline String
-Substr(String Str, yd_umm Start)
-{
-    YDAssert((Start >= 0) && (Start <= Str.Count));
+substr(String str, yd_umm start) {
+    YDAssert((start >= 0) && (start <= str.count));
     
-    String Result;
-    Result.Data = Str.Data + Start;
-    Result.Count = Str.Count - Start;
-    Result.capacity = 0;
+    String result;
+    result.data = str.data + start;
+    result.count = str.count - start;
+    result.capacity = 0;
     
     return Result;
 }
 
 yd_internal inline String
-Substr(String Str, yd_umm Start, yd_umm Count)
-{
+Substr(String Str, yd_umm Start, yd_umm Count) {
     YDAssert((Start >= 0) && (Start <= Str.Count));
     
-    String Result;
-    Result.Data = Str.Data + Start;
+    String result;
+    result.data = str.data + start;
     
-    Result.Count = Count;
+    result.count = count;
     // TODO(yuval): Verify that this works
-    if (Start + Count > Str.Count)
-    {
-        Result.Count = Str.Count - Start;
+    if (start + count > str.count) {
+        result.count = str.count - start;
     }
     
-    Result.capacity = 0;
+    result.capacity = 0;
     
-    return Result;
+    return result;
 }
 
 yd_internal inline String
-SkipWhitespace(String Str)
-{
-    yd_umm Ignored;
-    String Result = SkipWhitespace(Str, &Ignored);
-    return Result;
+skip_whitespace(String str) {
+    yd_umm ignored;
+    String result = skip_whitespace(str, &ignored);
+    return result;
 }
 
 yd_internal inline String
-SkipChopWhitespace(String Str, yd_umm* OutSkipCount)
-{
-    String Result = SkipWhitespace(Str, OutSkipCount);
-    Result = ChopWhitespace(Result);
-    return Result;
+skip_chop_whitespace(String str, yd_umm* ou_skip_count) {
+    String result = skip_whitespace(str, out_skip_count);
+    result = chop_whitespace(result);
+    return result;
 }
 
 yd_internal inline String
-SkipChopWhitespace(String Str)
-{
-    yd_umm Ignored;
-    String Result = SkipChopWhitespace(Str, &Ignored);
-    return Result;
+skip_chop_whitespace(String str) {
+    yd_umm ignored;
+    String result = skip_chop_whitespace(str, &ignored);
+    return result;
 }
 
 yd_internal inline String
-TailStr(String Str)
+tailstr(String str)
 {
-    String Result;
-    Result.Data = Str.Data + Str.Count;
-    Result.Count = 0;
-    Result.capacity = Str.capacity - Str.Count;
+    String result;
+    result.data = str.data + str.count;
+    result.count = 0;
+    result.capacity = str.capacity - str.Count;
     
-    return Result;
+    return result;
 }
 
 yd_internal inline void
-AdvanceString(String* Value, yd_umm Count)
+advance_string(String* value, yd_umm count)
 {
-    if (Value->Count >= Count)
+    if (value->count >= count)
     {
-        Value->Data += Count;
-        Value->Count -= Count;
-        Value->capacity -= (Count * sizeof(char));
+        value->data += count;
+        value->count -= count;
+        value->capacity -= (count * sizeof(char));
     }
     else
     {
-        Value->Data += Value->Count;
-        Value->Count = 0;
-        Value->capacity = 0;
+        value->data += value->count;
+        value->count = 0;
+        value->capacity = 0;
     }
 }
 
