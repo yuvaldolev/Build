@@ -12,7 +12,7 @@
 
 // TODO(yuval): Number To String Conversion For Different Bases
 
-// TODO(yuval): Implement ColorToHexString and HexStringToColor
+// TODO(yuval): Implement color_to_hex_string and hex_string_to_color
 // after I decide on my color string format
 
 #if !defined(YD_TYPES)
@@ -199,7 +199,6 @@ yd_b32 color_to_hex_string(String* dest, yd_u32 color);
 yd_b32 hex_string_to_color(yd_u32* dest, String str);
 
 yd_umm reverse_seek_slash(String str, yd_umm shift_from_last_char);
-yd_umm reverse_seek_slash(String str);
 yd_b32 set_last_folder(String* dir, const char* folder_name, char slash);
 yd_b32 set_last_folder(String* dir, String folder_name, char slash);
 yd_b32 remove_last_folder(String* dir);
@@ -1073,7 +1072,7 @@ s32_to_hex_char(yd_s32 value) {
 //
 
 yd_internal inline yd_b32
-IsSlash(char c) {
+is_slash(char c) {
     yd_b32 result = ((c == '/') || (c == '\\'));
     return result;
 }
@@ -1087,6 +1086,12 @@ front_of_directory(String dir) {
 yd_internal inline String
 path_of_directory(String dir) {
     String result = substr(dir, 0, reverse_seek_slash(dir) + 1);
+    return result;
+}
+
+yd_internal inline yd_umm
+reverse_seek_slash(String str) {
+    yd_umm result = reverse_seek_slash(str, 0);
     return result;
 }
 
@@ -2458,31 +2463,25 @@ push_copy_string(Memory_Arena* arena, String source, Arena_Push_Params params) {
 //
 
 void
-to_lower(char* str)
-{
-    for (char* at = str; *at; ++at)
-    {
+to_lower(char* str) {
+    for (char* at = str; *at; ++at) {
         *at = to_lower(*at);
     }
 }
 
 void
-to_lower(String* str)
-{
-    for (yd_umm index = 0; index < str->count; ++index)
-    {
+to_lower(String* str) {
+    for (yd_umm index = 0; index < str->count; ++index) {
         str->data[index] = to_lower(str->data[index]);
     }
 }
 
 void
-to_lower(char* dest, const char* source)
-{
+to_lower(char* dest, const char* source) {
     const char* source_at = source;
     char* dest_at = dest;
     
-    while (*source_at)
-    {
+    while (*source_at) {
         *dest_at++ = to_lower(*source_at++);
     }
     
@@ -2490,12 +2489,10 @@ to_lower(char* dest, const char* source)
 }
 
 void
-to_lower(String* dest, const char* source)
-{
+to_lower(String* dest, const char* source) {
     yd_umm index = 0;
     
-    for (; source[index]; ++index)
-    {
+    for (; source[index]; ++index) {
         dest->data[index] = to_lower(source[index]);
     }
     
@@ -2503,10 +2500,8 @@ to_lower(String* dest, const char* source)
 }
 
 void
-to_lower(char* dest, String source)
-{
-    for (yd_umm index = 0; index < source.count; ++index)
-    {
+to_lower(char* dest, String source) {
+    for (yd_umm index = 0; index < source.count; ++index) {
         dest[index] = to_lower(source.data[index]);
     }
     
@@ -2514,12 +2509,9 @@ to_lower(char* dest, String source)
 }
 
 void
-to_lower(String* dest, String source)
-{
-    if (dest->capacity >= source.count)
-    {
-        for (yd_umm index = 0; index < source.count; ++index)
-        {
+to_lower(String* dest, String source) {
+    if (dest->capacity >= source.count) {
+        for (yd_umm index = 0; index < source.count; ++index) {
             dest->data[index] = to_lower(source.data[index]);
         }
         
@@ -2528,31 +2520,25 @@ to_lower(String* dest, String source)
 }
 
 void
-to_upper(char* str)
-{
-    for (char* at = str; *at; ++at)
-    {
+to_upper(char* str) {
+    for (char* at = str; *at; ++at) {
         *at = to_upper(*at);
     }
 }
 
 void
-to_upper(String* str)
-{
-    for (yd_umm index = 0; index < str->count; ++index)
-    {
+to_upper(String* str) {
+    for (yd_umm index = 0; index < str->count; ++index) {
         str->data[index] = to_upper(str->data[index]);
     }
 }
 
 void
-to_upper(char* dest, const char* source)
-{
+to_upper(char* dest, const char* source) {
     const char* source_at = source;
     char* dest_at = dest;
     
-    while (*source_at)
-    {
+    while (*source_at) {
         *dest_at++ = to_upper(*source_at++);
     }
     
@@ -2560,12 +2546,10 @@ to_upper(char* dest, const char* source)
 }
 
 void
-to_upper(String* dest, const char* source)
-{
+to_upper(String* dest, const char* source) {
     yd_umm index = 0;
     
-    for (; source[index]; ++index)
-    {
+    for (; source[index]; ++index) {
         dest->data[index] = to_upper(source[index]);
     }
     
@@ -2573,10 +2557,8 @@ to_upper(String* dest, const char* source)
 }
 
 void
-to_upper(char* dest, String source)
-{
-    for (yd_umm index = 0; index < source.count; ++index)
-    {
+to_upper(char* dest, String source) {
+    for (yd_umm index = 0; index < source.count; ++index) {
         dest[index] = to_upper(source.data[index]);
     }
     
@@ -2584,12 +2566,9 @@ to_upper(char* dest, String source)
 }
 
 void
-to_upper(String* dest, String source)
-{
-    if (dest->capacity >= source.count)
-    {
-        for (yd_umm index = 0; index < source.count; ++index)
-        {
+to_upper(String* dest, String source) {
+    if (dest->capacity >= source.count) {
+        for (yd_umm index = 0; index < source.count; ++index) {
             dest->data[index] = to_upper(source.data[index]);
         }
         
@@ -2598,76 +2577,58 @@ to_upper(String* dest, String source)
 }
 
 void
-ToCamel(char* str)
-{
+to_camel(char* str) {
     yd_b32 is_first = true;
     
-    for (char* at = str; *at; ++at)
-    {
-        if (is_alpha_numeric_true(*at))
-        {
-            if (is_first)
-            {
+    for (char* at = str; *at; ++at) {
+        if (is_alpha_numeric_true(*at)) {
+            if (is_first) {
                 *at = to_upper(*at);
                 is_first = false;
-            } else
-            {
+            } else {
                 *at = to_lower(*at);
             }
-        } else
-        {
+        } else {
             is_first = true;
         }
     }
 }
 
 void
-ToCamel(String* str)
-{
+to_camel(String* str) {
     yd_b32 is_first = true;
     
-    for (yd_umm index = 0; index < str->count; ++index)
-    {
-        if (is_alpha_numeric_true(str->data[index]))
-        {
-            if (is_first)
-            {
+    for (yd_umm index = 0; index < str->count; ++index) {
+        if (is_alpha_numeric_true(str->data[index])) {
+            if (is_first) {
                 str->data[index] = to_upper(str->data[index]);
                 is_first = false;
-            } else
-            {
+            } else {
                 str->data[index] = to_lower(str->data[index]);
             }
-        } else
-        {
+        } else {
             is_first = true;
         }
     }
 }
 
 void
-ToCamel(char* dest, const char* source)
-{
+to_camel(char* dest, const char* source) {
     const char* source_at = source;
     char* dest_at = dest;
     yd_b32 is_first = false;
     
-    for (; *source_at; ++source_at, ++dest_at)
-    {
+    for (; *source_at; ++source_at, ++dest_at) {
         char c = *source_at;
         
-        if (is_alpha_numeric_true(c))
-        {
-            if (is_first)
-            {
+        if (is_alpha_numeric_true(c)) {
+            if (is_first) {
                 c = to_upper(c);
                 is_first = false;
-            } else
-            {
+            } else {
                 c = to_lower(c);
             }
-        } else
-        {
+        } else {
             is_first = true;
         }
         
@@ -2678,29 +2639,21 @@ ToCamel(char* dest, const char* source)
 }
 
 void
-ToCamel(String* dest, const char* source)
-{
+to_camel(String* dest, const char* source) {
     yd_umm index = 0;
     yd_b32 is_first = true;
     
-    for (; source[index]; ++index)
-    {
+    for (; source[index]; ++index) {
         char c = source[index];
         
-        if (is_alpha_numeric_true(c))
-        {
-            if (is_first)
-            {
+        if (is_alpha_numeric_true(c)) {
+            if (is_first) {
                 c = to_upper(c);
                 is_first = false;
-            }
-            else
-            {
+            } else {
                 c = to_lower(c);
             }
-        }
-        else
-        {
+        } else {
             is_first = true;
         }
         
@@ -2711,28 +2664,20 @@ ToCamel(String* dest, const char* source)
 }
 
 void
-ToCamel(char* dest, String source)
-{
+to_camel(char* dest, String source) {
     yd_b32 is_first = true;
     
-    for (yd_umm index = 0; index < source.count; ++index)
-    {
+    for (yd_umm index = 0; index < source.count; ++index) {
         char c = source.data[index];
         
-        if (is_alpha_numeric_true(c))
-        {
-            if (is_first)
-            {
+        if (is_alpha_numeric_true(c)) {
+            if (is_first) {
                 c = to_upper(c);
                 is_first = false;
-            }
-            else
-            {
+            } else {
                 c = to_lower(c);
             }
-        }
-        else
-        {
+        } else {
             is_first = true;
         }
         
@@ -2743,28 +2688,21 @@ ToCamel(char* dest, String source)
 }
 
 void
-ToCamel(String* dest, String source)
-{
-    if (dest->capacity >= source.count)
-    {
+to_camel(String* dest, String source) {
+    if (dest->capacity >= source.count) {
         yd_b32 is_first = true;
         
-        for (yd_umm index = 0; index < source.count; ++index)
-        {
+        for (yd_umm index = 0; index < source.count; ++index) {
             char c = source.data[index];
             
-            if (is_alpha_numeric_true(c))
-            {
-                if (is_first)
-                {
+            if (is_alpha_numeric_true(c)) {
+                if (is_first) {
                     c = to_upper(c);
                     is_first = false;
-                } else
-                {
+                } else {
                     c = to_lower(c);
                 }
-            } else
-            {
+            } else {
                 is_first = true;
             }
             
@@ -2776,13 +2714,11 @@ ToCamel(String* dest, String source)
 }
 
 yd_umm
-U64ToStringcount(yd_u64 value)
-{
+u64_to_string_count(yd_u64 value) {
     yd_umm count = 1;
     
     value /= 10;
-    while (value != 0)
-    {
+    while (value != 0) {
         ++count;
         value /= 10;
     }
@@ -2791,42 +2727,34 @@ U64ToStringcount(yd_u64 value)
 }
 
 yd_b32
-U64ToString(String* dest, yd_u64 value)
-{
+u64_to_string(String* dest, yd_u64 value) {
     yd_b32 result = false;
     yd_umm count = 0;
     
-    do
-    {
-        if (count == dest->capacity)
-        {
+    do {
+        if (count == dest->capacity) {
             result = false;
             break;
         }
         
         // TODO(yuval): Replace Hard-Coded Base
-        yd_u64 Digit = value % 10;
-        char DigitChar = (char)('0' + Digit);
-        dest->data[count++] = DigitChar;
+        yd_u64 digit = value % 10;
+        char digit_char = (char)('0' + digit);
+        dest->data[count++] = digit_char;
         value /= 10;
-    }
-    while (value != 0);
+    } while (value != 0);
     
-    if (result)
-    {
+    if (result) {
         for (yd_umm start_index = 0, end_index = count - 1;
              start_index < end_index;
-             ++start_index, --end_index)
-        {
-            char Temp = dest->data[end_index];
+             ++start_index, --end_index) {
+            char temp = dest->data[end_index];
             dest->data[end_index] = dest->data[start_index];
-            dest->data[start_index] = Temp;
+            dest->data[start_index] = temp;
         }
         
         dest->count = count;
-    }
-    else
-    {
+    } else {
         dest->count = 0;
     }
     
@@ -2834,14 +2762,12 @@ U64ToString(String* dest, yd_u64 value)
 }
 
 yd_b32
-appendU64ToString(String* dest, yd_u64 value)
-{
-    String Tail = tailstr(*dest);
-    yd_b32 result = U64ToString(&Tail, value);
+append_u64_to_string(String* dest, yd_u64 value) {
+    String tail = tailstr(*dest);
+    yd_b32 result = u64_to_string(&tail, value);
     
-    if (result)
-    {
-        dest->count += Tail.count;
+    if (result) {
+        dest->count += tail.count;
     }
     
     return result;
@@ -2849,18 +2775,15 @@ appendU64ToString(String* dest, yd_u64 value)
 
 
 yd_umm
-S32ToStringcount(yd_s32 value)
-{
+s32_to_string_count(yd_s32 value) {
     yd_umm count = 1;
     
-    if (value < 0)
-    {
+    if (value < 0) {
         count = 2;
     }
     
     value /= 10;
-    while (value != 0)
-    {
+    while (value != 0) {
         ++count;
         value /= 10;
     }
@@ -2869,67 +2792,56 @@ S32ToStringcount(yd_s32 value)
 }
 
 yd_b32
-S32ToString(String* dest, yd_s32 value)
-{
+s32_to_string(String* dest, yd_s32 value) {
     yd_b32 result = true;
     
     dest->count = 0;
     
-    if (value < 0)
-    {
-        if (dest->capacity > 0)
-        {
+    if (value < 0) {
+        if (dest->capacity > 0) {
             dest->data[dest->count++] = '-';
             value = -value;
-        }
-        else
-        {
+        } else {
             result = false;
         }
     }
     
-    if (result)
-    {
-        result = appendU64ToString(dest, (yd_u64)value);
+    if (result) {
+        result = append_u64_to_string(dest, (yd_u64)value);
     }
     
     return result;
 }
 
 yd_b32
-appendS32ToString(String* dest, yd_s32 value)
-{
-    String Tail = tailstr(*dest);
-    yd_b32 result = S32ToString(&Tail, value);
+append_s32_to_string(String* dest, yd_s32 value) {
+    String tail = tailstr(*dest);
+    yd_b32 result = s32_to_string(&tail, value);
     
-    if (result)
-    {
-        dest->count += Tail.count;
+    if (result) {
+        dest->count += tail.count;
     }
     
     return result;
 }
 
 yd_umm
-F32ToStringcount(yd_f32 value, yd_u32 MaxPrecision)
-{
+f32_to_string_count(yd_f32 value, yd_u32 max_precision) {
     yd_umm count = 0;
     
-    if (value < 0)
-    {
+    if (value < 0) {
         count = 1;
         value = -value;
     }
     
-    yd_u64 IntegerPart = (yd_u64)value;
-    count += U64ToStringcount(IntegerPart);
+    yd_u64 integer_part = (yd_u64)value;
+    count += u64_to_string_count(integer_part);
     
-    value -= IntegerPart;
+    value -= integer_part;
     
-    for (yd_u32 Precisionindex = 0;
-         Precisionindex < MaxPrecision;
-         ++Precisionindex)
-    {
+    for (yd_u32 precision_index = 0;
+         precision_index < max_precision;
+         ++precision_index) {
         if (value == 0.0f)
         {
             break;
@@ -2947,35 +2859,29 @@ F32ToStringcount(yd_f32 value, yd_u32 MaxPrecision)
 }
 
 yd_b32
-F32ToString(String* dest, yd_f32 value, yd_u32 MaxPrecision)
-{
-    yd_s32 IntegerPart = (yd_s32)value;
-    yd_b32 result = S32ToString(dest, IntegerPart);
+f32_to_string(String* dest, yd_f32 value, yd_u32 max_precision) {
+    yd_s32 integer_part = (yd_s32)value;
+    yd_b32 result = s32_to_string(dest, integer_part);
     
-    if (result)
-    {
-        value -= IntegerPart;
+    if (result) {
+        value -= integer_part;
         
-        if (value != 0.0f)
-        {
+        if (value != 0.0f) {
             append(dest, '.');
             
-            for (yd_u32 Precisionindex = 0;
-                 Precisionindex < MaxPrecision;
-                 ++Precisionindex)
-            {
-                if (value == 0.0f)
-                {
+            for (yd_u32 precision_index = 0;
+                 precision_index < max_precision;
+                 ++precision_index) {
+                if (value == 0.0f) {
                     break;
                 }
                 
                 value *= 10.0f;
                 
                 yd_u64 Integer = (yd_u64)value;
-                result = appendU64ToString(dest, Integer);
+                result = append_u64_to_string(dest, Integer);
                 
-                if (!result)
-                {
+                if (!result) {
                     break;
                 }
                 
@@ -2988,27 +2894,23 @@ F32ToString(String* dest, yd_f32 value, yd_u32 MaxPrecision)
 }
 
 yd_b32
-appendF32ToString(String* dest, yd_f32 value, yd_u32 MaxPrecision)
-{
-    String Tail = tailstr(*dest);
-    yd_b32 result = F32ToString(&Tail, value, MaxPrecision);
+append_f32_to_string(String* dest, yd_f32 value, yd_u32 max_precision) {
+    String tail = tailstr(*dest);
+    yd_b32 result = f32_to_string(&tail, value, max_precision);
     
-    if (result)
-    {
-        dest->count += Tail.count;
+    if (result) {
+        dest->count += tail.count;
     }
     
     return result;
 }
 
 yd_u32
-HexStringToU32(String str)
-{
+hex_string_to_u32(String str) {
     yd_u32 result = 0;
     
-    for (yd_umm index = 0; index < str.count; ++index)
-    {
-        result += HexCharToS32(str.data[index]);
+    for (yd_umm index = 0; index < str.count; ++index) {
+        result += hex_char_to_s32(str.data[index]);
         result *= 0x10;
     }
     
@@ -3016,31 +2918,26 @@ HexStringToU32(String str)
 }
 
 yd_b32
-ColorToHexString(String* dest, yd_u32 Color)
-{
+color_to_hex_string(String* dest, yd_u32 color) {
     // TODO(yuval): Implement This
     return false;
 }
 
 yd_b32
-HexStringToColor(yd_u32* dest, String str)
-{
+hex_string_to_color(yd_u32* dest, String str) {
     // TODO(yuval): Implement This
     return false;
 }
 
 //
-// NOTE(yuval): File / directory Strings Management Functions
+// NOTE(yuval): File / Directory Strings Management Functions
 //
 
 yd_umm
-reverse_seek_slash(String str, yd_umm ShiftFromLastChar)
-{
-    yd_umm index = str.count - ShiftFromLastChar - 1;
-    while (index--)
-    {
-        if (IsSlash(str.data[index]))
-        {
+reverse_seek_slash(String str, yd_umm shift_from_last_char) {
+    yd_umm index = str.count - shift_from_last_char - 1;
+    while (index--) {
+        if (is_slash(str.data[index])) {
             return index;
         }
     }
@@ -3048,24 +2945,16 @@ reverse_seek_slash(String str, yd_umm ShiftFromLastChar)
     return STRING_NOT_FOUND;
 }
 
-yd_umm
-reverse_seek_slash(String str)
-{
-    yd_umm result = reverse_seek_slash(str, 0);
-    return result;
-}
-
 #if 0
 yd_b32
-SetLastFolder(char* dir, yd_umm count, const char* FolderName, char Slash)
-{
+set_last_folder(char* dir, yd_umm count, const char* folder_name, char slash) {
     yd_b32 result = false;
-    yd_umm LastSlashindex = reverse_seek_slash(dir, count);
+    yd_umm last_slash_index = reverse_seek_slash(dir, count);
     
-    if (LastSlashindex != STRING_NOT_FOUND)
+    if (last_slash_index != STRING_NOT_FOUND)
     {
-        yd_umm Newcount = LastSlashindex + 1;
-        Newcount = append(dir, count, FolderName));
+        yd_umm Newcount = last_slash_index + 1;
+        Newcount = append(dir, count, folder_name));
         {
             if (append())
         }
@@ -3074,26 +2963,21 @@ SetLastFolder(char* dir, yd_umm count, const char* FolderName, char Slash)
 #endif // #if 0
 
 yd_b32
-SetLastFolder(String* dir, const char* FolderName, char Slash)
-{
+set_last_folder(String* dir, const char* folder_name, char slash) {
     yd_b32 result = false;
-    yd_umm LastSlashindex = reverse_seek_slash(*dir);
+    yd_umm last_slash_index = reverse_seek_slash(*dir);
     
-    if (LastSlashindex != STRING_NOT_FOUND)
-    {
-        yd_umm count = LastSlashindex + 1;
+    if (last_slash_index != STRING_NOT_FOUND) {
+        yd_umm count = last_slash_index + 1;
         dir->count = count;
         
-        if (append(dir, FolderName))
-        {
-            if (append(dir, Slash))
-            {
+        if (append(dir, folder_name)) {
+            if (append(dir, slash)) {
                 result = true;
             }
         }
         
-        if (!result)
-        {
+        if (!result) {
             dir->count = count;
         }
     }
@@ -3103,33 +2987,27 @@ SetLastFolder(String* dir, const char* FolderName, char Slash)
 
 #if 0
 yd_b32
-SetLastFolder(char* dir, yd_umm count, String FolderName, char Slash)
-{
+set_last_folder(char* dir, yd_umm count, String folder_name, char slash) {
     
 }
 #endif // #if 0
 
 yd_b32
-SetLastFolder(String* dir, String FolderName, char Slash)
-{
+set_last_folder(String* dir, String folder_name, char slash) {
     yd_b32 result = false;
-    yd_umm LastSlashindex = reverse_seek_slash(*dir);
+    yd_umm last_slash_index = reverse_seek_slash(*dir);
     
-    if (LastSlashindex != STRING_NOT_FOUND)
-    {
-        yd_umm count = LastSlashindex + 1;
+    if (last_slash_index != STRING_NOT_FOUND) {
+        yd_umm count = last_slash_index + 1;
         dir->count = count;
         
-        if (append(dir, FolderName))
-        {
-            if (append(dir, Slash))
-            {
+        if (append(dir, folder_name)) {
+            if (append(dir, slash)) {
                 result = true;
             }
         }
         
-        if (!result)
-        {
+        if (!result) {
             dir->count = count;
         }
     }
@@ -3138,53 +3016,45 @@ SetLastFolder(String* dir, String FolderName, char Slash)
 }
 
 yd_b32
-RemoveLastFolder(String* path)
-{
+remove_last_folder(String* path) {
     yd_b32 result = false;
-    yd_umm LastSlashindex = reverse_seek_slash(*path, 1);
+    yd_umm last_slash_index = reverse_seek_slash(*path, 1);
     
-    if (LastSlashindex != STRING_NOT_FOUND)
-    {
+    if (last_slash_index != STRING_NOT_FOUND) {
         result = true;
-        path->count = LastSlashindex + 1;
+        path->count = last_slash_index + 1;
     }
     
     return result;
 }
 
 String
-Fileextension(String filename)
-{
+file_extension(String filename) {
     String result = {};
-    yd_umm Dotindex = find(filename, '.');
+    yd_umm dot_index = find(filename, '.');
     
-    if (Dotindex != STRING_NOT_FOUND)
-    {
-        result = MakeString(filename.data + Dotindex + 1,
-                            filename.count - Dotindex - 1);
+    if (dot_index != STRING_NOT_FOUND) {
+        result = make_string(filename.data + dot_index + 1,
+                             filename.count - dot_index - 1);
     }
     
     return result;
 }
 
 yd_b32
-Setextension(String* filename, const char* extension)
-{
+set_extension(String* filename, const char* extension) {
     yd_b32 result = false;
-    yd_umm LastDotindex = find(*filename, '.');
+    yd_umm last_dot_index = find(*filename, '.');
     
-    if (LastDotindex != STRING_NOT_FOUND)
-    {
-        yd_umm count = LastDotindex;
+    if (last_dot_index != STRING_NOT_FOUND) {
+        yd_umm count = last_dot_index;
         filename->count = count;
         
-        if (append(filename, extension))
-        {
+        if (append(filename, extension)) {
             result = true;
         }
         
-        if (!result)
-        {
+        if (!result) {
             filename->count = count;
         }
     }
@@ -3193,23 +3063,19 @@ Setextension(String* filename, const char* extension)
 }
 
 yd_b32
-Setextension(String* filename, String extension)
-{
+set_extension(String* filename, String extension) {
     yd_b32 result = false;
-    yd_umm LastDotindex = find(*filename, '.');
+    yd_umm last_dot_index = find(*filename, '.');
     
-    if (LastDotindex != STRING_NOT_FOUND)
-    {
-        yd_umm count = LastDotindex + 1;
+    if (last_dot_index != STRING_NOT_FOUND) {
+        yd_umm count = last_dot_index + 1;
         filename->count = count;
         
-        if (append(filename, extension))
-        {
+        if (append(filename, extension)) {
             result = true;
         }
         
-        if (!result)
-        {
+        if (!result) {
             filename->count = count - 1;
         }
     }
@@ -3218,15 +3084,13 @@ Setextension(String* filename, String extension)
 }
 
 yd_b32
-Removeextension(String* filename)
-{
+remove_extension(String* filename) {
     yd_b32 result = false;
-    yd_umm LastDotindex = find(*filename, '.');
+    yd_umm last_dot_index = find(*filename, '.');
     
-    if (LastDotindex != STRING_NOT_FOUND)
-    {
+    if (last_dot_index != STRING_NOT_FOUND) {
         result = true;
-        filename->count = LastDotindex;
+        filename->count = last_dot_index;
     }
     
     return result;
