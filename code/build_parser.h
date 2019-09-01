@@ -122,7 +122,7 @@ enum Ast_Statement_Type {
 };
 
 struct Ast_Return {
-    Ast* expression;
+    Ast* expr;
 };
 
 struct Ast_While {

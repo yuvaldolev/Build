@@ -1,245 +1,214 @@
 #define AST_GET_TOKEN(parser) (parser)->token = get_token(&(parser)->tokenizer)
 #define AST_PEEK_TOKEN(parser) peek_token(&(parser)->tokenizer)
 #define AST_GET_TOKEN_CHECK_TYPE(parser, type) get_token_check_type(&(parser)->tokenizer, type, &(parser)->token)
-#define AST_REQUIRE_TOKEN(parser, type) (File)->token = require_token(&(parser)->tokenizer, type)
+#define AST_REQUIRE_TOKEN(parser, type) (file)->token = require_token(&(parser)->tokenizer, type)
 #define AST_OPTIONAL_TOKEN(parser, type) optional_token(&(parser)->Tokenizer, type, &(parser)->token)
 
-#define DefaultTypes \
-DefaultType(Void, BundleZ("void")) \
-DefaultType(Bool, BundleZ("bool")) \
-DefaultType(Char, BundleZ("char")) \
-DefaultType(Int, BundleZ("int")) \
-DefaultType(Float, BundleZ("float")) \
-DefaultType(Double, BundleZ("double")) \
-DefaultType(Long, BundleZ("long")) \
-DefaultType(Short, BundleZ("short")) \
-DefaultType(Unsigned, BundleZ("unsigned"))
+#define DEFAULT_TYPES \
+DEFAULT_TYPE(Void, BundleZ("void")) \
+DEFAULT_TYPE(Bool, BundleZ("bool")) \
+DEFAULT_TYPE(Char, BundleZ("char")) \
+DEFAULT_TYPE(Int, BundleZ("int")) \
+DEFAULT_TYPE(Float, BundleZ("float")) \
+DEFAULT_TYPE(Double, BundleZ("double")) \
+DEFAULT_TYPE(Long, BundleZ("long")) \
+DEFAULT_TYPE(Short, BundleZ("short")) \
+DEFAULT_TYPE(Unsigned, BundleZ("unsigned"))
 
-#define DefaultType(Type, ...) global ast* Join2(TypeDef, Type);
-DefaultTypes
-#undef DefaultType
+#define DEFAULT_TYPE(Type, ...) global Ast* Join2(type_def, Type);
+DEFAULT_TYPES
+#undef DEFAULT_TYPE
 
-#define BeginAstDumpBlock ++GlobalIndentation;
-#define EndAstDumpBlock --GlobalIndentation;
+#define BEGIN_AST_DUMP_BLOCK(...) ++global_indentation;
+#define END_AST_DUMP_BLOCK(...) --global_indentation;
 
-global u32 GlobalIndentation = 0;
+global u32 global_indentation = 0;
 
-internal ast*
-AstNew(ast_type Type, ast_translation_unit* File, token* Token = 0)
-{
-    ast* Result = PushStruct(ParserArena, ast);
-    u32 UnsignedInt = 0;
+internal Ast*
+ast_new(Ast_Type type, Ast_Translation_Unit* file, Token* token = 0) {
+    Ast* result = PUSH_STRUCT(ParserArena, ast);
     
-    Result->Type = Type;
-    Result->MyFile = File;
+    result->type = type;
+    result->my_file = file;
     
-    if (!Token)
-    {
-        Token = &File->Token;
+    if (!token) {
+        token = &file->token;
     }
     
-    Result->MyLine = Token->LineNumber;
-    Result->MyColumn = Token->ColumnNumber;
+    result->my_line = token->line_number;
+    result->my_column = token->column_number;
     
-    return Result;
+    return result;
 }
 
-internal ast*
-AstNewDecl(ast_declaration_type Type,
-           ast_translation_unit* File, token* Token = 0)
-{
-    ast* Result = AstNew(Ast_Declaration, File, Token);
-    Result->Decl.Type = Type;
-    return Result;
+internal Ast*
+ast_new_decl(Ast_Declaration_Type type,
+             Ast_Translation_Unit* file, Token* token = 0) {
+    Ast* result = ast_new(Ast_Declaration, file, token);
+    result->decl.type = type;
+    return result;
 }
 
-internal ast*
-AstNewTypeDef(ast_type_definition_type Type,
-              ast_translation_unit* File, token* Token = 0)
-{
-    ast* Result = AstNew(Ast_TypeDefinition, File, Token);
-    Result->TypeDef.Type = Type;
-    return Result;
+internal Ast*
+ast_new_type_def(Ast_Type_Definition_Type type,
+                 Ast_Translation_Unit* file, Token* token = 0) {
+    Ast* result = ast_new(Ast_TypeDefinition, file, token);
+    result->type_def.type = type;
+    return result;
 }
 
-internal ast*
-AstNewStmt(ast_statement_type Type,
-           ast_translation_unit* File, token* Token = 0)
-{
-    ast* Result = AstNew(Ast_Statement, File, Token);
-    Result->Stmt.Type = Type;
-    return Result;
+internal Ast*
+ast_new_stmt(Ast_Statement_Type type,
+             Ast_Translation_Unit* file, Token* token = 0) {
+    Ast* result = ast_new(Ast_Statement, file, token);
+    result->stmt.type = type;
+    return result;
 }
 
-internal ast*
-AstNewExpr(ast_expression_type Type,
-           ast_translation_unit* File, token* Token = 0)
-{
-    ast* Result = AstNew(Ast_Expression, File, Token);
-    Result->Expr.Type = Type;
-    return Result;
+internal Ast*
+ast_new_expr(Ast_Expression_Type type,
+             Ast_Translation_Unit* file, Token* token = 0) {
+    Ast* result = ast_new(Ast_Expression, file, token);
+    result->expr.type = type;
+    return result;
 }
 
 internal void
-InitDefaultTypes()
-{
-#define DefaultType(TypeName, Name) MetaJoin2(TypeDef, TypeName) = Alloc(ast); \
-    MetaJoin2(TypeDef, TypeName)->Type = Ast_TypeDefinition; \
-    MetaJoin2(TypeDef, TypeName)->TypeDef.Type = AstTypeDef_Default; \
-    MetaJoin2(TypeDef, TypeName)->TypeDef.DefaultTypeName = Name;
+init_default_types() {
+#define DEFAULT_TYPE(type_name, name) JOIN2(type_def, type_name) = PUSH_STRUCT(, ast); \
+    JOIN2(type_def, type_name)->type = Ast_Type_Definition; \
+    JOIN2(type_def, type_name)->type_def.type = AST_TYPE_DEF_DEFAULT; \
+    JOIN2(TypeDef, type_name)->type_def.default_type_name = name;
     
-    DefaultTypes
+    DEFAULT_TYPES
     
-#undef DefaultType
+#undef DEFAULT_TYPE
 }
 
-internal ast*
-GetDefaultType(string TypeName)
-{
-#define DefaultType(Type, Name) \
-    if (StringsAreEqual(TypeName, Name)) \
-    { \
-        return MetaJoin2(TypeDef, Type); \
+internal Ast*
+get_default_type(String type_name) {
+#define DEFAULT_TYPE(type, name) \
+    if (strings_match(type_name, name)) { \
+        return JOIN2(type_def, type); \
     }
     
-    DefaultTypes
+    DEFAULT_TYPES
     
-#undef DefaultType
+#undef DEFAULT_TYPE
     
         return 0;
 }
 
 internal void
-IndentLine(u32 nSpaces)
-{
-    while (nSpaces--)
-    {
+indent_line(u32 n_spaces) {
+    while (n_spaces--) {
         printf(" ");
     }
 }
 
 internal void
-DumpAstDetails(ast* Ast)
-{
-    string* FileName = &Ast->MyFile->FileName;
+dump_ast_details(Ast* ast) {
+    String* file_name = &ast->my_file->file_name;
     
     printf("%p <%.*s:%d:%d> ",
-           (void*)Ast,
-           (s32)FileName->Count, FileName->Data,
-           Ast->MyLine, Ast->MyColumn);
+           (void*)ast,
+           (s32)file_name->count, file_name->Data,
+           ast->my_line, ast->my_column);
 }
 
 internal void
-DumpAstDeclaration(ast* DeclAst)
-{
-    IndentLine(GlobalIndentation);
+dump_ast_declaration(Ast* decl_ast) {
+    indent_line(global_indentation);
     
-    ast_declaration* Decl = &DeclAst->Decl;
-    ast_identifier* Ident = Decl->Identifier;
+    Ast_Declaration* decl = &decl_ast->decl;
+    Ast_Identifier* ident = decl->identifier;
     
-    switch (Decl->Type)
-    {
-        case AstDecl_Type:
-        {
+    switch (decl->type) {
+        case AST_DECL_TYPE: {
             printf("TypeDecl ");
-            DumpAstDetails(DeclAst);
+            dump_ast_details(decl_ast);
             printf("%.*s ",
-                   (s32)Ident->MyName.Count,
-                   Ident->MyName.Data);
+                   (s32)ident->my_name.count,
+                   ident->my_name.data);
             
-            ast* TypeDefAst = Decl->MyType;
-            ast_type_definition* TypeDef = &TypeDefAst->TypeDef;
+            Ast* type_def_ast = decl->my_type;
+            Ast_Type_Definition* type_def = &type_def_ast->type_def;
             
-            ast** Decls = 0;
-            u32 DeclsCount = 0;
+            Ast** decls = 0;
+            u32 decls_count = 0;
             
-            switch (TypeDef->Type)
-            {
-                case AstTypeDef_Pointer:
-                {
+            switch (type_def->Type) {
+                case AST_TYPE_DEF_POINTER: {
                 } break;
                 
-                case AstTypeDef_Struct:
-                {
+                case AST_TYPE_DEF_STRUCT: {
                     printf("'struct'");
                     
-                    Decls = (ast**)TypeDef->Struct.Members;
-                    DeclsCount = TypeDef->Struct.MemberIndex;
+                    decls = (Ast**)type_def->struct_type_def.members;
+                    decls_count = type_def->struct_type_def.member_index;
                 } break;
                 
-                case AstTypeDef_Enum:
-                {
+                case AST_TYPE_DEF_ENUM: {
                     printf("'enum'");
                     
-                    Decls = (ast**)TypeDef->Enum.Decls;
-                    DeclsCount = TypeDef->Enum.DeclIndex;
+                    decls = (Ast**)type_def->Enum.decls;
+                    decls_count = type_def->Enum.decl_index;
                 } break;
                 
-                case AstTypeDef_Union:
-                {
+                case AST_TYPE_DEF_UNION: {
                     printf("'union'");
                     
-                    Decls = (ast**)TypeDef->Union.Decls;
-                    DeclsCount = TypeDef->Union.DeclIndex;
+                    decls = (Ast**)type_def->Union.decls;
+                    decls_count = type_def->Union.decl_index;
                 } break;
             }
             
             printf("\n");
             
-            if (Decls)
-            {
-                BeginAstDumpBlock;
+            if (decls) {
+                BEGIN_AST_DUMP_BLOCK();
                 
-                For (DeclIndex, Range(DeclsCount))
-                {
-                    DumpAstDeclaration(Decls[DeclIndex]);
+                for (int decl_index = 0; decl_index < decls_count; ++decl_index) {
+                    dump_ast_declaration(decls[decl_index]);
                 }
                 
-                EndAstDumpBlock;
+                END_AST_DUMP_BLOCK();
             }
             
         } break;
         
-        case AstDecl_Func:
-        {
+        case AST_DECL_FUNC: {
         } break;
         
-        case AstDecl_Var:
-        {
+        case AST_DECL_VAR: {
             printf("VarDecl ");
-            DumpAstDetails(DeclAst);
+            dump_ast_details(decl_ast);
             printf("%.*s ",
-                   (s32)Ident->MyName.Count, Ident->MyName.Data);
+                   (s32)ident->my_name.count, ident->my_name.data);
             
+            Ast* type_def_ast = decl->my_type;
+            Ast_Type_Definition* type_def = &TypeDefAst->TypeDef;
             
-            ast* TypeDefAst = Decl->MyType;
-            ast_type_definition* TypeDef = &TypeDefAst->TypeDef;
+            String* type_name;
             
-            string* TypeName;
-            
-            switch (TypeDef->Type)
-            {
-                case AstTypeDef_Default:
-                {
-                    TypeName = &TypeDef->DefaultTypeName;
+            switch (type_def->type) {
+                case AST_TYPE_DEF_DEFAULT: {
+                    type_name = &type_def->DEFAULT_TYPEName;
                 } break;
                 
-                case AstTypeDef_Pointer:
-                {
+                case AST_TYPE_DEF_POINTER: {
                     // TODO(yuval): Handle Pointers
-                    TypeName = 0;
+                    type_name = 0;
                 } break;
                 
-                default:
-                {
-                    TypeName = &TypeDef->MyDecl->Decl.Identifier->MyName;
+                default: {
+                    type_name = &type_def->my_decl->decl.identifier->my_name;
                 } break;
             }
             
-            if (TypeName)
-            {
+            if (type_name) {
                 printf("'%.*s'",
-                       (s32)TypeName->Count, TypeName->Data);
+                       (s32)type_name->Count, type_name->Data);
             }
             
             printf("\n");
@@ -248,503 +217,438 @@ DumpAstDeclaration(ast* DeclAst)
 }
 
 internal void
-DumpAstFile(ast_translation_unit* File)
-{
-    ast_block* GlobalScope = &File->GlobalScope.Block;
+dump_ast_file(Ast_Translation_Unit* file) {
+    Ast_Block* global_scope = &file->global_scope.block;
     
     // NOTE(yuval): AST Dumping
-    For (DeclIndex, Range(GlobalScope->DeclIndex))
-    {
-        DumpAstDeclaration(GlobalScope->Decls[DeclIndex]);
+    for (int decl_index = 0; decl_index < global_scope->decl_count) {
+        dump_ast_declaration(global_scope->decls[decl_index]);
     }
 }
 
-internal ast*
-FindType(ast* Scope, string TypeName)
-{
-    ast* Result = GetDefaultType(TypeName);
+internal Ast*
+find_type(Ast* scope, String type_name) {
+    Ast* result = get_default_type(type_name);
     
-    if (!Result)
-    {
-        ast* CurrScope = Scope;
+    if (!result) {
+        Ast* curr_scope = scope;
         
-        while (CurrScope)
-        {
-            ArrayFor (CurrScope->Block.Decls)
-            {
-                if (It)
-                {
-                    string* Name = &It->Decl.Identifier->MyName;
+        while (curr_scope) {
+            for (int decl_index = 0; i < curr_scope->block.decl_count; ++decl_index) {
+                Ast* it = curr_scope->block.decls[decl_index];
+                
+                if (it) {
+                    String* name = &it->decl.identifier->my_name;
                     
-                    if ((It->Decl.Type == AstDecl_Type) &&
-                        (StringsAreEqual(*Name, TypeName)))
-                    {
-                        Result = It->Decl.MyType;
+                    if ((it->decl.type == AST_DECL_TYPE) &&
+                        (strings_match(name, type_name))) {
+                        result = it->decl.my_type;
                         goto doublebreak;
                     }
                 }
             }
             
-            CurrScope = CurrScope->Block.Parent;
+            curr_scope = curr_scope->block.parent;
         }
         
         doublebreak:;
     }
     
-    return Result;
+    return result;
 }
 
-internal ast*
-ParseDeclaration(parser* Parser, ast* Scope);
+internal Ast*
+parse_declaration(Parser* parser, Ast* scope);
 
-internal ast*
-ParseCompoundStatement(parser* Parser, ast* Scope);
+internal Ast*
+parse_compound_statement(Parser* parser, Ast* Scope);
 
-internal ast*
-ParseStatement(parser* Parser, ast* ParentScope)
-{
-    ast* Result = 0;
+internal Ast*
+parse_statement(Parser* parser, Ast* parent_scope) {
+    Ast* result = 0;
     
-    AstGetToken(File);
+    AST_GET_TOKEN(file);
     
-    switch (File->Token.Type)
-    {
-        case Token_Identifier:
-        {
-            ast* TypeDef = FindType(ParentScope, File->Token.Text);
+    switch (file->token.type) {
+        case TOKEN_IDENTIFIER: {
+            Ast* type_def = find_type(parent_scope, file->token.text);
             
-            if (TypeDef)
-            {
+            if (type_def) {
                 // NOTE(yuval): Declaration Statement
-            }
-            else if ()
-            {
+            } else {
                 // NOTE(yuval): Assignment Statement
-                
             }
-            
         } break;
         
-        case Token_If:
-        {
-            Result = AstNewStmt(AstStmt_If, File);
-            ast_statement* Stmt = &Result->Stmt;
+        case TOKEN_IF: {
+            result = ast_new_stmt(AST_STMT_IF, file);
+            Ast_Statement* stmt = &result->stmt;
             
-            Stmt->MyScope = AstNew(Ast_Block, File);
-            Stmt->MyScope->Block.Parent = ParentScope;
+            stmt->my_scope = ast_new(Ast_Block, file);
+            stmt->my_scope->block.parent = parent_scope;
             
-            ast_if* If = &Stmt->If;
+            Ast_If* if_stmt = &stmt->if_stmt;
             
             // NOTE(yuval): If Condition
-            AstRequireToken(File, Token_OpenParen);
-            If->Condition = ParseExpression();
-            AstRequireToken(File, Token_CloseParen);
+            AST_REQUIRE_TOKEN(file, TOKEN_OPEN_PAREN);
+            if_stmt->condition_expr = parse_expression();
+            AST_REQUIRE_TOKEN(file, TOKEN_CLOSE_PAREN);
             
             // NOTE(yuval): If Body
-            If->Then = ParseStatement(File, Stmt->MyScope);
+            if_stmt->then_stmt = parse_statement(file, stmt->my_scope);
             
             // NOTE(yuval): Else
-            if (AstOptionalToken(File, Token_Else))
-            {
-                If->Else = ParseStatement(File, ParentScope);
+            if (AST_OPTIONAL_TOKEN(file, token_else)) {
+                if_stmt->else_stmt = parse_statement(file, parent_scope);
             }
         } break;
         
-        case Token_Switch:
-        {
-            Result = AstNewStmt(AstStmt_Switch, File);
-            ast_statement* Stmt = &Result->Stmt;
+        case TOKEN_SWITCH: {
+            result = ast_new_stmt(AST_STMT_SWITCH, file);
+            Ast_Statement* stmt = &result->stmt;
             
-            Stmt->MyScope = AstNew(Ast_Block, File);
-            Stmt->MyScope->Block.Parent = ParentScope;
+            stmt->my_scope = ast_new(Ast_Block, file);
+            stmt->my_scope->block.parent = parent_scope;
             
-            ast_switch* Switch = &Stmt->Switch;
+            Ast_Switch* switch_stmt = &stmt->switch_stmt;
             
             // NOTE(yuval): Switch Condition
-            AstRequireToken(File, Token_OpenParen);
-            Switch->Condition = ParseExpression();
-            AstRequireToken(File, Token_CloseParen);
+            AST_REQUIRE_TOKEN(file, TOKEN_OPEN_PAREN);
+            switch_stmt->condition = parse_expression();
+            AST_REQUIRE_TOKEN(File, TOKEN_CLOSE_PAREN);
             
             // NOTE(yuval): Switch Body
-            Switch->FirstCase = ParseStatement(File, Stmt->MyScope);
+            switch_stmt->first_case = parse_statement(File, Stmt->my_scope);
         } break;
         
-        case Token_Case:
-        {
-            Result = AstNewStmt(AstStmt_Case, File);
-            ast_statement* Stmt = &Result->Stmt;
+        case TOKEN_CASE: {
+            result = ast_new_stmt(AST_STMT_CASE, file);
+            Ast_Statement* stmt = &result->Stmt;
             
-            ast* Scope = ParentScope;
+            Ast* scope = parent_scope;
             
-            token NextToken = AstPeekToken(File);
-            if (NextToken.Type == Token_OpenBrace)
-            {
-                Scope = AstNew(Ast_Block, File);
-                Scope->Block.Parent = ParentScope;
+            Token next_token = AST_PEEK_TOKEN(file);
+            if (next_token.type == TOKEN_OPEN_BRACE) {
+                scope = ast_new(Ast_Block, File);
+                scope->block.parent = parent_scope;
             }
             
-            Stmt->MyScope = Scope;
+            stmt->my_scope = scope;
             
-            ast_case* Case = &Stmt->Case;
+            Ast_Case* case_stmt = &stmt->case_stmt;
             
             // NOTE(yuval): Case Expression
-            Case->Value = ParseExpression();
+            case_stmt->value = parse_expression();
             
             // NOTE(yuval): Case Body
-            Case->Body = ParseStatement(File, Stmt->MyScope);
+            case_stmt->body = parse_statement(file, stmt->my_scope);
         } break;
         
-        case Token_Default:
-        {
-            Result = AstNewStmt(AstStmt_Default, File);
-            ast_statement* Stmt = &Result->Stmt;
+        case TOKEN_DEFAULT: {
+            result = ast_new_stmt(AST_STMT_DEFAULT, file);
+            Ast_Statement* stmt = &result->stmt;
             
-            ast* Scope = ParentScope;
+            Ast* scope = parent_scope;
             
-            token NextToken = AstPeekToken(File);
-            if (NextToken.Type == Token_OpenBrace)
-            {
-                Scope = AstNew(Ast_Block, File);
-                Scope->Block.Parent = ParentScope;
+            token next_token = AST_PEEK_TOKEN(file);
+            if (next_token.type == TOKEN_OPEN_BRACE) {
+                scope = ast_new(Ast_Block, file);
+                scope->block.parent = parent_scope;
             }
             
-            Stmt->MyScope = Scope;
+            stmt->my_scope = scope;
             
-            ast_default* Default = &Stmt->Default;
+            Ast_Default* default_stmt = &stmt->default_stmt;
             
             // NOTE(yuval): Default Body
-            Default->Body = ParseStatement(File, Stmt->MyScope);
+            default_stmt->body = parse_statement(file, stmt->my_scope);
         } break;
         
-        case Token_For:
-        {
-            Result = AstNewStmt(AstStmt_For, File);
-            ast_statement* Stmt = &Result->Stmt;
+        case TOKEN_FOR: {
+            result = ast_new_stmt(AST_STMT_FOR, file);
+            Ast_Statement* stmt = &result->stmt;
             
-            Stmt->MyScope = AstNew(Ast_Block, File);
-            Stmt->MyScope->Block.Parent = ParentScope;
+            stmt->my_scope = ast_new(Ast_Block, file);
+            stmt->my_scope->block.parent = parent_scope;
             
-            ast_for* ForStmt = &Stmt->ForStmt;
+            Ast_For* for_stmt = &Stmt->for_stmt;
             
-            AstRequireToken(File, Token_OpenParen);
+            AST_REQUIRE_TOKEN(file, TOKEN_OPEN_PAREN);
             
-            // NOTE(yuval): For Initialization Declaration
-            if (!AstOptionalToken(File, Token_Semi))
-            {
-                ForStmt->Init = ParseStatement(File, Stmt->MyScope);
-                AstRequireToken(File, Token_Semi);
+            // NOTE(yuval): For Initialization Statement
+            if (!AST_OPTIONAL_TOKEN(file, TOKEN_SEMI)) {
+                for_stmt->init = parse_statement(file, stmt->my_scope);
+                AST_REQUIRE_TOKEN(file, TOKEN_SEMI);
             }
             
-            // NOTE(yuval): For Condition
-            if (!AstOptionalToken(File, Token_Semi))
-            {
-                ForStmt->Condition = ParseExpression();
-                AstRequireToken(File, Token_Semi);
+            // NOTE(yuval): For Condition Expression
+            if (!AST_OPTIONAL_TOKEN(file, TOKEN_SEMI)) {
+                ForStmt->Condition = parse_expression();
+                AST_REQUIRE_TOKEN(file, TOKEN_SEMI);
             }
             
-            // NOTE(yuval): For Incrementation
-            if (!AstOptionalToken(File, Token_CloseParen))
-            {
-                ForStmt->Inc = ParseExpression();
-                AstRequireToken(File, Token_CloseParen);
+            // NOTE(yuval): For Incrementation Expression
+            if (!AST_OPTIONAL_TOKEN(file, TOKEN_CLOSE_PAREN)) {
+                for_stmt->inc = parse_expression();
+                AST_REQUIRE_TOKEN(file, TOKEN_CLOSE_PAREN);
             }
             
-            // NOTE(yuval): For Body
-            ForStmt->Body = ParseStatement(File, Stmt->MyScope);
+            // NOTE(yuval): For Body Statement
+            for_stmt->body = parse_statement(file, stmt->my_scope);
         } break;
         
-        case Token_While:
-        {
-            Result = AstNewStmt(AstStmt_While, File);
-            ast_statement* Stmt = &Result->Stmt;
+        case TOKEN_WHILE: {
+            result = ast_new_stmt(AST_STMT_WHILE, file);
+            Ast_Statement* stmt = &result->stmt;
             
-            Stmt->MyScope = AstNew(Ast_Block, File);
-            Stmt->MyScope->Block.Parent = ParentScope;
+            stmt->my_scope = ast_new(Ast_Block, file);
+            stmt->my_scope->block.parent = parent_scope;
             
-            ast_while* While = &Stmt->While;
+            Ast_While* while_stmt = &stmt->while_stmt;
             
             // NOTE(yuval): While Condition
-            AstRequireToken(File, Token_OpenParen);
-            While->Condition = ParseExpression();
-            AstRequireToken(File, Token_CloseParen);
+            AST_REQUIRE_TOKEN(File, TOKEN_OPEN_PAREN);
+            while_stmt->condition = parse_expression();
+            AST_REQUIRE_TOKEN(File, TOKEN_CLOSE_PAREN);
             
             // NOTE(yuval): While Body
-            While->Body = ParseStatement(File, Stmt->MyScope);
+            while_stmt->body = parse_statement(file, stmt->my_scope);
         } break;
         
-        case Token_Do:
-        {
-            Result = AstNewStmt(AstStmt_DoWhile, File);
-            ast_statement* Stmt = &Result->Stmt;
+        case TOKEN_DO: {
+            result = ast_new_stmt(AST_STMT_DO_WHILE, file);
+            Ast_Statement* stmt = &result->stmt;
             
-            Stmt->MyScope = AstNew(Ast_Block, File);
-            Stmt->MyScope->Block.Parent = ParentScope;
+            stmt->my_scope = ast_new(Ast_Block, File);
+            stmt->my_scope->block.parent = parent_scope;
             
-            ast_while* While = &Stmt->While;
+            Ast_While* while_stmt = &stmt->while_stmt;
             
             // NOTE(yuval): Do While Body
-            While->Body = ParseStatement(File, Stmt->MyScope);
+            while_stmt->body = parse_statement(file, stmt->my_scope);
             
             // NOTE(yuval): Do While Condition
-            AstRequireToken(File, Token_While);
+            AST_REQUIRE_TOKEN(file, TOKEN_WHILE);
             
-            AstRequireToken(File, Token_OpenParen);
-            While->Condition = ParseExpression();
-            AstRequireToken(File, Token_CloseParen);
+            AST_REQUIRE_TOKEN(file, TOKEN_OPEN_PAREN);
+            while_stmt->condition = parse_expression();
+            AST_REQUIRE_TOKEN(file, TOKEN_CLOSE_PAREN);
             
-            AstRequireToken(File, Token_Semi);
+            AST_REQUIRE_TOKEN(file, TOKEN_SEMI);
         } break;
         
-        case Token_Break:
-        {
-            Result = AstNewStmt(AstStmt_Break, File);
-            AstRequireToken(File, Token_Semi);
+        case TOKEN_BREAK: {
+            result = ast_new_stmt(AST_STMT_BREAK, File);
+            AST_REQUIRE_TOKEN(File, TOKEN_SEMI);
         } break;
         
-        case Token_Continue:
-        {
-            Result = AstNewStmt(AstStmt_Continue, File);
-            AstRequireToken(File, Token_Semi);
+        case TOKEN_CONTINUE: {
+            result = ast_new_stmt(AST_STMT_CONTINUE, File);
+            AST_REQUIRE_TOKEN(File, TOKEN_SEMI);
         } break;
         
-        case Token_Return:
-        {
-            Result = AstNewStmt(AstStmt_Return, File);
-            ast_statement* Stmt = &Result->Stmt;
+        case TOKEN_RETURN: {
+            result = ast_new_stmt(AstStmt_Return, File);
+            Ast_Statement* stmt = &result->stmt;
             
-            Stmt->MyScope = ParentScope;
+            stmt->my_scope = parent_scope;
             
-            ast_return* Return = &Stmt->Return;
-            Return->Expression = ParseExpression();
-            AstRequireToken(File, Token_Semi);
+            Ast_Return* return_stmt = &stmt->return_stmt;
+            return_stmt->expr = parse_expression();
+            AST_REQUIRE_TOKEN(file, TOKEN_SEMI);
         } break;
         
-        case Token_OpenBrace:
-        {
-            Result = ParseCompoundStatement(File, ParentScope);
+        case TOKEN_OPEN_BRACE: {
+            result = parse_compound_statement(file, parent_scope);
         } break;
     }
     
-    return Result;
+    return result;
 }
 
-internal ast*
-ParseCompoundStatement(parser* Parser, ast* Scope)
-{
-    ast* FirstStmt = ParseStatement(File, Scope);
-    ast* PrevStmt = FirstStmt;
+internal Ast*
+parse_compound_statement(Parser* parser, Ast* scope) {
+    Ast* first_stmt = ParseStatement(file, scope);
+    Ast* prev_stmt = FirstStmt;
     
-    while (!AstOptionalToken(File, Token_CloseBrace))
-    {
-        ast* Stmt = ParseStatement(File, Scope);
+    while (!AST_OPTIONAL_TOKEN(file, TOKEN_CLOSE_BRACE)) {
+        Ast* stmt = parse_statement(file, scope);
         
-        if (Stmt)
-        {
-            Stmt->Left = PrevStmt;
-            PrevStmt->Right = Stmt;
-            PrevStmt = Stmt;
-        }
-        else
-        {
-            BadToken(&File->Token, "expected '}'");
+        if (stmt) {
+            stmt->left = prev_stmt;
+            prev_stmt->right = stmt;
+            prev_stmt = stmt;
+        } else {
+            bad_token(&file->token, "expected '}'");
         }
     }
     
-    return FirstStmt;
+    return first_stmt;
 }
 
-internal ast*
-ParseTypeDeclaration(parser* Parser, ast* ParentScope,
-                     ast_type_definition_type Type)
-{
-    ast* Result = AstNewDecl(AstDecl_Type, File);
-    ast_declaration* Decl = &Result->Decl;
+internal Ast*
+parse_type_declaration(Parser* parser, Ast* parent_scope,
+                       Ast_Type_Definition_Type type) {
+    Ast* result = ast_new_decl(AST_DECL_TYPE, file);
+    Ast_Declaration* decl = &result->decl;
     
-    AstRequireToken(File, Token_Identifier);
-    Decl->Identifier = Alloc(ast_identifier);
-    Decl->Identifier->MyName = File->Token.Text;
+    AST_REQUIRE_TOKEN(file, TOKEN_IDENTIFIER);
+    decl->identifier = PUSH_STRUCT(, Ast_Identifier);
+    decl->identifier->my_name = file->token.text;
     
-    if (AstOptionalToken(File, Token_OpenBrace))
-    {
-        Decl->MyScope = AstNew(Ast_Block, File);
-        Decl->MyScope->Block.Parent = ParentScope;
-        Decl->MyScope->Block.OwningDecl = Result;
+    if (AST_OPTIONAL_TOKEN(file, TOKEN_OPEN_BRACE)) {
+        decl->my_scope = ast_new(Ast_Block, file);
+        decl->my_scope->block.parent = parent_scope;
+        decl->my_scope->block.owning_decl = result;
         
-        Decl->MyType = AstNewTypeDef(Type, File);
-        ast_type_definition* TypeDef = &Decl->MyType->TypeDef;
-        TypeDef->MyDecl = Result;
+        decl->my_type = ast_new_type_def(type, file);
+        Ast_Type_Definition* type_def = &decl->my_type->type_def;
+        type_def->myDecl = result;
         
         // NOTE(yuval): Temporary
-        ast** Decls = 0;
-        u32* DeclIndex = 0;
+        Ast** decls = 0;
+        u32* decl_index = 0;
         
-        switch (Type)
-        {
-            case AstTypeDef_Struct:
-            {
-                Decls = (ast**)&TypeDef->Struct.Members;
-                DeclIndex = &TypeDef->Struct.MemberIndex;
+        switch (type) {
+            case AST_TYPE_DEF_STRUCT: {
+                decls = (Ast**)&type_def->Struct.Members;
+                decl_index = &type_def->Struct.MemberIndex;
             } break;
             
-            case AstTypeDef_Enum:
-            {
-                Decls = (ast**)&TypeDef->Enum.Decls;
-                DeclIndex = &TypeDef->Enum.DeclIndex;
+            case AST_TYPE_DEF_ENUM: {
+                decls = (Ast**)&type_def->Enum.decls;
+                decl_index = &type_def->Enum.decl_index;
             } break;
             
-            case AstTypeDef_Union:
-            {
-                Decls = (ast**)&TypeDef->Union.Decls;
-                DeclIndex = &TypeDef->Union.DeclIndex;
+            case AST_TYPE_DEF_UNION: {
+                decls = (Ast**)&type_def->Union.decls;
+                decl_index = &type_def->Union.decl_index;
             } break;
         }
         
         // NOTE(yuval): Member Declarations Parsing
-        while (!AstGetTokenOfType(File, Token_CloseBrace))
-        {
-            Decls[*DeclIndex] = ParseDeclaration(File, Decl->MyScope);
-            ++(*DeclIndex);
+        while (!AST_GET_TOKEN_CHECK_TYPE(File, TOKEN_CLOSE_BRACE)) {
+            decls[*decl_index] = parse_declaration(file, decl->myScope);
+            ++(*decl_index);
             
-            AstRequireToken(File, Token_Semi);
+            AST_REQUIRE_TOKEN(file, TOKEN_SEMI);
         }
-    }
-    else
-    {
+    } else {
         // TODO(yuval): Think about forward declarations
     }
     
-    return Result;
+    return result;
 }
 
-internal ast*
-ParseDeclaration(parser* Parser, ast* Scope)
-{
-    ast* Result = 0;
+internal Ast*
+parse_declaration(Parser* parser, Ast* scope) {
+    Ast* result = 0;
     
     // NOTE(yuval): Tag Parsing
-    ast_tag* Tags[16] = {};
-    u32 TagIndex = 0;
+    Ast_Tag* tags[16] = {};
+    u32 tag_index = 0;
     
-    while (File->Token.Type == Token_At)
-    {
-        AstRequireToken(File, Token_Identifier);
-        ast_tag* Tag = Alloc(ast_tag);
-        Tag->Tag = File->Token.Text;
-        Tags[TagIndex++] = Tag;
-        AstGetToken(File);
+    while (file->token.type == TOKEN_AT) {
+        AST_REQUIRE_TOKEN(file, TOKEN_IDENTIFIER);
+        Ast_Tag* tag = PUSH_STRUCT(, Ast_Tag);
+        tag->tag = file->token.text;
+        tags[TagIndex++] = tag;
+        AST_GET_TOKEN(file);
     }
     
-    switch (File->Token.Type)
-    {
-        case Token_Typedef:
-        {
+    switch (file->token.type) {
+        case TOKEN_TYPEDEF: {
         } break;
         
-        case Token_Const:
-        {
+        case TOKEN_CONST: {
         } break;
         
-        case Token_Identifier:
-        {
-            ast* Type = FindType(Scope, File->Token.Text);
+        case TOKEN_IDENTIFIER: {
+            Ast* type = find_type(scope, file->token.text);
             
-            if (!Type)
-            {
-                BadToken(&File->Token, "use of undeclared identifier '%S'",
-                         File->Token.Text);
+            if (!type) {
+                bad_token(&file->token, "use of undeclared identifier '%S'",
+                          file->token.text);
             }
             
-            AstRequireToken(File, Token_Identifier);
-            ast_identifier* Identifier = Alloc(ast_identifier);
-            Identifier->MyName = File->Token.Text;
+            AST_REQUIRE_TOKEN(file, TOKEN_IDENTIFIER);
+            ast_identifier* Identifier = PUSH_STRUCT(, Ast_Identifier);
+            identifier->my_name = file->token.text;
             
-            if (AstOptionalToken(File, Token_OpenParen))
-            {
-                Result = AstNewDecl(AstDecl_Func, File);
+            if (AST_OPTIONAL_TOKEN(file, TOKEN_OPEN_PAREN)) {
+                result = ast_new_decl(AstDecl_Func, File);
                 
                 // TODO(yuval): Maybe unite this code with the variable declaration code below?
-                ast_declaration* Decl = &Result->Decl;
-                Decl->Identifier = Identifier;
-                Decl->MyScope = AstNew(Ast_Block, File);
-                Decl->MyScope->Block.Parent = Scope;
+                Ast_Declaration* decl = &result->decl;
+                decl->identifier = identifier;
+                decl->my_scope = ast_new(Ast_Block, file);
+                decl->my_scope->block.parent = scope;
                 
-                ast_function* Func = &Decl->Func;
-                Func->ReturnType = Type;
+                Ast_Function* func = &decl->func;
+                func->return_type = type;
                 
                 // NOTE(yuval): Function Declaration Parsing
-                while (!AstGetTokenOfType(File, Token_CloseParen))
-                {
-                    Func->Params[Func->ParamIndex++] =
-                        ParseDeclaration(File, Scope);
+                while (!AST_GET_TOKEN_CHECK_TYPE(file, TOKEN_CLOSE_BRACE)) {
+                    func->params[func->param_count++] = parse_declaration(file, scope);
                 }
                 
                 // NOTE(yuval): Function Body Parsing
-                AstRequireToken(File, Token_OpenBrace);
-                Func->MyBody = ParseCompoundStatement(File, Decl->MyScope);
-            }
-            else
-            {
+                AST_REQUIRE_TOKEN(file, TOKEN_OPEN_BRACE);
+                func->my_body = parse_compound_statement(file, decl->my_scope);
+            } else {
                 // NOTE(yuval): Variable Declaration Parsing
                 // TODO(yuval): Handle default value assignment
-                Result = AstNewDecl(AstDecl_Var, File);
+                result = ast_new_decl(AstDecl_Var, file);
                 
-                ast_declaration* Decl = &Result->Decl;
-                Decl->Identifier = Identifier;
-                Decl->MyScope = Scope;
-                Decl->MyType = Type;
+                Ast_Declaration* decl = &result->decl;
+                decl->identifier = identifier;
+                decl->my_scope = scope;
+                decl->my_type = type;
             }
         } break;
         
-        case Token_Struct:
-        {
-            Result = ParseTypeDeclaration(File, Scope, AstTypeDef_Struct);
+        case TOKEN_STRCUT: {
+            result = parse_type_declaration(file, Scope, AST_TYPE_DEF_STRUCT);
         } break;
         
-        case Token_Enum:
-        {
-            Result = ParseTypeDeclaration(File, Scope, AstTypeDef_Enum);
+        case TOKEN_ENUM: {
+            result = parse_type_declaration(File, Scope, AST_TYPE_DEF_ENUM);
         } break;
         
-        case Token_Union:
-        {
-            Result = ParseTypeDeclaration(File, Scope, AstTypeDef_Union);
+        case TOKEN_UNION: {
+            result = parse_type_declaration(file, scope, AST_TYPE_DEF_UNION);
         } break;
     }
     
-    if (Result)
-    {
-        Copy(Result->Decl.MyTags, Tags, sizeof(Tags));
-        Scope->Block.Decls[Scope->Block.DeclIndex++] = Result;
+    if (result) {
+        Copy(result->Decl.MyTags, Tags, sizeof(Tags));
+        Scope->Block.decls[Scope->Block.decl_index++] = result;
     }
     
-    return Result;
+    return result;
 }
 
 internal void
-ParseTopLevel(parser* Parser)
-{
-    ast* Decl = ParseDeclaration(File, &File->GlobalScope);
+parse_top_level(Parser* parser) {
+    Ast* decl = parse_declaration(file, &file->global_scope);
     
-    if (Decl->Decl.Type == AstDecl_Type ||
-        Decl->Decl.Type == AstDecl_Var)
-    {
-        AstRequireToken(File, Token_Semi);
+    if (decl->decl.type == AST_DECL_TYPE ||
+        decl->decl.type == AST_DECL_VAR) {
+        AST_REQUIRE_TOKEN(file, TOKEN_SEMI);
     }
 }
 
-internal ast*
-ParseTranslationUnit(parser* Parser, string FileName, string FileContents)
-{
-    ast_translation_unit* TranslationUnit = PushStruct(ast_translation_unit,
-                                                       &Parser->ParserArena);
+internal Ast*
+parse_translation_unit(Parser* parser, String filename, String file_contents) {
+    Ast_Translation_Unit* translation_unit = PUSH_STRUCT(Ast_Translation_Unit,
+                                                         &parser->parser_arena);
     
-    Parser->TranslationUnit = TranslationUnit;
-    Parser->Tokenizer = Tokenize(FileName, FileContents);
+    parser->translation_unit = translation_unit;
+    parser->tokenizer = tokenize(filename, file_contents);
     
-    while (!AstGetTokenOfType(File, Token_EndOfStream))
-    {
-        ParseTopLevel(Parser);
+    while (!AST_GET_TOKEN_CHECK_TYPE(file, TOKEN_END_OF_STREAM)) {
+        parse_top_level(parser);
     }
     
-    return TranslationUnit;
+    return translation_unit;
 };

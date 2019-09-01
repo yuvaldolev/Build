@@ -1,9 +1,9 @@
 #if !defined(BUILD_H)
 
-#define DoJoin2(Arg1, Arg2) Arg1 ## Arg2
-#define Join2(Arg1, Arg2) DoJoin2(Arg1, Arg2)
-#define Join3(Arg1, Arg2, Arg3) Join2(Join2(Arg1, Arg2), Arg3)
-#define Join4(Arg1, Arg2, Arg3, Arg4) Join2(Join3(Arg1, Arg2, Arg3), Arg4)
+#define DO_JOIN2(Arg1, Arg2) Arg1 ## Arg2
+#define JOIN2(Arg1, Arg2) DO_JOIN2(Arg1, Arg2)
+#define JOIN3(Arg1, Arg2, Arg3) JOIN2(JOIN2(Arg1, Arg2), Arg3)
+#define JOIN4(Arg1, Arg2, Arg3, Arg4) JOIN2(JOIN3(Arg1, Arg2, Arg3), Arg4)
 
 #include "build_platform.h"
 #include "build_for.h"
@@ -17,10 +17,10 @@
 
 struct compilation_work
 {
-    char* FileName;
-    compiler_info* CompilerInfo;
-    memory_arena* MemoryArena;
-    b32 IsVerboseBuild;
+    char* file_name;
+    Compiler_Info* compiler_info;
+    Memory_Arena* memory_arena;
+    b32 is_verbose_build;
 };
 
 #define BUILD_H
