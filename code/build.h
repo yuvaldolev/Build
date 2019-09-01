@@ -17,7 +17,7 @@
 
 struct compilation_work
 {
-    char* file_name;
+    char* filename;
     Compiler_Info* compiler_info;
     Memory_Arena* memory_arena;
     b32 is_verbose_build;

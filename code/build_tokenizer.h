@@ -127,22 +127,21 @@ PP_KEYWORD_TOKEN_TYPE(PP_USING, "USING")
 
 enum Token_Type
 {
-#define TOKEN_TYPE(type) Join2(TOKEN_, type),
+#define TOKEN_TYPE(type) JOIN2(TOKEN_, type),
     TOKEN_TYPES
 #undef TOKEN_TYPE
     
-#define KEYWORD_TOKEN_TYPE(type, ...) Join2(TOKEN_, type),
+#define KEYWORD_TOKEN_TYPE(type, ...) JOIN2(TOKEN_, type),
         KEYWORD_TOKEN_TYPES
 #undef KEYWORD_TOKEN_TYPE
     
-#define PP_KEYWORD_TOKEN_TYPE(type, ...) Join2(TOKEN_, type),
+#define PP_KEYWORD_TOKEN_TYPE(type, ...) JOIN2(TOKEN_, type),
         PP_KEYWORD_TOKEN_TYPES
 #undef PP_KEYWORD_TOKEN_TYPE
 };
 
-struct Token
-{
-    String file_name;
+struct Token {
+    String filename;
     
     s32 line_number;
     s32 column_number;
@@ -155,9 +154,8 @@ struct Token
     f32 value_f32;
 };
 
-struct Tokenizer
-{
-    String file_name;
+struct Tokenizer {
+    String filename;
     
     s32 line_number;
     s32 column_number;
@@ -167,6 +165,12 @@ struct Tokenizer
     char at[2];
     
     b32 error;
+};
+
+// TODO(yuval): Maybe add a better data structure for faster lookup
+struct Token_Name_And_Type {
+    const char* name;
+    Token_Type type;
 };
 
 #define BUILD_TOKENIZER_H

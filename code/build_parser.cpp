@@ -108,11 +108,11 @@ indent_line(u32 n_spaces) {
 
 internal void
 dump_ast_details(Ast* ast) {
-    String* file_name = &ast->my_file->file_name;
+    String* filename = &ast->my_file->filename;
     
     printf("%p <%.*s:%d:%d> ",
            (void*)ast,
-           (s32)file_name->count, file_name->Data,
+           (s32)filename->count, filename->Data,
            ast->my_line, ast->my_column);
 }
 
