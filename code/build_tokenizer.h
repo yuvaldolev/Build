@@ -1,173 +1,173 @@
 #if !defined(BUILD_TOKENIZER_H)
 
 /* TODO(yuval): Create Default Ast Types For These Keywords:
-KeywordTokenType(Void, "void")
-KeywordTokenType(Bool, "bool")
-KeywordTokenType(Char, "char")
-KeywordTokenType(Int, "int")
-KeywordTokenType(Float, "float")
-KeywordTokenType(Double, "double")
-KeywordTokenType(Long, "long")
-KeywordTokenType(Short, "short")
-KeywordTokenType(Unsigned, "unsigned")
+KEYWORD_TOKEN_TYPE(Void, "void")
+KEYWORD_TOKEN_TYPE(Bool, "bool")
+KEYWORD_TOKEN_TYPE(Char, "char")
+KEYWORD_TOKEN_TYPE(Int, "int")
+KEYWORD_TOKEN_TYPE(Float, "float")
+KEYWORD_TOKEN_TYPE(Double, "double")
+KEYWORD_TOKEN_TYPE(Long, "long")
+KEYWORD_TOKEN_TYPE(Short, "short")
+KEYWORD_TOKEN_TYPE(Unsigned, "unsigned")
 */
 
-#define TokenTypes \
-TokenType(Unknown) \
-TokenType(Ternary) \
-TokenType(OpenBracket) \
-TokenType(CloseBracket) \
-TokenType(OpenParen) \
-TokenType(CloseParen) \
-TokenType(OpenBrace) \
-TokenType(CloseBrace) \
-TokenType(Period) \
-TokenType(Tilde) \
-TokenType(Semi) \
-TokenType(Comma) \
-TokenType(At) \
-TokenType(Amp) \
-TokenType(AmpAmp) \
-TokenType(AmpEqual) \
-TokenType(Star) \
-TokenType(StarEqual) \
-TokenType(Plus) \
-TokenType(PlusPlus) \
-TokenType(PlusEqual) \
-TokenType(Minus) \
-TokenType(MinusMinus) \
-TokenType(MinusEqual) \
-TokenType(Arrow) \
-TokenType(Not) \
-TokenType(NotEqual) \
-TokenType(Percent) \
-TokenType(PercentEqual) \
-TokenType(Less) \
-TokenType(LessEqual) \
-TokenType(Greater) \
-TokenType(GreaterEqual) \
-TokenType(Caret) \
-TokenType(CaretCaret) \
-TokenType(CaretEqual) \
-TokenType(Pipe) \
-TokenType(PipePipe) \
-TokenType(PipeEqual) \
-TokenType(Colon) \
-TokenType(ColonColon) \
-TokenType(Equal) \
-TokenType(EqualEqual) \
-TokenType(Hash) \
-TokenType(HashHash) \
-TokenType(Slash) \
-TokenType(SlashEqual) \
-TokenType(Comment) \
-TokenType(StringLiteral) \
-TokenType(CharConstant) \
-TokenType(Number) \
-TokenType(Identifier) \
-TokenType(Spacing) \
-TokenType(EndOfLine) \
-TokenType(EndOfStream)
+#define TOKEN_TYPES \
+TOKEN_TYPE(UNKNOWN) \
+TOKEN_TYPE(TERNARY) \
+TOKEN_TYPE(OPEN_BRACKET) \
+TOKEN_TYPE(CLOSE_BRACKET) \
+TOKEN_TYPE(OPEN_PAREN) \
+TOKEN_TYPE(CLOSE_PAREN) \
+TOKEN_TYPE(OPEN_BRACE) \
+TOKEN_TYPE(CLOSE_BRACE) \
+TOKEN_TYPE(PERIOD) \
+TOKEN_TYPE(TILDE) \
+TOKEN_TYPE(SEMI) \
+TOKEN_TYPE(COMMA) \
+TOKEN_TYPE(AT) \
+TOKEN_TYPE(AMP) \
+TOKEN_TYPE(AMP_AMP) \
+TOKEN_TYPE(AMP_EQUAL) \
+TOKEN_TYPE(STAR) \
+TOKEN_TYPE(STAR_EQUAL) \
+TOKEN_TYPE(PLUS) \
+TOKEN_TYPE(PLUS_PLUS) \
+TOKEN_TYPE(PLUS_EQUAL) \
+TOKEN_TYPE(MINUS) \
+TOKEN_TYPE(MINUS_MINUS) \
+TOKEN_TYPE(MINUS_EQUAL) \
+TOKEN_TYPE(ARROW) \
+TOKEN_TYPE(NOT) \
+TOKEN_TYPE(NOT_EQUAL) \
+TOKEN_TYPE(PERCENT) \
+TOKEN_TYPE(PERCENT_EQUAL) \
+TOKEN_TYPE(LESS) \
+TOKEN_TYPE(LESS_EQUAL) \
+TOKEN_TYPE(GREATER) \
+TOKEN_TYPE(GREATER_EQUAL) \
+TOKEN_TYPE(CARET) \
+TOKEN_TYPE(CARET_CARET) \
+TOKEN_TYPE(CARET_EQUAL) \
+TOKEN_TYPE(PIPE) \
+TOKEN_TYPE(PIPE_PIPE) \
+TOKEN_TYPE(PIPE_EQUAL) \
+TOKEN_TYPE(COLON) \
+TOKEN_TYPE(COLON_COLON) \
+TOKEN_TYPE(EQUAL) \
+TOKEN_TYPE(EQUAL_EQUAL) \
+TOKEN_TYPE(HASH) \
+TOKEN_TYPE(HASH_HASH) \
+TOKEN_TYPE(SLASH) \
+TOKEN_TYPE(SLASH_EQUAL) \
+TOKEN_TYPE(COMMENT) \
+TOKEN_TYPE(STRING_LITERAL) \
+TOKEN_TYPE(CHAR_CONSTANT) \
+TOKEN_TYPE(NUMBER) \
+TOKEN_TYPE(IDENTIFIER) \
+TOKEN_TYPE(SPACING) \
+TOKEN_TYPE(END_OF_LINE) \
+TOKEN_TYPE(END_OF_STREAM)
 
 // TODO(yuval): Maybe add an "export" keyword
 
-#define KeywordTokenTypes \
-KeywordTokenType(BoolConstant, "true") \
-KeywordTokenType(Const, "const") \
-KeywordTokenType(Volatile, "volatile") \
-KeywordTokenType(If, "if") \
-KeywordTokenType(Switch, "switch") \
-KeywordTokenType(For, "for") \
-KeywordTokenType(While, "while") \
-KeywordTokenType(Do, "do") \
-KeywordTokenType(Else, "else") \
-KeywordTokenType(Case, "case") \
-KeywordTokenType(Default, "default") \
-KeywordTokenType(Break, "break") \
-KeywordTokenType(Continue, "continue") \
-KeywordTokenType(Return, "return") \
-KeywordTokenType(Goto, "goto") \
-KeywordTokenType(Struct, "struct") \
-KeywordTokenType(Enum, "enum") \
-KeywordTokenType(Union, "union") \
-KeywordTokenType(Typedef, "typedef") \
-KeywordTokenType(Static, "static") \
-KeywordTokenType(Inline, "inline") \
-KeywordTokenType(Extern, "extern") \
+#define KEYWORD_TOKEN_TYPES \
+KEYWORD_TOKEN_TYPE(BOOL_CONSTANT, "true") \
+KEYWORD_TOKEN_TYPE(CONST, "const") \
+KEYWORD_TOKEN_TYPE(VOLATILE, "volatile") \
+KEYWORD_TOKEN_TYPE(IF, "if") \
+KEYWORD_TOKEN_TYPE(SWITCH, "switch") \
+KEYWORD_TOKEN_TYPE(FOR, "for") \
+KEYWORD_TOKEN_TYPE(WHILE, "while") \
+KEYWORD_TOKEN_TYPE(DO, "do") \
+KEYWORD_TOKEN_TYPE(ELSE, "else") \
+KEYWORD_TOKEN_TYPE(CASE, "case") \
+KEYWORD_TOKEN_TYPE(DEFAULT, "default") \
+KEYWORD_TOKEN_TYPE(BREAK, "break") \
+KEYWORD_TOKEN_TYPE(CONTINUE, "continue") \
+KEYWORD_TOKEN_TYPE(RETURN, "return") \
+KEYWORD_TOKEN_TYPE(GOTO, "goto") \
+KEYWORD_TOKEN_TYPE(STRUCT, "struct") \
+KEYWORD_TOKEN_TYPE(ENUM, "enum") \
+KEYWORD_TOKEN_TYPE(UNION, "union") \
+KEYWORD_TOKEN_TYPE(TYPEDEF, "typedef") \
+KEYWORD_TOKEN_TYPE(STATIC, "static") \
+KEYWORD_TOKEN_TYPE(INLINE, "inline") \
+KEYWORD_TOKEN_TYPE(EXTERN, "extern") \
 
-#define PPKeywordTokenTypes \
-PPKeywordTokenType(PP_Include, "include") \
-PPKeywordTokenType(PP_Define, "define") \
-PPKeywordTokenType(PP_If, "if") \
-PPKeywordTokenType(PP_Elif, "elif") \
-PPKeywordTokenType(PP_Else, "else") \
-PPKeywordTokenType(PP_Ifdef, "ifdef") \
-PPKeywordTokenType(PP_Ifndef, "ifndef") \
-PPKeywordTokenType(PP_Endif, "endif") \
-PPKeywordTokenType(PP_Import, "import") \
-PPKeywordTokenType(PP_Pragma, "pragma") \
-PPKeywordTokenType(PP_Undef, "undef") \
-PPKeywordTokenType(PP_Error, "error") \
-PPKeywordTokenType(PP_Using, "using")
+#define PP_KEYWORD_TOKEN_TYPES \
+PP_KEYWORD_TOKEN_TYPE(PP_INCLUDE, "include") \
+PP_KEYWORD_TOKEN_TYPE(PP_DEFINE, "define") \
+PP_KEYWORD_TOKEN_TYPE(PP_IF, "if") \
+PP_KEYWORD_TOKEN_TYPE(PP_ELIF, "elif") \
+PP_KEYWORD_TOKEN_TYPE(PP_ELSE, "else") \
+PP_KEYWORD_TOKEN_TYPE(PP_IFDEF, "ifdef") \
+PP_KEYWORD_TOKEN_TYPE(PP_IFNDEF, "ifndef") \
+PP_KEYWORD_TOKEN_TYPE(PP_ENDIF, "endif") \
+PP_KEYWORD_TOKEN_TYPE(PP_IMPORT, "import") \
+PP_KEYWORD_TOKEN_TYPE(PP_PRAGMA, "pragma") \
+PP_KEYWORD_TOKEN_TYPE(PP_UNDEF, "undef") \
+PP_KEYWORD_TOKEN_TYPE(PP_ERROR, "error") \
+PP_KEYWORD_TOKEN_TYPE(PP_USING, "using")
 
-#define PPKeywordTokenTypesUpper \
-PPKeywordTokenType(PP_Include, "INCLUDE") \
-PPKeywordTokenType(PP_Define, "DEFINE") \
-PPKeywordTokenType(PP_If, "IF") \
-PPKeywordTokenType(PP_Elif, "ELIF") \
-PPKeywordTokenType(PP_Else, "ELSE") \
-PPKeywordTokenType(PP_Ifdef, "IFDEF") \
-PPKeywordTokenType(PP_Ifndef, "IFNDEF") \
-PPKeywordTokenType(PP_Endif, "ENDIF") \
-PPKeywordTokenType(PP_Import, "IMPORT") \
-PPKeywordTokenType(PP_Pragma, "PRAGMA") \
-PPKeywordTokenType(PP_Undef, "UNDEF") \
-PPKeywordTokenType(PP_Error, "ERROR") \
-PPKeywordTokenType(PP_Using, "USING")
+#define PP_KEYWORD_TOKEN_TYPES_UPPER \
+PP_KEYWORD_TOKEN_TYPE(PP_INCLUDE, "INCLUDE") \
+PP_KEYWORD_TOKEN_TYPE(PP_DEFINE, "DEFINE") \
+PP_KEYWORD_TOKEN_TYPE(PP_IF, "IF") \
+PP_KEYWORD_TOKEN_TYPE(PP_ELIF, "ELIF") \
+PP_KEYWORD_TOKEN_TYPE(PP_ELSE, "ELSE") \
+PP_KEYWORD_TOKEN_TYPE(PP_IFDEF, "IFDEF") \
+PP_KEYWORD_TOKEN_TYPE(PP_IFNDEF, "IFNDEF") \
+PP_KEYWORD_TOKEN_TYPE(PP_ENDIF, "ENDIF") \
+PP_KEYWORD_TOKEN_TYPE(PP_IMPORT, "IMPORT") \
+PP_KEYWORD_TOKEN_TYPE(PP_PRAGMA, "PRAGMA") \
+PP_KEYWORD_TOKEN_TYPE(PP_UNDEF, "UNDEF") \
+PP_KEYWORD_TOKEN_TYPE(PP_ERROR, "ERROR") \
+PP_KEYWORD_TOKEN_TYPE(PP_USING, "USING")
 
-enum token_type
+enum Token_Type
 {
-#define TokenType(Type) Join2(Token_, Type),
-    TokenTypes
-#undef TokenType
+#define TOKEN_TYPE(type) Join2(TOKEN_, type),
+    TOKEN_TYPES
+#undef TOKEN_TYPE
     
-#define KeywordTokenType(Type, ...) Join2(Token_, Type),
-        KeywordTokenTypes
-#undef KeywordTokenType
+#define KEYWORD_TOKEN_TYPE(type, ...) Join2(TOKEN_, type),
+        KEYWORD_TOKEN_TYPES
+#undef KEYWORD_TOKEN_TYPE
     
-#define PPKeywordTokenType(Type, ...) Join2(Token_, Type),
-        PPKeywordTokenTypes
-#undef PPKeywordTokenType
+#define PP_KEYWORD_TOKEN_TYPE(type, ...) Join2(TOKEN_, type),
+        PP_KEYWORD_TOKEN_TYPES
+#undef PP_KEYWORD_TOKEN_TYPE
 };
 
-struct token
+struct Token
 {
-    string FileName;
+    String file_name;
     
-    s32 LineNumber;
-    s32 ColumnNumber;
+    s32 line_number;
+    s32 column_number;
     
-    token_type Type;
-    string Text;
-    string FileData;
+    Token_Type type;
+    String text;
+    String file_data;
     
-    f32 F32;
-    s32 S32;
+    s32 value_s32;
+    f32 value_f32;
 };
 
-struct tokenizer
+struct Tokenizer
 {
-    string FileName;
+    String file_name;
     
-    s32 LineNumber;
-    s32 ColumnNumber;
+    s32 line_number;
+    s32 column_number;
     
-    string Input;
-    string InputFileData;
-    char At[2];
+    String input;
+    String input_file_data;
+    char at[2];
     
-    b32 Error;
+    b32 error;
 };
 
 #define BUILD_TOKENIZER_H
-#endif
+#endif // #if !defined(BUILD_TOKENIZER_H)

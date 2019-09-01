@@ -621,8 +621,8 @@ parse_declaration(Parser* parser, Ast* scope) {
     }
     
     if (result) {
-        Copy(result->Decl.MyTags, Tags, sizeof(Tags));
-        Scope->Block.decls[Scope->Block.decl_index++] = result;
+        copy(result->decl.myTags, tags, sizeof(tags));
+        scope->block.decls[scope->block.decl_index++] = result;
     }
     
     return result;
