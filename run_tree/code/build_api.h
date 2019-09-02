@@ -11,7 +11,7 @@
 // NOTE(yuval): To be used only in the same function
 // where the array was defined or with arrays that are defined
 // within structs
-#define BuildArrayCount(Array) (sizeof(Array) / sizeof((Array)[0]))
+#define BUILD_ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
 
 typedef int8_t build_s8;
 typedef int16_t build_s16;
@@ -36,136 +36,121 @@ typedef uintptr_t build_umm;
 #include "yd/yd_string.h"
 
 // TODO(yuval): Make this export functions
-#define BUILD_FUNCTION(Name) void Name(struct build_application_links* App)
-typedef BUILD_FUNCTION(build_function);
+#define BUILD_FUNCTION(name) void name(struct Build_Application_Links* app)
+typedef BUILD_FUNCTION(Build_Function);
 
-struct build_file_array
-{
-    string Paths[4096];
-    build_umm Count;
+struct Build_File_Array {
+    String paths[4096];
+    build_umm count;
 };
 
-enum build_output_type
-{
-    BuildOutput_Executable,
-    BuildOutput_StaticLibrary,
-    BuildOutput_SharedLibrary
+enum Build_Output_Type {
+    BUILD_OUTPUT_EXECUTABLE,
+    BUILD_OUTPUT_STATIC_LIBRARY,
+    BUILD_OUTPUT_SHARED_LIBRARY
 };
 
-enum build_compiler_type
-{
+enum Build_Compiler_Type {
     // NOTE(yuval): Used for automatic compiler detection (this is the default compiler type)
-    BuildCompiler_Auto,
+    BUILD_COMPILER_AUTO,
     
-    BuildCompiler_Clang,
-    BuildCompiler_GPP,
-    BuildCompiler_GCC,
-    BuildCompiler_MSVC,
+    BUILD_COMPILER_CLANG,
+    BUILD_COMPILER_GPP,
+    BUILD_COMPILER_GCC,
+    BUILD_COMPILER_MSVC,
     
-    BuildCompiler_Count
+    BUILD_COMPILER_COUNT
 };
 
-struct build_command_line_args
-{
-    const char* Args[512];
-    build_umm Count;
+struct Build_Command_Line_Args {
+    const char* args[512];
+    build_umm count;
 };
 
-struct build_options
-{
-    build_u32 OptimizationLevel;
+struct Build_Options {
+    build_u32 optimization_level;
     
-    build_output_type OutputType;
-    string OutputName;
-    string OutputPath;
+    Build_Output_Type output_type;
+    String output_name;
+    String output_path;
     
-    build_command_line_args CompilerArgs;
-    build_command_line_args LinkerArgs;
+    Build_Command_Line_Args compiler_args;
+    Build_Command_Line_Args linker_args;
     
-    build_compiler_type Compiler;
+    Build_Compiler_Type compiler;
 };
 
-struct build_workspace
-{
-    string Name;
-    build_file_array Files;
-    build_options Options;
+struct Build_Workspace {
+    String name;
+    Build_File_Array files;
+    Build_Options options;
 };
 
-struct build_workspace_array
-{
-    build_workspace Workspaces[8];
-    build_umm Count;
+struct Build_Workspace_Array {
+    Build_Workspace workspaces[8];
+    build_umm count;
 };
 
-enum build_message_type
-{
-    BuildMessage_Invalid,
+enum Build_Message_Type {
+    BUILD_MESSAGE_INVALID,
     
-    BuildMessage_Started,
-    BuildMessage_Completed,
+    BUILD_MESSAGE_STARTED,
+    BUILD_MESSAGE_COMPLETED,
     
-    BuildMessage_Workspace,
-    BuildMessage_File,
+    BUILD_MESSAGE_WORKSPACE,
+    BUILD_MESSAGE_FILE,
 };
 
-struct build_message
-{
-    build_message_type Type;
+struct Build_Message {
+    Build_Message_Type type;
     
-    union
-    {
-        string String;
-        build_b32 Bool;
-    } Data;
+    union {
+        String data_string;
+        build_b32 data_b32;
+    };
 };
 
-#define BUILD_CREATE_WORKSPACE(FnName) build_workspace* FnName(struct build_application_links* App, \
-string Name)
-typedef BUILD_CREATE_WORKSPACE(build_create_workspace);
+#define BUILD_CREATE_WORKSPACE(fn_name) Build_Workspace* \
+fn_name(struct Build_Application_Links* app, String name)
 
-#define START_BUILD(Name) void Name(struct build_application_links* App)
-typedef START_BUILD(start_build);
+typedef BUILD_CREATE_WORKSPACE(Build_Create_Workspace);
 
-#define BUILD_WAIT_FOR_MESSAGE(Name) build_message Name(struct build_application_links* App)
-typedef BUILD_WAIT_FOR_MESSAGE(build_wait_for_message);
+#define START_BUILD(name) void name(struct Build_Application_Links* app)
+typedef START_BUILD(Start_Build);
 
-struct build_application_links
-{
-    build_workspace_array Workspaces;
+#define BUILD_WAIT_FOR_MESSAGE(name) Build_Message name(struct Build_Application_Links* app)
+typedef BUILD_WAIT_FOR_MESSAGE(Build_Wait_For_Message);
+
+struct Build_Application_Links {
+    Build_Workspace_Array workspaces;
     
-    build_create_workspace* CreateWorkspace_;
+    Build_Create_Workspace* create_workspace_;
     
-    start_build* StartBuild_;
-    build_wait_for_message* WaitForMessage_;
+    Start_Build* start_build_;
+    Build_Wait_For_Message* wait_for_message_;
 };
 
-build_internal inline build_workspace*
-BuildCreateWorkspace(build_application_links* App, string Name)
-{
-    return App->CreateWorkspace_(App, Name);
+build_internal inline Build_Workspace*
+build_create_workspace(Build_Application_Links* app, String name) {
+    return app->create_workspace_(app, name);
 }
 
 build_internal inline void
-StartBuild(build_application_links* App)
-{
-    App->StartBuild_(App);
+start_build(Build_Application_Links* app) {
+    app->start_build_(app);
 }
 
 build_internal inline build_message
-BuildWaitForMessage(build_application_links* App)
-{
-    return App->WaitForMessage_(App);
+build_wait_for_message(Build_Application_Links* app) {
+    return app->wait_for_message_(app);
 }
 
 build_internal void
-BuildAddFile(build_workspace* Workspace, string FileName)
-{
-    build_file_array* Files = &Workspace->Files;
+build_add_file(Build_Workspace* workspace, String filename) {
+    Build_File_Array* files = &workspace->files;
     
-    if (Files->Count < BuildArrayCount(Files->Paths))
-    {
-        Files->Paths[Files->Count++] = FileName;
+    if (files->count < BUILD_ARRAY_COUNT(files->paths)) {
+        files->paths[files->count++] = filename;
     }
 }
 

@@ -93,13 +93,13 @@ get_token_raw(Tokenizer* tokenizer) {
     if (is_alpha(tokenizer->at[0])) {
         b32 is_keyword = false;
         
-        ArrayFor (global_keywords) {
+        array_foreach (global_keywords) {
             if (strings_match_part(tokenizer->Input, it.Name)) {
                 // TODO(yuval): Copy-and-paste - string_length is called twice
                 advance_chars(tokenizer, string_length(It.Name));
                 token.type = it.type;
                 is_keyword = true;
-                ArrayBreak;
+                array_break;
             }
         }
         
@@ -268,13 +268,13 @@ get_token_raw(Tokenizer* tokenizer) {
                 } else {
                     b32 is_keyword = false;
                     
-                    ArrayFor (global_pp_keywords) {
+                    array_foreach (global_pp_keywords) {
                         if (strings_match_part(tokenizer->input, it.name)) {
                             // TODO(yuval): Copy-and-paste - string_length is called twice
                             advance_chars(tokenizer, string_length(it.name));
                             token.type = it.type;
                             is_keyword = true;
-                            ArrayBreak;
+                            array_break;
                         }
                     }
                     
