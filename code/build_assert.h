@@ -5,43 +5,40 @@
 #include <stdio.h>
 
 #if 0
-#define Assert_(Expression, ShouldCrash) \
-if (!(Expression)) \
-{ \
-    char Message[256]; \
-    snprintf(Message, sizeof(Message), "Assertion Failure: %s at %s:%s:%d", \
-    #Expression, __FILE__, __FUNCTION__, __LINE__); \
-    Platform.DisplayMessageBox("ASSERSION FAILURE", Message); \
-    if (ShouldCrash) \
-    { \
+#define ASSERT_(expression, should_crash) \
+if (!(expression)) { \
+    char message[256]; \
+    snprintf(message, sizeof(message), "Assertion Failure: %s at %s:%s:%d", \
+    #expression, __FILE__, __FUNCTION__, __LINE__); \
+    platform.display_message_box("ASSERSION FAILURE", message); \
+    if (should_crash) { \
         *(volatile int*)0 = 0; \
     } \
 }
 #else // TODO(yuval): Temporary! Use the above macro which calls the platform for display message boxes
-#define Assert_(Expression, ShouldCrash) \
-if (!(Expression)) \
-{ \
-    char Message[256]; \
-    snprintf(Message, sizeof(Message), "Assertion Failure: %s at %s:%s:%d", \
-    #Expression, __FILE__, __FUNCTION__, __LINE__); \
-    NSAlert *Alert = [[[NSAlert alloc] init] autorelease]; \
-    NSString* MessageString = [NSString stringWithUTF8String:Message]; \
+#define ASSERT_(expression, should_crash) \
+if (!(expression)) { \
+    char message[256]; \
+    snprintf(message, sizeof(message), "Assertion Failure: %s at %s:%s:%d", \
+    #expression, __FILE__, __FUNCTION__, __LINE__); \
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease]; \
+    NSString* message_string = [NSString stringWithUTF8String:message]; \
     [Alert setMessageText:@"ASSERSION FAILURE"]; \
-    [Alert setInformativeText:MessageString]; \
+    [Alert setInformativeText:message_string]; \
     [Alert runModal]; \
-    if (ShouldCrash) \
-    { \
+    if (should_crash) { \
         *(volatile int*)0 = 0; \
     } \
 }
 #endif // #if 0
 
-#define Assert(Expression) Assert_((Expression), true)
-#define SoftAssert(Expression) Assert_((Expression), false)
+#define ASSERT(expression) ASSERT_((expression), true)
+#define SOFT_ASSERT(expression) ASSERT_((expression), false)
 
 #else
-#define Assert(Expression)
-#define SoftAssert(Expression)
+
+#define ASSERT(expression)
+#define SOFT_ASSERT(expression)
 #endif // #if BUILD_SLOW
 
 #define BUILD_ASSERT_H
