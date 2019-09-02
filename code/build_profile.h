@@ -1,97 +1,87 @@
 #if !defined(BUILD_PROFILE_H)
 
-enum time_event_type
-{
-    TimeEvent_None,
+enum Time_Event_Type {
+    TIME_EVENT_NONE,
     
-    TimeEvent_BeginBlock,
-    TimeEvent_EndBlock
+    TIME_EVENT_BEGIN_BLOCK,
+    TIME_EVENT_END_BLOCK
 };
 
-struct time_event
-{
-    time_event_type Type;
-    const char* Name;
+struct Time_Event {
+    Time_Event_Type type;
+    const char* name;
     // TODO(yuval): Maybe add a name hash so that we would be able to quickly search an event by its name
     
-    u64 Clock;
-    u64 CycleCount;
+    u64 clock;
+    u64 cycle_count;
     
     // TODO(yuval): Change this to a union as more time_event types are added
-    time_event* Parent; // NOTE(yuval): Used to TimeEvent_BeginBlock
+    Time_Event* parent; // NOTE(yuval): Used for TIME_EVENT_BEGIN_BLOCK
     
 };
 
-struct time_events_queue
-{
-    time_event Events[1024];
-    umm ReadIndex;
-    umm WriteIndex;
+struct Time_Events_Queue {
+    Time_Event events[1024];
+    umm read_index;
+    umm write_index;
 };
 
 // TODO(yuval): Maybe force sending CycleCount (get rid of the default value for the parameter)
 inline b32
-RecordTimeEvent_(time_events_queue* Queue, time_event_type Type,
-                 const char* Name, u64 Clock, u64 CycleCount = 0)
-{
-    umm NextWriteIndex = (Queue->WriteIndex + 1) % ArrayCount(Queue->Events);
-    b32 CanRecordTimeEvent = (NextWriteIndex != Queue->ReadIndex);
+record_time_event_(Time_Events_Queue* queue, Time_Event_Type type,
+                   const char* name, u64 clock, u64 cycle_count = 0) {
+    umm next_write_index = (queue->write_index + 1) % ARRAY_COUNT(queue->events);
+    b32 can_record_time_event = (next_write_index != queue->read_index);
     
     // TODO(yuval): Make this write thread-safe
-    if (CanRecordTimeEvent)
-    {
-        time_event* Event = &Queue->Events[Queue->WriteIndex];
-        Queue->WriteIndex = NextWriteIndex;
+    if (can_record_time_event) {
+        Time_Event* event = &queue->events[queue->write_index];
+        queue->write_index = next_write_index;
         
-        Event->Type = Type;
-        Event->Name = Name;
-        Event->Clock = Clock;
-        Event->CycleCount = CycleCount;
+        event->type = type;
+        event->name = name;
+        event->clock = clock;
+        event->cycle_count = cycle_count;
     }
     
-    return CanRecordTimeEvent;
+    return can_record_time_event;
 }
 
-#define RecordTimeEvent(Queue, Type, Name) RecordTimeEvent_(Queue, Type, Name, \
-Platform.GetWallClock(), \
-__rdtsc())
+#define RECORD_TIME_EVENT(queue, type, name) \
+record_time_event_(queue, type, name, platform.get_wall_clock(), __rdtsc())
+
 inline time_event*
-ReadTimeEvent(time_events_queue* Queue)
-{
+read_time_event(Time_Events_Queue* queue) {
     // TODO(yuval): Make this read thread-safe
-    time_event* Event = 0;
+    Time_Event* event = 0;
     
-    if (Queue->ReadIndex != Queue->WriteIndex)
-    {
-        Event = &Queue->Events[Queue->ReadIndex++];
-        Queue->ReadIndex %= ArrayCount(Queue->Events);
+    if (queue->read_index != queue->write_index) {
+        event = &queue->events[queue->read_index++];
+        queue->read_index %= ARRAY_COUNT(queue->events);
     }
     
-    return Event;
+    return event;
 }
 
 // TODO(yuval): Maybe allow using a default queue?
-#define BeginTimedBlock(Queue, Name) { RecordTimeEvent(Queue, TimeEvent_BeginBlock, Name); }
-#define EndTimedBlock(Queue) { RecordTimeEvent(Queue, TimeEvent_EndBlock, "EndBlock_"); }
+#define BEGIN_TIMED_BLOCK(queue, name) { RECORD_TIME_EVENT(queue, TIME_EVENT_BEGIN_BLOCK, name); }
+#define END_TIMED_BLOCK(queue) { RECORD_TIME_EVENT(queue, TIME_EVENT_END_BLOCK, "EndBlock_"); }
 
-struct timed_block
-{
-    time_events_queue* Queue;
+struct Timed_Block {
+    Time_Events_Queue* queue;
     
-    timed_block(const char* Name, time_events_queue* Queue_)
-    {
-        Queue = Queue_;
-        BeginTimedBlock(Queue, Name);
+    Timed_Block(const char* name, Time_Events_Queue* queue_) {
+        queue = queue_;
+        BEGIN_TIMED_BLOCK(queue, name);
     }
     
-    ~timed_block()
-    {
-        EndTimedBlock(Queue);
+    ~Timed_Block() {
+        END_TIMED_BLOCK(queue);
     }
 };
 
-#define TimedBlock(Name, Queue) timed_block Join2(TimedBlock_, __COUNTER__)(Name, Queue)
-#define TimedFunction(Queue) TimedBlock(__FUNCTION__, Queue)
+#define TIMED_BLOCK(name, queue) Timed_Block JOIN2(timed_block_, __COUNTER__)(name, queue)
+#define TimedFunction(queue) Timed_Block(__FUNCTION__, queue)
 
 #define BUILD_PROFILE_H
 #endif // #if !defined(BUILD_PROFILE_H)
