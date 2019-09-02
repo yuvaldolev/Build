@@ -3,18 +3,18 @@
 ///////////////////////////////
 //       Array Foreach       //
 ///////////////////////////////
-#define ArrayFor(Array) \
-for (u32 Index = 0, For__ShouldBreak = 0; \
-Index < ArrayCount(Array) && !For__ShouldBreak; \
-++Index) \
-for (b32 Join2(B, __LINE__) = true; \
-Join2(B, __LINE__); \
-Join2(B, __LINE__) = false) \
-for (auto& It = (Array)[Index]; \
-Join2(B, __LINE__); \
-Join2(B, __LINE__) = false)
+#define array_foreach(array) \
+for (u32 it_index = 0, foreach__should_break = 0; = 0; \
+it_index < ARRAY_COUNT(array) && !foreach__should_break; \
+++it_index) \
+for (b32 JOIN2(b, __LINE__) = true; \
+JOIN2(b, __LINE__); \
+JOIN2(b, __LINE__) = false) \
+for (auto& it = (array)[it_index]; \
+JOIN2(b, __LINE__); \
+JOIN2(b, __LINE__) = false)
 
-#define ArrayBreak For__ShouldBreak = 1
+#define array_break foreach__should_break = 1
 
 #if 0
 ///////////////////////////////
