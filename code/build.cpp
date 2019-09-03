@@ -9,8 +9,8 @@
 #include "build_tokenizer.cpp"
 #include "build_parser.cpp"
 
-global time_events_queue GlobalTimeEventsQueue;
-global b32 GlobalBuildSucceeded = true;
+global Time_Events_Queue global_time_events_queue;
+global b32 global_build_succeeded = true;
 
 #if 0
 struct FunctionVariable
@@ -240,313 +240,271 @@ MetaToolProcessFile(string FileName)
 #define LINKAGE_TIMED_BLOCK_NAME "Linkage"
 
 internal void
-PrintWorkspaceBuildStats(time_events_queue* Queue)
-{
-    f32 TotalBuildTime = -1.0f;
-    f32 CompilationTime = -1.0f;
-    f32 LinkageTime = -1.0f;
+print_workspace_build_stats(Time_Events_Queue* queue) {
+    f32 total_build_time = -1.0f;
+    f32 compilation_time = -1.0f;
+    f32 linkage_time = -1.0f;
     
-    time_event* LastTimedBlock = 0;
+    Time_Event* last_timed_block = 0;
     
-    time_event* Event = ReadTimeEvent(Queue);
-    while (Event)
-    {
-        switch (Event->Type)
-        {
-            case TimeEvent_BeginBlock:
-            {
+    Time_Event* event = read_time_event(queue);
+    while (event) {
+        switch (event->type) {
+            case TIME_EVENT_BEGIN_BLOCK: {
                 // TODO(yuval): The parent event and the OpenBlock event can change when new events
                 // are inserted to the queue, FIX THIS!!!
-                Event->Parent = LastTimedBlock;
-                LastTimedBlock = Event;
+                event->parent = last_timed_block;
+                last_timed_block = event;
             } break;
             
-            case TimeEvent_EndBlock:
-            {
-                if (LastTimedBlock)
-                {
-                    f32* Time = 0;
+            case TIME_EVENT_END_BLOCK: {
+                if (last_timed_block) {
+                    f32* time = 0;
                     
-                    if (StringsMatch(LastTimedBlock->Name, "BuildWorkspace"))
-                    {
-                        Time = &TotalBuildTime;
+                    if (strings_match(last_timed_block->name, "BuildWorkspace")) {
+                        time = &total_build_time;
                     }
                     
-                    else if (StringsMatch(LastTimedBlock->Name,
-                                          COMPILATION_TIMED_BLOCK_NAME))
-                    {
-                        Time = &CompilationTime;
+                    else if (strings_match(last_timed_block->name,
+                                           COMPILATION_TIMED_BLOCK_NAME)) {
+                        time = &compilation_time;
                     }
-                    else if (StringsMatch(LastTimedBlock->Name,
-                                          LINKAGE_TIMED_BLOCK_NAME))
-                    {
-                        Time = &LinkageTime;
+                    else if (strings_match(last_timed_block->name,
+                                           LINKAGE_TIMED_BLOCK_NAME)) {
+                        time = linkage_time;
                     }
                     
-                    if (Time)
-                    {
-                        *Time = Platform.GetSecondsElapsed(LastTimedBlock->Clock, Event->Clock);
+                    if (time) {
+                        *time = platform.get_seconds_elapsed(last_timed_block->clock, event->clock);
                     }
                     
-                    LastTimedBlock = LastTimedBlock->Parent;
-                }
-                else
-                {
+                    last_timed_block = last_timed_block->parent;
+                } else {
                     // TODO(yuval): Diagnostic
                 }
             } break;
         }
         
-        Event = ReadTimeEvent(Queue);
+        event = read_time_event(queue);
     }
     
-    if ((TotalBuildTime != -1.0f) && (CompilationTime != -1.0f) && (LinkageTime != -1.0f))
-    {
-        f32 BackendTime = CompilationTime + LinkageTime;
-        f32 FrontendTime = TotalBuildTime - BackendTime;
+    if ((total_build_time != -1.0f) && (compilation_time != -1.0f) && (linkage_time != -1.0f)) {
+        f32 backend_time = compilation_time + linkage_time;
+        f32 frontend_time = total_build_time - backend_time;
         
-        printf("Front-end Time: %f seconds\n", FrontendTime);
-        printf("    Compilation Time: %f seconds\n", CompilationTime);
-        printf("    Linkage Time: %f seconds\n", LinkageTime);
-        printf("Back-end Time: %f seconds\n", BackendTime);
-        printf("Total Build Time: %f seconds\n", TotalBuildTime);
+        printf("Front-end Time: %f seconds\n", frontend_time);
+        printf("    Compilation Time: %f seconds\n", compilation_time);
+        printf("    Linkage Time: %f seconds\n", linkage_time);
+        printf("Back-end Time: %f seconds\n", backend_time);
+        printf("Total Build Time: %f seconds\n", total_build_time);
     }
 }
 
 internal void
-LinkWorkspace(build_workspace* Workspace, memory_arena* Arena, b32 IsVerboseBuild)
-{
+link_workspace(Build_Workspace* workspace, Memory_Arena* arena, b32 is_verbose_build) {
     // TODO(yuval): Instead of using the compiler as the linker use the default system linker!
-    build_options* BuildOptions = &Workspace->Options;
-    compiler_info* CompilerInfo = 0;
-    ArrayFor(Platform.Compilers)
-    {
-        if (((It.Type == BuildOptions->Compiler) ||
-             BuildOptions->Compiler == BuildCompiler_Auto) &&
-            It.Path)
-        {
-            CompilerInfo = &It;
-            ArrayBreak;
+    Build_Options* build_options = &workspace->options;
+    Compiler_Info* compiler_info = 0;
+    array_foreach (platform.compilers) {
+        if (((it.type == build_options->compiler) ||
+             build_options->compiler == BUILD_COMPILER_AUTO) &&
+            it.path) {
+            compiler_info = &it;
+            array_break;
         }
     }
     
     // TODO(yuval): Create append functions for Z strings
-    char FullOutputPathData[PATH_MAX + 1];
-    string FullOutputPath = MakeString(FullOutputPathData, 0,
-                                       sizeof(FullOutputPath) - 1);
-    Copy(&FullOutputPath, BuildOptions->OutputPath);
-    Append(&FullOutputPath, BuildOptions->OutputName);
-    const char* OutputExtension = Platform.GetOutputExtension(BuildOptions->OutputType);
-    Append(&FullOutputPath, OutputExtension);
-    TerminateWithNull(&FullOutputPath);
+    char full_output_path_data[PATH_MAX + 1];
+    String full_output_path = make_string(full_output_path_data, 0,
+                                          sizeof(full_output_path_data) - 1);
+    copy(&full_output_path, build_options->output_path);
+    append(&full_output_path, build_options->output_name);
+    const char* output_extension = platform.get_output_extension(build_options->output_type);
+    append(&full_output_path, output_extension);
+    terminate_with_null(&full_output_path);
     
-    const char* LinkerArgs[512] = {};
-    const char** LinkerArgsAt = LinkerArgs;
-    *LinkerArgsAt++ = CompilerInfo->Name;
+    const char* linker_args[512] = {};
+    const char** linker_args_at = linker_args;
+    *linker_args_at++ = compiler_info->name;
     
-    LinkerArgsAt += Workspace->Files.Count;
-    switch (BuildOptions->OutputType)
-    {
-        case BuildOutput_StaticLibrary:
-        {
+    linker_args_at += workspace->files.count;
+    switch (build_options->output_type) {
+        case BUILD_OUTPUT_STATIC_LIBRARY: {
             // TODO(yuval): Add support for static libraries
             //LinkerArgs[Workspace->Files.Count + 1] = "";
         } break;
         
-        case BuildOutput_SharedLibrary:
-        {
-            *LinkerArgsAt++ = "-shared";
+        case BUILD_OUTPUT_SHARED_LIBRARY: {
+            *linker_args_at++ = "-shared";
         } break;
     }
     
-    *LinkerArgsAt++ = "-o";
-    *LinkerArgsAt = FullOutputPath.Data;
+    *linker_args_at++ = "-o";
+    *linker_args_at = full_output_path.data;
     
-    temporary_memory TempMem = BeginTemporaryMemory(Arena);
+    Temporary_Memory temp_mem = begin_temporary_memory(arena);
     
-    for (umm Index = 0;
-         Index < Workspace->Files.Count;
-         ++Index)
-    {
+    for (umm index = 0;
+         index < workspace->files.count;
+         ++index) {
         // TODO(yuval): Use PushCopyZ and add functions to append and set extensions for
         // null-terminated strings
-        string ObjectFilePath = PushCopyString(Arena, Workspace->Files.Paths[Index]);
-        if (SetExtension(&ObjectFilePath, ".o"))
-        {
+        String object_file_path = push_copy_string(arena, workspace->files.paths[index]);
+        if (set_extension(&object_file_path, ".o")) {
             // TODO(yuval): WE NEED TO ALLOCATE MEMORY FOR THE NULL TERMINATOR!!!!!
-            TerminateWithNull(&ObjectFilePath);
-            LinkerArgs[Index + 1] = ObjectFilePath.Data;
-        }
-        else
-        {
+            terminate_with_null(&object_file_path);
+            linker_args[index + 1] = object_file_path.data;
+        } else {
             // TODO(yuval): Diagnostic
         }
     }
     
-    if (IsVerboseBuild)
-    {
+    if (is_verbose_build) {
         printf("Running Linker: ");
-        for (const char** Arg = LinkerArgs; *Arg; ++Arg)
-        {
+        for (const char** Arg = LinkerArgs; *Arg; ++Arg) {
             printf("%s ", *Arg);
         }
         printf("\n\n");
     }
     
-    int ExitCode = Platform.ExecProcessAndWait(CompilerInfo->Path, (char**)LinkerArgs, Arena);
-    GlobalBuildSucceeded &= (ExitCode == 0);
+    int exit_code = platform.exec_process_and_wait(compiler_info->path,
+                                                   (char**)linker_args, arena);
+    global_build_succeeded &= (exit_code == 0);
     
-    EndTemporaryMemory(TempMem);
+    end_temporary_memory(temp_mem);
 }
 
-internal PLATFORM_WORK_QUEUE_CALLBACK(DoCompilationWork)
-{
-    compilation_work* Work = (compilation_work*)Data;
+internal PLATFORM_WORK_QUEUE_CALLBACK(do_compilation_work) {
+    Compilation_Work* work = (Compilation_Work*)data;
     
-    const char* CompilerArgs[512] = {};
-    CompilerArgs[0] = Work->CompilerInfo->Name;
-    CompilerArgs[1] = "-I";
-    CompilerArgs[2] = Platform.BuildRunTreeCodePath;
-    CompilerArgs[3] = Work->FileName;
-    CompilerArgs[4] = "-c";
+    const char* compiler_args[512] = {};
+    compiler_args[0] = work->compiler_info->name;
+    compiler_args[1] = "-I";
+    compiler_args[2] = platform.build_run_tree_code_path;
+    compiler_args[3] = work->filename;
+    compiler_args[4] = "-c";
     
-    if (Work->IsVerboseBuild)
-    {
+    if (work->is_verbose_build) {
         printf("Running Compiler: ");
-        for (const char** Arg = CompilerArgs; *Arg; ++Arg)
-        {
-            printf("%s ", *Arg);
+        for (const char** arg = compiler_args; *arg; ++arg) {
+            printf("%s ", *arg);
         }
         printf("\n");
     }
     
-    int ExitCode = Platform.ExecProcessAndWait(Work->CompilerInfo->Path,
-                                               (char**)CompilerArgs, Work->MemoryArena);
+    int exit_code = platform.exec_process_and_wait(work->compiler_info->path,
+                                                   (char**)compiler_args, work->memory_arena);
     
-    GlobalBuildSucceeded &= (ExitCode == 0);
+    global_build_succeeded &= (exit_code == 0);
 }
 
 internal void
-CompileWorkspace(build_workspace* Workspace, memory_arena* Arena, b32 IsVerboseBuild)
-{
-    build_options* BuildOptions = &Workspace->Options;
-    compiler_info* CompilerInfo = 0;
-    ArrayFor(Platform.Compilers)
-    {
-        if (((It.Type == BuildOptions->Compiler) ||
-             BuildOptions->Compiler == BuildCompiler_Auto) &&
-            It.Path)
-        {
-            CompilerInfo = &It;
-            ArrayBreak;
+compile_workspace(Build_Workspace* workspace, Memory_Arena* arena, b32 is_verbose_build) {
+    Build_Options* build_options = &workspace->options;
+    Compiler_Info* compiler_info = 0;
+    array_foreach(platform.compilers) {
+        if (((it.type == build_options->compiler) ||
+             build_options->compiler == BUILD_COMPILER_AUTO) &&
+            it.path) {
+            compiler_info = &it;
+            array_break;
         }
     }
     
-    if (CompilerInfo)
-    {
-        for (umm Index = 0;
-             Index < Workspace->Files.Count;
-             ++Index)
-        {
-            compilation_work* Work = PushStruct(Arena, compilation_work);
+    if (compiler_info) {
+        for (umm index = 0;
+             index < workspace->files.count;
+             ++index) {
+            Compilation_Work* work = PUSH_STRUCT(arena, Compilation_Work);
             
             // TODO(yuval): Add the workspace's object file path to the file name
-            Work->FileName = PushCopyZ(Arena, Workspace->Files.Paths[Index]);
-            Work->CompilerInfo = CompilerInfo;
-            Work->MemoryArena = Arena;
-            Work->IsVerboseBuild = IsVerboseBuild;
+            work->filename = push_copy_z(arena, workspace->files.paths[index]);
+            work->compiler_info = compiler_info;
+            work->memory_arena = arena;
+            work->is_verbose_build = is_verbose_build;
             
-#if 1
+#if 0
             // Multi-Threaded
-            Platform.AddWorkQueueEntry(Platform.WorkQueue, DoCompilationWork, Work);
+            platform.add_work_queue_entry(platform.work_queue, do_compilation_work, work);
 #else
             // Single-Threaded
-            DoCompilationWork(Platform.WorkQueue, Work);
-#endif // #if 1
+            do_compilation_work(platform.work_queue, work);
+#endif // #if 0
         }
-    }
-    else
-    {
+    } else {
         // TODO(yuval): Diagnostic
     }
 }
 
-internal BUILD_CREATE_WORKSPACE(AppCreateWorkspace)
-{
-    build_workspace* Result = &App->Workspaces.Workspaces[App->Workspaces.Count++];
+internal BUILD_CREATE_WORKSPACE(app_create_workspace) {
+    Build_Workspace* result = &app->workspaces.workspaces[app->workspaces.count++];
     
-    Result->Name = Name;
+    result->name = name;
     // TODO(yuval): Default workspace options
     
-    return Result;
+    return result;
 }
 
-internal START_BUILD(AppStartBuild)
-{
-    build_application* TheApp = (build_application*)App;
+internal START_BUILD(app_start_build) {
+    Build_Application* the_app = (Build_Application*)app;
     
     // NOTE(yuval): Compilation
-    temporary_memory TempMem = BeginTemporaryMemory(&TheApp->AppArena);
-    for (umm Index = 0; Index < App->Workspaces.Count; ++Index)
-    {
-        CompileWorkspace(&App->Workspaces.Workspaces[Index],
-                         &TheApp->AppArena, TheApp->IsVerboseBuild);
+    Temporary_Memory temp_mem = begin_temporary_memory(&the_app->app_arena);
+    for (umm Index = 0; Index < app->workspaces.count; ++index) {
+        compile_workspace(&app->workspaces.workspaces[index],
+                          &the-app->app_arena, the_app->is_verbose_build);
         
         //PrintWorkspaceBuildStats(&WorkspaceTimeEventsQueue);
     }
-    Platform.CompleteAllWorkQueueWork(Platform.WorkQueue);
-    EndTemporaryMemory(TempMem);
+    platform.complete_all_work_queue_work(platform.work_queue);
+    end_temporaryMemory(temp_mem);
     
     // NOTE(yuval): Compilation Succeeded
-    if (GlobalBuildSucceeded)
+    if (global_build_succeeded)
     {
         // NOTE(yuval): Linkage
         // TODO(yuval): Link workspaces according to their depencencies on each other
-        for (umm Index = 0; Index < App->Workspaces.Count; ++Index)
-        {
-            LinkWorkspace(&App->Workspaces.Workspaces[Index],
-                          &TheApp->AppArena, TheApp->IsVerboseBuild);
+        for (umm index = 0; index < app->workspaces.count; ++index) {
+            link_workspace(&app->workspaces.workspaces[index],
+                           &the_app->app_arena, the_app->is_verbose_build);
         }
     }
-    
-    // TODO(yuval): Linkage
 }
 
-internal BUILD_WAIT_FOR_MESSAGE(AppWaitForMessage)
-{
-    build_message Result;
+internal BUILD_WAIT_FOR_MESSAGE(app_wait_for_message) {
+    Build_Message result;
     
-    return Result;
+    return result;
 }
 
 #define GENERATED_BUILD_FILE_NAME "build_file.buildgen.cpp"
-platform_api Platform;
+Platform_API platform;
 
 internal b32
-BuildStartup(build_application* App)
-{
-    Platform = App->PlatformAPI;
+build_startup(Build_Application* app) {
+    platform = app->platform_api;
     
-    App->AppLinks.CreateWorkspace_ = AppCreateWorkspace;
-    App->AppLinks.StartBuild_ = AppStartBuild;
-    App->AppLinks.WaitForMessage_ = AppWaitForMessage;
+    app->app_links.create_workspace_ = app_create_workspace;
+    app->app_links.start_build_ = app_start_suild;
+    app->app_links.wait_for_fessage_ = app_wait_for_message;
     
     // NOTE(yuval): Build File Workspace Setup
-    build_workspace BuildFileWorkspace = {};
-    BuildFileWorkspace.Name = MakeLitString("Build File");
+    Build_Workspace build_file_workspace = {};
+    build_file_workspace.name = MAKE_LIT_STRING("Build File");
     
-    build_options* Options = &BuildFileWorkspace.Options;
-    Options->OptimizationLevel = 0; // TODO(yuval): Use max optimization level
-    Options->OutputType = BuildOutput_SharedLibrary;
-    Options->OutputName = MakeLitString("build_file");
-    Options->OutputPath = MakeLitString(""); // TODO(yuval): Add an output path;
-    Options->Compiler = BuildCompiler_Auto;
+    Build_Options* options = &build_file_workspace.options;
+    options->optimization_level = 0; // TODO(yuval): Use max optimization level
+    options->outputType = BUILD_OUTPUT_SHARED_LIBRARY;
+    options->outputName = MAKE_LIT_STRING("build_file");
+    options->outputPath = MAKE_LIT_STRING(""); // TODO(yuval): Add an output path;
+    options->compiler = BUILD_COMPILER_AUTO;
     
-    BuildAddFile(&BuildFileWorkspace, MakeLitString(GENERATED_BUILD_FILE_NAME));
+    build_add_file(&build_file_workspace, MAKE_LIT_STRING(GENERATED_BUILD_FILE_NAME));
     
     // NOTE(yuval): Build File Workspace Building
-    time_events_queue BuildFileTimeEventsQueue;
-    //b32 Result = BuildWorkspace(&BuildFileWorkspace, &App->AppArena, &BuildFileTimeEventsQueue, false);
-    b32 Result = true;
-    return Result;
+    Time_Events_Queue build_file_time_events_queue;
+    // b32 Result = build_workspace(&build_file_workspace, &App->AppArena, &BuildFileTimeEventsQueue, false);
+    b32 result = true;
+    return result;
 }

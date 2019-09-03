@@ -4,68 +4,65 @@
 #include "build_types.h"
 
 // TODO(yuval): Use a hash map for this
-struct compiler_info
-{
-    build_compiler_type Type;
-    const char* Name;
-    const char* Path;
+struct Compiler_Info {
+    Build_Compiler_Type type;
+    const char* name;
+    const char* path;
 };
 
-struct platform_work_queue;
+struct Platform_Work_Queue;
 
-#define PLATFORM_WORK_QUEUE_CALLBACK(Name) void Name(platform_work_queue* Queue, void* Data)
-typedef PLATFORM_WORK_QUEUE_CALLBACK(platform_work_queue_callback);
+#define PLATFORM_WORK_QUEUE_CALLBACK(name) void name(Platform_Work_Queue* queue, void* data)
+typedef PLATFORM_WORK_QUEUE_CALLBACK(Platform_Work_Queue_Callback);
 
-#define PLATFORM_ADD_WORK_QUEUE_ENTRY(Name) void Name(platform_work_queue* Queue, \
-platform_work_queue_callback* Callback, \
-void* Data)
-typedef PLATFORM_ADD_WORK_QUEUE_ENTRY(platform_add_work_queue_entry);
+#define PLATFORM_ADD_WORK_QUEUE_ENTRY(name) void name(Platform_Work_Queue* queue, \
+Platform_Work_Queue_Callback* callback, \
+void* data)
+typedef PLATFORM_ADD_WORK_QUEUE_ENTRY(Platform_Add_Work_Queue_Entry);
 
-#define PLATFORM_COMPLETE_ALL_WORK_QUEUE_WORK(Name) void Name(platform_work_queue* Queue)
-typedef PLATFORM_COMPLETE_ALL_WORK_QUEUE_WORK(platform_complete_all_work_queue_work);
+#define PLATFORM_COMPLETE_ALL_WORK_QUEUE_WORK(name) void name(Platform_Work_Queue* queue)
+typedef PLATFORM_COMPLETE_ALL_WORK_QUEUE_WORK(Platform_Complete_All_Work_Queue_Work);
 
-#define PLATFORM_GET_OUTPUT_EXTENSION(Name) const char* Name(build_output_type OutputType)
-typedef PLATFORM_GET_OUTPUT_EXTENSION(platform_get_output_extension);
+#define PLATFORM_GET_OUTPUT_EXTENSION(name) const char* name(Build_Output_Type output_type)
+typedef PLATFORM_GET_OUTPUT_EXTENSION(Platform_Get_Output_Extension);
 
-#define PLATFORM_EXEC_PROCESS_AND_WAIT(Name) s32 Name(const char* Path, char** Args, memory_arena* Arena)
-typedef PLATFORM_EXEC_PROCESS_AND_WAIT(platform_exec_process_and_wait);
+#define PLATFORM_EXEC_PROCESS_AND_WAIT(name) s32 name(const char* path, char** args, Memory_Arena* arena)
+typedef PLATFORM_EXEC_PROCESS_AND_WAIT(Platform_Exec_Process_And_Wait);
 
-#define PLATFORM_GET_WALL_CLOCK(Name) u64 Name()
-typedef PLATFORM_GET_WALL_CLOCK(platform_get_wall_clock);
+#define PLATFORM_GET_WALL_CLOCK(name) u64 name()
+typedef PLATFORM_GET_WALL_CLOCK(Platform_Get_Wall_Clock);
 
-#define PLATFORM_GET_SECONDS_ELAPSED(Name) f32 Name(u64 Start, u64 End)
-typedef PLATFORM_GET_SECONDS_ELAPSED(platform_get_seconds_elapsed);
+#define PLATFORM_GET_SECONDS_ELAPSED(name) f32 name(u64 start, u64 end)
+typedef PLATFORM_GET_SECONDS_ELAPSED(Platform_Get_Seconds_Elapsed);
 
-typedef struct platform_api
-{
-    char BuildRunTreeCodePath[PATH_MAX];
-    compiler_info Compilers[BuildCompiler_Count - 1];
+struct Platform_API {
+    char build_run_tree_code_path[PATH_MAX];
+    Compiler_Info compilers[BUILD_COMPILER_COUNT - 1];
     
-    platform_work_queue* WorkQueue;
+    Platform_Work_Queue* work_queue;
     
-    platform_add_work_queue_entry* AddWorkQueueEntry;
-    platform_complete_all_work_queue_work* CompleteAllWorkQueueWork;
+    Platform_Add_Work_Queue_Entry* add_work_queue_entry;
+    Platform_Complete_All_Work_Queue_Work* complete_all_work_queue_work;
     
-    platform_get_output_extension* GetOutputExtension;
-    platform_exec_process_and_wait* ExecProcessAndWait;
+    Platform_Get_Output_Extension* get_output_extension;
+    Platform_Exec_Process_And_Wait* exec_process_and_wait;
     
-    platform_get_wall_clock* GetWallClock;
-    platform_get_seconds_elapsed* GetSecondsElapsed;
-} platform_api;
+    Platform_Get_Wall_Clock* get_wall_clock;
+    Platform_Get_Seconds_Elapsed* get_seconds_elapsed;
+};
 
-extern platform_api Platform;
+extern Platform_API platform;
 
 #include "build_assert.h"
 #include "build_intrinsics.h"
 
-struct build_application
-{
-    build_application_links AppLinks;
+struct Build_Application {
+    Build_Application_Links app_links;
     
-    memory_arena AppArena;
-    platform_api PlatformAPI;
+    Memory_Arena app_arena;
+    Platform_API platfor_api;
     
-    b32 IsVerboseBuild;
+    b32 is_verbose_build;
 };
 
 

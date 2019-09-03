@@ -15,7 +15,7 @@
 #include "build_parser.h"
 #include "build_errors.h"
 
-struct compilation_work
+struct Compilation_Work
 {
     char* filename;
     Compiler_Info* compiler_info;

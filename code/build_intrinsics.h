@@ -3,110 +3,98 @@
 #include <math.h>
 
 inline s32
-RoundF32ToS32(f32 Value)
-{
-    s32 Result = (s32)roundf(Value);
-    return Result;
+round_f32_to_s32(f32 value) {
+    s32 result = (s32)roundf(value);
+    return result;
 }
 
 inline u32
-RoundF32ToU32(f32 Value)
-{
-    u32 Result = (u32)roundf(Value);
-    return Result;
+round_f32_to_u32(f32 value) {
+    u32 result = (u32)roundf(value);
+    return result;
 }
 
 inline s32
-TruncateF32ToS32(f32 Value)
-{
-    s32 Result = (s32)Value;
-    return Result;
+truncate_f32_to_s32(f32 value) {
+    s32 result = (s32)value;
+    return result;
 }
 
 inline u32
-SafeTruncateToU32(u64 Value)
-{
-    // TODO(yuval & eran): Defines for size limits
-    Assert(Value <= 0xFFFFFFFF);
-    return (u32)Value;
+safe_truncate_to_u32(u64 value) {
+    // TODO(yuval): Defines for size limits
+    ASSERT(value <= 0xFFFFFFFF);
+    return (u32)value;
 }
 
 #if COMPILER_MSVC
-# define CompletePreviousReadsBeforeFutureReads(...) _ReadBarrier()
-# define CompletePreviousWritesBeforeFutureWrites(...) _WriteBarrier()
+# define COMPLETE_PREVIOUS_READS_BEFORE_FUTURE_READS(...) _ReadBarrier()
+# define COMPLETE_PREVIOUS_WRITES_BEFORE_FUTURE_WRITES(...) _WriteBarrier()
 
 inline u32
-AtomicCompareExchangeU32(volatile u32* Value, u32 New, u32 Expected)
-{
-    u32 Result = _InterlockedCompareExchange((volatile long*)Value, New, Expected);
-    return Result;
+atomic_compare_exchange_u32(volatile u32* value, u32 new_value, u32 expected_value) {
+    u32 result = _InterlockedCompareExchange((volatile long*)value, new_value, expecte_value);
+    return result;
 }
 
 inline u64
-AtomicExchangeU64(volatile u64* Value, u64 New)
-{
-    u64 Result = _InterlockedExchange64((volatile __int64*)Value, New);
-    return Result;
+atomic_exchange_u64(volatile u64* value, u64 new_value) {
+    u64 result = _InterlockedExchange64((volatile __int64*)value, new_value);
+    return result;
 }
 
 inline u64
-AtomicAddU64(volatile u64* Value, u64 Addend)
-{
+atomic_add_u64(volatile u64* value, u64 addend) {
     // NOTE(yuval): Returns the original value _prior_ to the addition
-    u64 Result = _InterlockedExchangeAdd64((volatile __int64*)Value, Addend);
-    return Result;
+    u64 result = _InterlockedExchangeAdd64((volatile __int64*)value, addend);
+    return result;
 }
 
 inline u32
-GetThreadID()
-{
-    u8* ThreadLocalStorage = (u8*)__readgsqword(0x30);
-    u32 ThreadID = *(u32*)(ThreadLocalStorage + 0x48);
+get_thread_id() {
+    u8* thread_local_storage = (u8*)__readgsqword(0x30);
+    u32 thread_id = *(u32*)(thread_local_storage + 0x48);
     
-    return ThreadID;
+    return thread_id;
 }
 #elif COMPILER_LLVM
-# define CompletePreviousReadsBeforeFutureReads(...) asm volatile("" ::: "memory")
-# define CompletePreviousWritesBeforeFutureWrites(...) asm volatile("" ::: "memory")
+# define COMPLETE_PREVIOUS_READS_BEFORE_FUTURE_READS(...) asm volatile("" ::: "memory")
+# define COMPLETE_PREVIOUS_WRITES_BEFORE_FUTURE_WRITES(...) asm volatile("" ::: "memory")
 
 inline u32
-AtomicCompareExchangeU32(volatile u32* Value, u32 New, u32 Expected)
-{
-    u32 Result = __sync_val_compare_and_swap(Value, Expected, New);
-    return Result;
+atomic_compare_exchange_u32(volatile u32* value, u32 new_value, u32 expected_value) {
+    u32 result = __sync_val_compare_and_swap(value, expected_value, new_value);
+    return result;
 }
 
 inline u64
-AtomicExchangeU64(volatile u64* Value, u64 New)
-{
-    u64 Result = __sync_lock_test_and_set(Value, New);
-    return Result;
+atomic_exchange_u64(volatile u64* value, u64 new_value) {
+    u64 result = __sync_lock_test_and_set(value, new_value);
+    return result;
 }
 
 inline u64
-AtomicAddU64(volatile u64* Value, u64 Addend)
-{
+atomic_add_u64(volatile u64* value, u64 addend) {
     // NOTE(yuval): Returns the original value _prior_ to the addition
-    u64 Result = __sync_fetch_and_add(Value, Addend);
-    return Result;
+    u64 result = __sync_fetch_and_add(value, addend);
+    return result;
 }
 
 inline u32
-GetThreadID()
-{
-    u32 ThreadID;
+get_thread_id() {
+    u32 thread_id;
     
 #if defined(__APPLE__) && defined(__x86_64__)
-    asm("mov %%gs:0x00,%0" : "=r"(ThreadID));
+    asm("mov %%gs:0x00,%0" : "=r"(thread_id));
 #elif defined(__i386__)
-    asm("mov %%gs:0x08,%0" : "=r"(ThreadID));
+    asm("mov %%gs:0x08,%0" : "=r"(thread_id));
 #elif defined(__x86_64__)
-    asm("mov %%fs:0x10,%0" : "=r"(ThreadID));
+    asm("mov %%fs:0x10,%0" : "=r"(thread_id));
 #else
-# error Unsupported architecture
+# error Unsupported Architecture
 #endif // #if defined(__APPLE__) && defined(__x86_64__)
     
-    return ThreadID;
+    return thread_id;
 }
 #else
 // TODO(yuval): More compilers / platforms!
