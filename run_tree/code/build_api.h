@@ -34,6 +34,7 @@ typedef uintptr_t build_umm;
 
 #include "yd/yd_memory.h"
 #include "yd/yd_string.h"
+#include "yd/yd_string_format.h"
 
 // TODO(yuval): Make this export functions
 #define BUILD_FUNCTION(name) void name(struct Build_Application_Links* app)
@@ -140,7 +141,7 @@ start_build(Build_Application_Links* app) {
     app->start_build_(app);
 }
 
-build_internal inline build_message
+build_internal inline Build_Message
 build_wait_for_message(Build_Application_Links* app) {
     return app->wait_for_message_(app);
 }

@@ -6,8 +6,8 @@
 #define YD_STRING_IMPLEMENTATION
 #include "yd/yd_string.h"
 
-#include "build_tokenizer.cpp"
-#include "build_parser.cpp"
+#include "build_lexer.cpp"
+//#include "build_parser.cpp"
 
 global Time_Events_Queue global_time_events_queue;
 global b32 global_build_succeeded = true;
@@ -271,7 +271,7 @@ print_workspace_build_stats(Time_Events_Queue* queue) {
                     }
                     else if (strings_match(last_timed_block->name,
                                            LINKAGE_TIMED_BLOCK_NAME)) {
-                        time = linkage_time;
+                        time = &linkage_time;
                     }
                     
                     if (time) {
@@ -362,8 +362,8 @@ link_workspace(Build_Workspace* workspace, Memory_Arena* arena, b32 is_verbose_b
     
     if (is_verbose_build) {
         printf("Running Linker: ");
-        for (const char** Arg = LinkerArgs; *Arg; ++Arg) {
-            printf("%s ", *Arg);
+        for (const char** arg = linker_args; *arg; ++arg) {
+            printf("%s ", *arg);
         }
         printf("\n\n");
     }
@@ -451,14 +451,14 @@ internal START_BUILD(app_start_build) {
     
     // NOTE(yuval): Compilation
     Temporary_Memory temp_mem = begin_temporary_memory(&the_app->app_arena);
-    for (umm Index = 0; Index < app->workspaces.count; ++index) {
+    for (umm index = 0; index < app->workspaces.count; ++index) {
         compile_workspace(&app->workspaces.workspaces[index],
-                          &the-app->app_arena, the_app->is_verbose_build);
+                          &the_app->app_arena, the_app->is_verbose_build);
         
         //PrintWorkspaceBuildStats(&WorkspaceTimeEventsQueue);
     }
     platform.complete_all_work_queue_work(platform.work_queue);
-    end_temporaryMemory(temp_mem);
+    end_temporary_memory(temp_mem);
     
     // NOTE(yuval): Compilation Succeeded
     if (global_build_succeeded)
@@ -486,8 +486,8 @@ build_startup(Build_Application* app) {
     platform = app->platform_api;
     
     app->app_links.create_workspace_ = app_create_workspace;
-    app->app_links.start_build_ = app_start_suild;
-    app->app_links.wait_for_fessage_ = app_wait_for_message;
+    app->app_links.start_build_ = app_start_build;
+    app->app_links.wait_for_message_ = app_wait_for_message;
     
     // NOTE(yuval): Build File Workspace Setup
     Build_Workspace build_file_workspace = {};
@@ -495,9 +495,9 @@ build_startup(Build_Application* app) {
     
     Build_Options* options = &build_file_workspace.options;
     options->optimization_level = 0; // TODO(yuval): Use max optimization level
-    options->outputType = BUILD_OUTPUT_SHARED_LIBRARY;
-    options->outputName = MAKE_LIT_STRING("build_file");
-    options->outputPath = MAKE_LIT_STRING(""); // TODO(yuval): Add an output path;
+    options->output_type = BUILD_OUTPUT_SHARED_LIBRARY;
+    options->output_name = MAKE_LIT_STRING("build_file");
+    options->output_path = MAKE_LIT_STRING(""); // TODO(yuval): Add an output path;
     options->compiler = BUILD_COMPILER_AUTO;
     
     build_add_file(&build_file_workspace, MAKE_LIT_STRING(GENERATED_BUILD_FILE_NAME));

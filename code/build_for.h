@@ -4,7 +4,7 @@
 //       Array Foreach       //
 ///////////////////////////////
 #define array_foreach(array) \
-for (u32 it_index = 0, foreach__should_break = 0; = 0; \
+for (u32 it_index = 0, foreach__should_break = 0; \
 it_index < ARRAY_COUNT(array) && !foreach__should_break; \
 ++it_index) \
 for (b32 JOIN2(b, __LINE__) = true; \

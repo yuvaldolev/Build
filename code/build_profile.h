@@ -50,7 +50,7 @@ record_time_event_(Time_Events_Queue* queue, Time_Event_Type type,
 #define RECORD_TIME_EVENT(queue, type, name) \
 record_time_event_(queue, type, name, platform.get_wall_clock(), __rdtsc())
 
-inline time_event*
+inline Time_Event*
 read_time_event(Time_Events_Queue* queue) {
     // TODO(yuval): Make this read thread-safe
     Time_Event* event = 0;

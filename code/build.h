@@ -9,9 +9,12 @@
 #include "build_for.h"
 #include "build_profile.h"
 
-#include "build_shared.h"
+struct Code_File {
+    String name;
+    String contents;
+};
 
-#include "build_tokenizer.h"
+#include "build_lexer.h"
 #include "build_parser.h"
 #include "build_errors.h"
 

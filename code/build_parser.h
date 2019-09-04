@@ -169,7 +169,7 @@ struct Ast_Decl_Statement {
 
 struct Ast_Statement {
     Ast_Statement_Type type;
-    Ast* my_scope; // Block
+    Ast* scope; // Block
     
     union {
         Ast_Decl_Statement decl_stmt;
@@ -181,7 +181,7 @@ struct Ast_Statement {
         Ast_Default default_stmt;
         Ast_For for_stmt;
         Ast_While while_stmt;
-        ast_return return_stmt;
+        Ast_Return return_stmt;
     };
 };
 
@@ -304,7 +304,7 @@ struct Ast {
     
     Ast_Translation_Unit* my_translation_unit;
     
-    String my_file_name;
+    Code_File my_file;
     s32 my_line;
     s32 my_column;
     
@@ -312,7 +312,6 @@ struct Ast {
     Ast* right;
     
     union {
-        Ast_Translation_Unit translation_unit;
         Ast_Block block;
         Ast_Declaration decl;
         Ast_Type_Definition type_def;
@@ -335,9 +334,10 @@ struct Parser {
     Memory_Arena parser_arena;
     
     Ast_Translation_Unit* translation_unit;
-    Tokenizer* tokenizer;
+    
+    Lexer* lexer;
     Token token;
-}
+};
 
 #define BUILD_PARSER_H
 #endif // #if !defined(BUILD_PARSER_H)

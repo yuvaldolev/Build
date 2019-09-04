@@ -1,4 +1,4 @@
-#if !defined(BUILD_TOKENIZER_H)
+#if !defined(BUILD_LEXER_H)
 
 /* TODO(yuval): Create Default Ast Types For These Keywords:
 KEYWORD_TOKEN_TYPE(Void, "void")
@@ -141,7 +141,7 @@ enum Token_Type
 };
 
 struct Token {
-    String filename;
+    Code_File file;
     
     s32 line_number;
     s32 column_number;
@@ -154,14 +154,13 @@ struct Token {
     f32 value_f32;
 };
 
-struct Tokenizer {
-    String filename;
+struct Lexer {
+    Code_File file;
     
     s32 line_number;
     s32 column_number;
     
     String input;
-    String input_file_data;
     char at[2];
     
     b32 error;
@@ -173,5 +172,5 @@ struct Token_Name_And_Type {
     Token_Type type;
 };
 
-#define BUILD_TOKENIZER_H
-#endif // #if !defined(BUILD_TOKENIZER_H)
+#define BUILD_LEXER_H
+#endif // #if !defined(BUILD_LEXER_H)

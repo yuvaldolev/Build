@@ -60,7 +60,7 @@ struct Build_Application {
     Build_Application_Links app_links;
     
     Memory_Arena app_arena;
-    Platform_API platfor_api;
+    Platform_API platform_api;
     
     b32 is_verbose_build;
 };

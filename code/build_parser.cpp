@@ -639,12 +639,12 @@ parse_top_level(Parser* parser) {
 }
 
 internal Ast*
-parse_translation_unit(Parser* parser, String filename, String file_contents) {
+parse_translation_unit(Parser* parser, Code_File file) {
     Ast_Translation_Unit* translation_unit = PUSH_STRUCT(Ast_Translation_Unit,
                                                          &parser->parser_arena);
     
     parser->translation_unit = translation_unit;
-    parser->tokenizer = tokenize(filename, file_contents);
+    parser->tokenizer = lex(file);
     
     while (!AST_GET_TOKEN_CHECK_TYPE(file, TOKEN_END_OF_STREAM)) {
         parse_top_level(parser);

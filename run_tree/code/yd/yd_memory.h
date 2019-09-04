@@ -98,7 +98,7 @@ typedef uintptr_t yd_umm;
 #endif // #if !defined(YD_MINIMUM)
 
 #if !defined(YD_MAXIMUM)
-# define YD_MAXIMUM(A, B) (((a) > (b)) ? (a) : (b))
+# define YD_MAXIMUM(a, b) (((a) > (b)) ? (a) : (b))
 #endif // #if !defined(YD_MAXIMUM)
 
 #if !defined(YD_ALIGN_POW2)
@@ -180,7 +180,7 @@ extern Deallocate_Memory* yd_deallocate_memory;
 void* copy(void* dest_init, const void* source_init, yd_umm size);
 
 #if !defined(COPY_ARRAY)
-# define COPY_ARRAY(dest, source, count) Copy((dest), (source), (count) * sizeof(*(source)))
+# define COPY_ARRAY(dest, source, count) copy((dest), (source), (count) * sizeof(*(source)))
 #endif // #if !defined(COPY_ARRAY)
 
 void zero_size(void* ptr, yd_umm size);
@@ -209,7 +209,7 @@ void* push_size_(Memory_Arena* arena, yd_umm size_init,
 #endif // #if !defined(PUSH_STRUCT)
 
 #if !defined(PUSH_ARRAY)
-# define PUSH_ARRAY(arena, type, count, ...) (Type*)push_size_(arena, (count) * sizeof(type), \
+# define PUSH_ARRAY(arena, type, count, ...) (type*)push_size_(arena, (count) * sizeof(type), \
 ## __VA_ARGS__)
 #endif // #if !defined(PUSH_ARRAY)
 
@@ -285,7 +285,7 @@ default_bootstrap_params() {
 yd_internal inline Arena_Bootstrap_Params
 no_restored_arena() {
     Arena_Bootstrap_Params params = default_bootstrap_params();
-    params.AllocationFlags = MEMORY_BLOCK_FLAG_NOT_RESTORED;
+    params.allocation_flags = MEMORY_BLOCK_FLAG_NOT_RESTORED;
     
     return params;
 }
@@ -360,7 +360,7 @@ end_temporary_memory(Temporary_Memory temp_mem) {
 }
 
 yd_internal inline void
-CheckArena(Memory_Arena* Arena) {
+check_arena(Memory_Arena* arena) {
     YD_ASSERT(arena->temp_count == 0);
 }
 
@@ -376,14 +376,15 @@ bootstrap_push_size_(yd_umm size, yd_umm offset_to_arena,
     bootstrap.allocation_flags = bootstrap_params.allocation_flags;
     bootstrap.minimum_block_size = bootstrap_params.minimum_block_size;
     
-    void* result = push_size(&bootstrap, size, push_params);
+    void* result = PUSH_SIZE(&bootstrap, size, push_params);
     *(Memory_Arena*)((yd_u8*)result + offset_to_arena) = bootstrap;
     
     return result;
 }
 
 #if !defined(BOOTSTRAP_PUSH_STRUCT)
-# define BootstrapPushStruct(type, member, ...) (Type*)bootstrap_push_size_(sizeof(type), \
+# define BOOTSTRAP_PUSH_STRUCT(type, member, ...) \
+(type*)bootstrap_push_size_(sizeof(type), \
 YD_OFFSET_OF(type, member), \
 ## __VA_ARGS__)
 #endif // #if !defined(BOOTSTRAP_PUSH_STRUCT)
@@ -431,7 +432,7 @@ ALLOCATE_MEMORY(yd_allocate_memory_) {
                                         MEM_RESERVE | MEM_COMMIT,
                                         PAGE_READWRITE);
 #elif YD_MACOS || YD_LINUX
-    Block = (memory_block*)mmap(0, total_size,
+    block = (Memory_Block*)mmap(0, total_size,
                                 PROT_READ | PROT_WRITE,
                                 MAP_PRIVATE | MAP_ANONYMOUS,
                                 -1, 0);
@@ -574,7 +575,7 @@ void
 clear(Memory_Arena* arena) {
     for (;;) {
         b32 is_last_block = (arena->current_block->prev == 0);
-        yd_memory_free_last_block(arena);
+        yd_memory__free_last_block(arena);
         
         if (is_last_block) {
             break;

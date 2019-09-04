@@ -21,463 +21,391 @@
  - Platform specific message boxes.
 */
 
-global mach_timebase_info_data_t GlobalTimebaseInfo;
+global mach_timebase_info_data_t global_timebase_info;
 
-internal PLATFORM_GET_OUTPUT_EXTENSION(MacGetOutputExtension)
-{
-    const char* Extension;
+internal PLATFORM_GET_OUTPUT_EXTENSION(mac_get_output_extension) {
+    const char* extension;
     
-    switch (OutputType)
-    {
-        case BuildOutput_Executable:
-        {
-            Extension = "";
+    switch (output_type) {
+        case BUILD_OUTPUT_EXECUTABLE: {
+            extension = "";
         } break;
         
-        case BuildOutput_StaticLibrary:
-        {
-            Extension = ".a";
+        case BUILD_OUTPUT_STATIC_LIBRARY: {
+            extension = ".a";
         } break;
         
-        case BuildOutput_SharedLibrary:
-        {
-            Extension = ".dylib";
+        case BUILD_OUTPUT_SHARED_LIBRARY: {
+            extension = ".dylib";
         } break;
     }
     
-    return Extension;
+    return extension;
 }
 
-internal PLATFORM_EXEC_PROCESS_AND_WAIT(MacExecProcessAndWait)
-{
-    s32 ExitCode = -1;
+internal PLATFORM_EXEC_PROCESS_AND_WAIT(mac_exec_process_and_wait) {
+    s32 exit_code = -1;
     
-    s32 PipeEnds[2];
-    if (pipe(PipeEnds) != -1)
-    {
-        int ChildPID = fork();
+    s32 pipe_ends[2];
+    if (pipe(pipe_ends) != -1) {
+        int child_pid = fork();
         
-        switch (ChildPID)
-        {
+        switch (child_pid) {
             // NOTE(yuval): Fork Failed
-            case -1:
-            {
+            case -1: {
                 printf("Fork Failed!\n");
             } break;
             
             // NOTE(yuval): Child Process
-            case 0:
-            {
+            case 0: {
                 // NOTE(yuval): Routing the standard output to the pipe
-                while ((dup2(PipeEnds[1], STDOUT_FILENO) == -1) && (errno == EINTR));
-                while ((dup2(PipeEnds[1], STDERR_FILENO) == -1) && (errno == EINTR));
-                close(PipeEnds[0]);
-                close(PipeEnds[1]);
+                while ((dup2(pipe_ends[1], STDOUT_FILENO) == -1) && (errno == EINTR));
+                while ((dup2(pipe_ends[1], STDERR_FILENO) == -1) && (errno == EINTR));
+                close(pipe_ends[0]);
+                close(pipe_ends[1]);
                 
-                execv(Path, Args);
+                execv(path, args);
             } break;
             
             // NOTE(yuval): Parent Process
-            default:
-            {
-                close(PipeEnds[1]);
+            default: {
+                close(pipe_ends[1]);
                 
-                int Status;
+                int status;
                 
-                do
-                {
+                do {
                     // NOTE(yuval): Pushing the message string because later it
                     // will be added to a messsage queue
-                    string Message = PushString(Arena, 4096);
-                    Message.Count = read(PipeEnds[0], Message.Data, Message.MemorySize);
+                    String message = push_string(arena, 4096);
+                    message.count = read(pipe_ends[0], message.data, message.capacity);
                     
-                    if (Message.Count != 0)
-                    {
-                        printf("%.*s", PrintableString(Message));
+                    if (message.count != 0) {
+                        printf("%.*s", PRINTABLE_STRING(message));
                     }
-                } while (waitpid(ChildPID, &Status, WNOHANG) == 0);
+                } while (waitpid(child_pid, &status, WNOHANG) == 0);
                 
-                close(PipeEnds[0]);
+                close(pipe_ends[0]);
                 
-                ExitCode = WEXITSTATUS(Status);
+                exit_code = WEXITSTATUS(status);
             } break;
         }
-    }
-    else
-    {
+    } else {
         // TODO(yuval): Diagnostic
     }
     
-    return ExitCode;
+    return exit_code;
 }
 
-internal PLATFORM_GET_WALL_CLOCK(MacGetWallClock)
-{
-    u64 Result = mach_absolute_time();
-    return Result;
+internal PLATFORM_GET_WALL_CLOCK(mac_get_wall_clock) {
+    u64 result = mach_absolute_time();
+    return result;
 }
 
-internal PLATFORM_GET_SECONDS_ELAPSED(MacGetSecondsElapsed)
-{
+internal PLATFORM_GET_SECONDS_ELAPSED(mac_get_seconds_elapsed) {
     // NOTE(yuval): Elapsed nanoseconds calculation
-    f32 Result = ((f32)(End - Start) *
-                  ((f32)GlobalTimebaseInfo.numer) /
-                  ((f32)GlobalTimebaseInfo.denom));
+    f32 result = ((f32)(end - start) *
+                  ((f32)global_timebase_info.numer) /
+                  ((f32)global_timebase_info.denom));
     
     // NOTE(yuval): Conversion to seconds
-    Result *= (f32)1.0E-9;
+    result *= (f32)1.0E-9;
     
-    return Result;
+    return result;
 }
 
 internal void
-MacFreeFileMemory(void* Memory)
-{
+mac_free_file_memory(void* memory) {
     // TODO(yuval): Stop using crt for this
-    if (Memory)
-    {
-        free(Memory);
+    if (memory) {
+        free(memory);
     }
 }
 
-struct read_file_result
-{
-    void* Contents;
-    umm ContentsSize;
+struct Read_File_Result {
+    void* contents;
+    umm contents_size;
 };
 
-internal read_file_result
-MacReadEntireFile(const char* FileName)
-{
-    read_file_result Result = {};
+internal Read_File_Result
+mac_read_entire_file(const char* filename) {
+    Read_File_Result result = {};
     
-    s32 FileHandle = open(FileName, O_RDONLY);
-    if (FileHandle != -1)
-    {
-        struct stat FileStat;
-        if (fstat(FileHandle, &FileStat) == 0)
-        {
-            umm FileSize = FileStat.st_size;
+    s32 file_handle = open(filename, O_RDONLY);
+    if (file_handle != -1) {
+        struct stat file_stat;
+        if (fstat(file_handle, &file_stat) == 0) {
+            umm file_size = file_stat.st_size;
             
             // TODO(yuval): Stop using crt for this
-            Result.Contents = malloc(FileSize);
-            if (Result.Contents)
-            {
-                umm BytesRead = read(FileHandle, Result.Contents, FileSize);
+            result.contents = malloc(file_size);
+            if (result.contents) {
+                umm bytes_read = read(file_handle, result.contents, file_size);
                 
-                if (BytesRead == FileSize)
+                if (bytes_read == file_size)
                 {
-                    Result.ContentsSize = FileSize;
+                    result.contents_size = file_size;
+                } else {
+                    mac_free_file_memory(result.contents);
+                    result.contents = 0;
                 }
-                else
-                {
-                    MacFreeFileMemory(Result.Contents);
-                    Result.Contents = 0;
-                }
-            }
-            else
-            {
+            } else {
                 // TODO(yuval): Diagnostic
             }
-        }
-        else
-        {
+        } else {
             // TODO(yuval): Diagnostic
         }
         
-        close(FileHandle);
-    }
-    else
-    {
+        close(file_handle);
+    } else {
         // TODO(yuval): Diagnostic
     }
     
-    return Result;
+    return result;
 }
 
 internal b32
-MacWriteEntireFile(const char* FileName, void* Memory, umm MemorySize)
-{
-    b32 Result = false;
+mac_write_entire_file(const char* filename, void* memory, umm memory_size) {
+    b32 result = false;
     
-    s32 FileHandle = open(FileName, O_WRONLY | O_CREAT, 0644);
-    if (FileHandle != -1)
-    {
-        umm BytesWritten = write(FileHandle, Memory, MemorySize);
-        Result = (BytesWritten == MemorySize);
+    s32 file_handle = open(filename, O_WRONLY | O_CREAT, 0644);
+    if (file_handle != -1) {
+        umm bytes_written = write(file_handle, memory, memory_size);
+        result = (bytes_written == memory_size);
         
-        close(FileHandle);
-    }
-    else
-    {
+        close(file_handle);
+    } else {
         // TODO(yuval): Diagnostic
     }
     
-    return Result;
+    return result;
 }
 
-internal PLATFORM_ADD_WORK_QUEUE_ENTRY(MacAddWorkQueueEntry)
-{
-    u32 NewNextEntryToWrite = (Queue->NextEntryToWrite + 1) % ArrayCount(Queue->Entries);
-    Assert(NewNextEntryToWrite != Queue->NextEntryToRead);
+internal PLATFORM_ADD_WORK_QUEUE_ENTRY(mac_add_work_queue_entry) {
+    u32 new_next_entry_to_write = (queue->next_entry_to_write + 1) % ARRAY_COUNT(queue->entries);
+    ASSERT(new_next_entry_to_write != queue->next_entry_to_read);
     
-    platform_work_queue_entry* Entry = &Queue->Entries[Queue->NextEntryToWrite];
-    Entry->Callback = Callback;
-    Entry->Data = Data;
+    Platform_Work_Queue_Entry* entry = &queue->entries[queue->next_entry_to_write];
+    entry->callback = callback;
+    entry->data = data;
     
-    ++Queue->CompletionGoal;
+    ++queue->completion_goal;
     
-    CompletePreviousWritesBeforeFutureWrites();
+    COMPLETE_PREVIOUS_WRITES_BEFORE_FUTURE_WRITES();
     
-    Queue->NextEntryToWrite = NewNextEntryToWrite;
-    sem_post(&Queue->SemaphoreHandle);
+    queue->next_entry_to_write = new_next_entry_to_write;
+    sem_post(&queue->semaphore_handle);
 }
 
 internal b32
-MacDoNextWorkQueueEntry(platform_work_queue* Queue)
-{
-    b32 DoneWork = true;
+mac_do_next_work_queue_entry(Platform_Work_Queue* queue) {
+    b32 done_work = true;
     
-    u32 OriginalNextEntryToRead = Queue->NextEntryToRead;
-    u32 NewNextEntryToRead = (OriginalNextEntryToRead + 1) % ArrayCount(Queue->Entries);
+    u32 original_next_entry_to_read = queue->next_entry_to_read;
+    u32 new_next_entry_to_read = (original_next_entry_to_read + 1) % ARRAY_COUNT(queue->entries);
     
-    if (OriginalNextEntryToRead != Queue->NextEntryToWrite)
-    {
-        u32 Index = AtomicCompareExchangeU32((volatile u32*)&Queue->NextEntryToRead,
-                                             NewNextEntryToRead,
-                                             OriginalNextEntryToRead);
+    if (original_next_entry_to_read != queue->next_entry_to_write) {
+        u32 index = atomic_compare_exchange_u32((volatile u32*)&queue->next_entry_to_read,
+                                                new_next_entry_to_read,
+                                                original_next_entry_to_read);
         
-        if (Index == OriginalNextEntryToRead)
-        {
-            platform_work_queue_entry Entry = Queue->Entries[Index];
-            Entry.Callback(Queue, Entry.Data);
-            AtomicAddU64((volatile u64*)&Queue->CompletionCount, 1);
+        if (index == original_next_entry_to_read) {
+            Platform_Work_Queue_Entry entry = queue->entries[index];
+            entry.callback(queue, entry.data);
+            atomic_add_u64((volatile u64*)&queue->completion_count, 1);
         }
-    }
-    else
-    {
-        DoneWork = false;
+    } else {
+        done_work = false;
     }
     
-    return DoneWork;
+    return done_work;
 }
 
-internal PLATFORM_COMPLETE_ALL_WORK_QUEUE_WORK(MacCompleteAllWorkQueueWork)
-{
-    while (Queue->CompletionCount != Queue->CompletionGoal)
-    {
-        MacDoNextWorkQueueEntry(Queue);
+internal PLATFORM_COMPLETE_ALL_WORK_QUEUE_WORK(mac_complete_all_work_queue_work) {
+    while (queue->completion_count != queue->completion_goal) {
+        mac_do_next_work_queue_entry(queue);
     }
     
-    Queue->CompletionCount = 0;
-    Queue->CompletionGoal = 0;
+    queue->completion_count = 0;
+    queue->completion_goal = 0;
 }
 
 internal void*
-MacThreadProc(void* Parameter)
-{
-    mac_thread_startup* Startup = (mac_thread_startup*)Parameter;
-    platform_work_queue* Queue = Startup->Queue;
+mac_thread_proc(void* parameter) {
+    Mac_Thread_Startup* startup = (Mac_Thread_Startup*)parameter;
+    Platform_Work_Queue* queue = startup->queue;
     
-    for (;;)
-    {
-        if (!MacDoNextWorkQueueEntry(Queue))
-        {
-            sem_wait(&Queue->SemaphoreHandle);
+    for (;;) {
+        if (!mac_do_next_work_queue_entry(queue)) {
+            sem_wait(&queue->semaphore_handle);
         }
     }
 }
 
 // TODO(yuval): Maybe factor this function to be non platform specific?
 internal char*
-MacGetCompilerPath(const char* CompilerName, string EnvPath, memory_arena* Arena)
-{
-    char* Result = 0;
+mac_get_compiler_path(const char* compiler_name, String env_path, Memory_Arena* arena) {
+    char* result = 0;
     
     // TODO(yuval): Make this platform independent (use the max path define for the current platform)
-    char CompilerPath[PATH_MAX] = {};
-    char* PathAt = CompilerPath;
+    char compiler_path[PATH_MAX] = {};
+    char* path_at = compiler_path;
     
-    for (size_t Index = 0; Index <= EnvPath.Count; ++Index)
-    {
-        if ((Index == EnvPath.Count) || (EnvPath.Data[Index] == ':'))
-        {
-            *PathAt++ = '/';
+    for (size_t index = 0; index <= env_path.count; ++index) {
+        if ((index == env_path.count) || (env_path.data[index] == ':')) {
+            *path_at++ = '/';
             
-            string CompilerPathTail = MakeString(PathAt, 0,
-                                                 sizeof(CompilerPath) - (PathAt - CompilerPath));
-            Append(&CompilerPathTail, CompilerName);
-            *(PathAt + CompilerPathTail.Count) = 0;
+            String compiler_path_tail = make_string(path_at, 0,
+                                                    sizeof(compiler_path) - (path_at - compiler_path));
+            append(&compiler_path_tail, compiler_name);
+            *(path_at + compiler_path_tail.count) = 0;
             
-            struct stat CompilerStat;
-            if ((stat(CompilerPath, &CompilerStat) != -1) &&
-                S_ISREG(CompilerStat.st_mode))
-            {
-                umm CompilerPathCount = PathAt + CompilerPathTail.Count - CompilerPath;
-                Result = PushCopyZ(Arena, MakeString(CompilerPath, CompilerPathCount));
+            struct stat compiler_stat;
+            if ((stat(compiler_path, &compiler_stat) != -1) && S_ISREG(compiler_stat.st_mode)) {
+                umm compiler_path_count = path_at + compiler_path_tail.count - compiler_path;
+                result = push_copy_z(arena, make_string(compiler_path, compiler_path_count));
                 
                 break;
             }
             
-            PathAt = CompilerPath;
-        }
-        else
-        {
-            *PathAt++ = EnvPath.Data[Index];
+            path_at = compiler_path;
+        } else {
+            *path_at++ = env_path.data[index];
         }
     }
     
-    return Result;
+    return result;
 }
 
 int
-main(int ArgCount, const char* Args[])
-{
+main(int arg_count, const char* args[]) {
     // NOTE(yuval): Getting the timebase info
-    mach_timebase_info(&GlobalTimebaseInfo);
+    mach_timebase_info(&global_timebase_info);
     
-    if (ArgCount > 1)
-    {
-        pid_t PID = getpid();
-        char BuildAppPath[PATH_MAX];
-        s32 BuildAppPathCount = proc_pidpath(PID, BuildAppPath, sizeof(BuildAppPath));
-        if (BuildAppPathCount > 0)
-        {
-            build_application* App = BootstrapPushStruct(build_application, AppArena);
+    if (arg_count > 1) {
+        pid_t pid = getpid();
+        char build_app_path[PATH_MAX];
+        s32 build_app_path_count = proc_pidpath(pid, build_app_path, sizeof(build_app_path));
+        
+        if (build_app_path_count > 0) {
+            Build_Application* app = BOOTSTRAP_PUSH_STRUCT(Build_Application, app_arena);
             
-            yd_umm BuildAppPathLastSlashIndex = RFind(BuildAppPath, BuildAppPathCount, '/');
-            ConcatStrings(App->PlatformAPI.BuildRunTreeCodePath, sizeof(Platform.BuildRunTreeCodePath),
-                          BuildAppPath, BuildAppPathLastSlashIndex + 1,
-                          Literal("code/"));
+            yd_umm build_app_path_last_slash_index = rfind(build_app_path, build_app_path_count, '/');
+            concat(app->platform_api.build_run_tree_code_path,
+                   sizeof(platform.build_run_tree_code_path),
+                   build_app_path, build_app_path_last_slash_index + 1,
+                   LITERAL("code/"));
             
             // NOTE(yuval): Compiler Paths Discovery
-            string EnvPath = MakeStringSlowly(getenv("PATH"));
+            String env_path = make_string_slowly(getenv("PATH"));
             
-            compiler_info* Compiler = App->PlatformAPI.Compilers;
-            Compiler->Type = BuildCompiler_Clang;
-            Compiler->Name = "clang";
-            Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
-            ++Compiler;
+            Compiler_Info* compiler = app->platform_api.compilers;
+            compiler->type = BUILD_COMPILER_CLANG;
+            compiler->name = "clang";
+            compiler->path = mac_get_compiler_path(compiler->name, env_path, &app->app_arena);
+            ++compiler;
             
-            Compiler->Type = BuildCompiler_GPP;
-            Compiler->Name = "g++";
-            Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
-            ++Compiler;
+            compiler->type = BUILD_COMPILER_GPP;
+            compiler->name = "g++";
+            compiler->path = mac_get_compiler_path(compiler->name, env_path, &app->app_arena);
+            ++compiler;
             
-            Compiler->Type = BuildCompiler_GCC;
-            Compiler->Name = "gcc";
-            Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
-            ++Compiler;
+            compiler->type = BUILD_COMPILER_GCC;
+            compiler->name = "gcc";
+            compiler->path = mac_get_compiler_path(compiler->name, env_path, &app->app_arena);
+            ++compiler;
             
-            Compiler->Type = BuildCompiler_MSVC;
-            Compiler->Name = "cl";
-            Compiler->Path = MacGetCompilerPath(Compiler->Name, EnvPath, &App->AppArena);
+            compiler->type = BUILD_COMPILER_MSVC;
+            compiler->name = "cl";
+            compiler->path = mac_get_compiler_path(compiler->name, env_path, &app->app_arena);
             
             // NOTE(yuval): Work Queue Creation
-            platform_work_queue WorkQueue = {};
-            mac_thread_startup ThreadStartups[8];
+            Platform_Work_Queue work_queue = {};
+            Mac_Thread_Startup thread_startups[8];
             
-            sem_init(&WorkQueue.SemaphoreHandle, 0, 0);
+            sem_init(&work_queue.semaphore_handle, 0, 0);
             
-            for (u32 ThreadIndex = 0;
-                 ThreadIndex < ArrayCount(ThreadStartups);
-                 ++ThreadIndex)
-            {
-                mac_thread_startup* Startup = &ThreadStartups[ThreadIndex];
-                Startup->Queue = &WorkQueue;
+            // TODO(yuval): Use array_foreach instead of regular for
+            for (u32 thread_index = 0;
+                 thread_index < ARRAY_COUNT(thread_startups);
+                 ++thread_index) {
+                Mac_Thread_Startup* startup = &thread_startups[thread_index];
+                startup->queue = &work_queue;
                 
-                pthread_t ThreadHandle;
-                pthread_create(&ThreadHandle, 0, MacThreadProc, Startup);
-                pthread_detach(ThreadHandle);
+                pthread_t thread_handle;
+                pthread_create(&thread_handle, 0, mac_thread_proc, startup);
+                pthread_detach(thread_handle);
             }
             
-            App->PlatformAPI.WorkQueue = &WorkQueue;
+            app->platform_api.work_queue = &work_queue;
             
             // NOTE(yuval): PlatformAPI Functions Initilization
-            App->PlatformAPI.AddWorkQueueEntry = MacAddWorkQueueEntry;
-            App->PlatformAPI.CompleteAllWorkQueueWork = MacCompleteAllWorkQueueWork;
+            app->platform_api.add_work_queue_entry = mac_add_work_queue_entry;
+            app->platform_api.complete_all_work_queue_work = mac_complete_all_work_queue_work;
             
-            App->PlatformAPI.GetOutputExtension = MacGetOutputExtension;
-            App->PlatformAPI.ExecProcessAndWait = MacExecProcessAndWait;
+            app->platform_api.get_output_extension = mac_get_output_extension;
+            app->platform_api.exec_process_and_wait = mac_exec_process_and_wait;
             
-            App->PlatformAPI.GetWallClock = MacGetWallClock;
-            App->PlatformAPI.GetSecondsElapsed = MacGetSecondsElapsed;
+            app->platform_api.get_wall_clock = mac_get_wall_clock;
+            app->platform_api.get_seconds_elapsed = mac_get_seconds_elapsed;
             
             // NOTE(yuval): Build File Processing
-            read_file_result BuildFile = MacReadEntireFile(Args[1]);
-            string BuildFileContents = MakeString(BuildFile.Contents,
-                                                  BuildFile.ContentsSize);
+            Read_File_Result build_file = mac_read_entire_file(args[1]);
+            String build_file_contents = make_string(build_file.contents,
+                                                     build_file.contents_size);
             
             // TODO(yuval): Better parsing for finding the build function name:
             // Parse the document to tokens, ignore whitespaces, newlines, and so on....
-            char BuildFunctionName[64];
-            umm BuildFunctionNameCount = 0;
+            char build_function_name[64];
+            umm build_function_name_count = 0;
             
-            string BuildFileWord = GetFirstWord(BuildFileContents);
-            while (!IsNullString(BuildFileWord))
-            {
-                if (StringsMatch(BuildFileWord, "#build"))
-                {
-                    BuildFunctionNameCount = Copy(BuildFunctionName,
-                                                  GetNextWord(BuildFileContents, BuildFileWord));
+            String build_file_word = get_first_word(build_file_contents);
+            while (!is_null_string(build_file_word)) {
+                if (strings_match(build_file_word, "#build")) {
+                    build_function_name_count = copy(build_function_name,
+                                                     get_next_word(build_file_contents,
+                                                                   build_file_word));
                     
-                    MacWriteEntireFile(GENERATED_BUILD_FILE_NAME,
-                                       BuildFile.Contents,
-                                       (umm)(BuildFileWord.Data - BuildFileContents.Data));
+                    mac_write_entire_file(GENERATED_BUILD_FILE_NAME,
+                                          build_file.contents,
+                                          (umm)(build_file_word.data - build_file_contents.data));
                     break;
                 }
                 
-                BuildFileWord = GetNextWord(BuildFileContents, BuildFileWord);
+                build_file_word = get_next_word(build_file_contents, build_file_word);
             }
             
-            MacFreeFileMemory(BuildFile.Contents);
+            mac_free_file_memory(build_file.contents);
             
             // NOTE(yuval): Build Startup & Build Function Call
-            if (BuildFunctionNameCount != 0)
-            {
-                printf("Build Function: %s\n\n", BuildFunctionName);
+            if (build_function_name_count != 0) {
+                printf("Build Function: %s\n\n", build_function_name);
                 
-                if (BuildStartup(App))
-                {
-                    void* BuildFileDLL = dlopen("build_file.dylib", RTLD_LAZY | RTLD_GLOBAL);
+                if (build_startup(app)) {
+                    void* build_file_dll = dlopen("build_file.dylib", RTLD_LAZY | RTLD_GLOBAL);
                     
-                    if (BuildFileDLL)
-                    {
-                        build_function* BuildFunction =
-                            (build_function*)dlsym(BuildFileDLL, BuildFunctionName);
+                    if (build_file_dll) {
+                        Build_Function* build_function =
+                            (Build_Function*)dlsym(build_file_dll, build_function_name);
                         
-                        if (BuildFunction)
-                        {
+                        if (build_function) {
                             // NOTE(yuval): Calling the build function
-                            BuildFunction(&App->AppLinks);
-                        }
-                        else
-                        {
+                            build_function(&app->app_links);
+                        } else {
                             // TODO(yuval): Report invalid build function
                         }
-                    }
-                    else
-                    {
+                    } else {
                         // TODO(yuval): Diagnostic
                     }
-                }
-                else
-                {
+                } else {
                     // TODO(yuval): Diagnostic
                 }
-            }
-            else
-            {
+            } else {
                 // TODO(yuval): Report no build function!
             }
-        }
-        else
-        {
+        } else {
             printf("A Build File Was Not Specified\n");
         }
-    }
-    else
-    {
+    } else {
         // TODO(yuval): Diagnostic
     }
     

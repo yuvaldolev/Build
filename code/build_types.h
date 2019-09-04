@@ -43,7 +43,7 @@
 // NOTE(yuval): To be used only in the same function
 // where the array was defined or with arrays that are defined
 // within structs
-#define ArrayCount(Array) (sizeof(Array) / sizeof((Array)[0]))
+#define ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
 
 typedef int8_t s8;
 typedef int16_t s16;

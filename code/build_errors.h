@@ -4,143 +4,120 @@
 #include <stdlib.h>
 
 internal void
-PrintReport(string Type, string FileData, string FilePath,
-            s32 Line, s32 Column, const char* Format, va_list ArgList)
-{
-    const char* DataAt = FileData.Data;
+print_report(String type, Code_File file, s32 line, s32 column,
+             const char* format, va_list arg_list) {
+    const char* data_at = file.contents.data;
     
     // NOTE(yuval): Getting to the line that contains the error
-    for (s32 LineNumber = 1; LineNumber < Line; ++LineNumber)
-    {
-        while (*DataAt && (*DataAt++ != '\n'));
+    for (s32 line_number = 1; line_number < line; ++line_number) {
+        while (*data_at && (*data_at++ != '\n'));
     }
     
     // NOTE(yuval): Ignoring all spacing in the beginning of the line
-    s32 FirstCharIndex = 0;
-    while (IsSpacing(*DataAt))
-    {
-        ++FirstCharIndex;
-        ++DataAt;
+    s32 first_char_index = 0;
+    while (is_spacing(*data_at)) {
+        ++first_char_index;
+        ++data_at;
     }
     
     // NOTE(yuval): Error line length calculation
-    u32 LineLen = 0;
-    const char* LineAt = DataAt;
+    u32 line_len = 0;
+    const char* line_at = data_at;
     
-    while (*LineAt && (*LineAt != '\n'))
-    {
-        ++LineLen;
-        ++LineAt;
+    while (*line_at && (*line_at != '\n')) {
+        ++line_len;
+        ++line_at;
     }
     
-    char Message[4096] = {};
-    FormatStringList(Message, sizeof(Message), Format, ArgList);
+    char message[4096] = {};
+    format_string_list(message, sizeof(message), format, arg_list);
     
     // NOTE(yuval): Error location data
     fprintf(stderr, "%.*s:%d:%d: %.*s: %s\n",
-            (s32)FilePath.Count, FilePath.Data,
-            Line, Column, (s32)Type.Count, Type.Data, Message);
+            PRINTABLE_STRING(file.name),
+            line, column, PRINTABLE_STRING(type), message);
     
     // NOTE(yuval): Error line
-    fprintf(stderr, "    %.*s\n    ", LineLen, DataAt);
+    fprintf(stderr, "    %.*s\n    ", line_len, data_at);
     
     // NOTE(yuval): Error char
-    for (s32 CharIndex = FirstCharIndex;
-         CharIndex < Column - 1;
-         ++CharIndex)
-    {
-        fprintf(stderr, ((DataAt[CharIndex] == '\t') ? "    " : " "));
+    for (s32 char_index = first_char_index;
+         char_index < column - 1;
+         ++char_index) {
+        fprintf(stderr, ((data_at[char_index] == '\t') ? "    " : " "));
     }
     
     fprintf(stderr, "^\n\n");
 }
 
 internal void
-ReportWarningList(string FileData, string FilePath,
-                  s32 Line, s32 Column,
-                  const char* Format, va_list ArgList)
-{
-    PrintReport(MakeLitString("warning"), FileData, FilePath, Line, Column, Format, ArgList);
+report_error_list(Code_File file, s32 line, s32 column,
+                  const char* format, va_list arg_list) {
+    print_report(MAKE_LIT_STRING("error"), file, line, column, format, arg_list);
 }
 
 internal void
-ReportWarning(string FileData, string FilePath,
-              s32 Line, s32 Column,
-              const char* Format, ...)
-{
-    va_list ArgList;
+report_error(Code_File file, s32 line, s32 column, const char* format, ...) {
+    va_list arg_list;
     
-    va_start(ArgList, Format);
-    ReportWarningList(FileData, FilePath, Line, Column, Format, ArgList);
-    va_end(ArgList);
+    va_start(arg_list, format);
+    report_error_list(file, line, column, format, arg_list);
+    va_end(arg_list);
 }
 
 internal void
-ReportErrorList(string FileData, string FilePath,
-                s32 Line, s32 Column,
-                const char* Format, va_list ArgList)
-{
-    PrintReport(MakeLitString("error"), FileData, FilePath, Line, Column, Format, ArgList);
-}
-
-internal void
-ReportError(string FileData, string FilePath,
-            s32 Line, s32 Column,
-            const char* Format, ...)
-{
-    va_list ArgList;
+report_error(Token* token, const char* format, ...) {
+    va_list arg_list;
     
-    va_start(ArgList, Format);
-    ReportErrorList(FileData, FilePath, Line, Column, Format, ArgList);
-    va_end(ArgList);
+    va_start(arg_list, format);
+    report_error_list(token->file, token->line_number,
+                      token->column_number, format, arg_list);
+    va_end(arg_list);
 }
 
 internal void
-WarnToken(token* Token, const char* Format, ...)
-{
-    va_list ArgList;
+report_error(Ast* ast, const char* format, ...) {
+    va_list arg_list;
     
-    va_start(ArgList, Format);
-    ReportWarningList(Token->FileData, Token->FileName,
-                      Token->LineNumber, Token->ColumnNumber,
-                      Format, ArgList);
-    va_end(ArgList);
+    va_start(arg_list, format);
+    report_error_list(ast->my_file, ast->my_line,
+                      ast->my_column, format, arg_list);
+    va_end(arg_list);
 }
 
 internal void
-BadToken(token* Token, const char* Format, ...)
-{
-    va_list ArgList;
-    
-    va_start(ArgList, Format);
-    ReportErrorList(Token->FileData, Token->FileName,
-                    Token->LineNumber, Token->ColumnNumber,
-                    Format, ArgList);
-    va_end(ArgList);
+report_warning_list(Code_File file, s32 line, s32 column,
+                    const char* format, va_list arg_list) {
+    print_report(MAKE_LIT_STRING("warning"), file, line, column, format, arg_list);
 }
 
 internal void
-AstWarning(ast* Ast, const char* Format, ...)
-{
-    va_list ArgList;
+report_warning(Code_File file, s32 line, s32 column, const char* format, ...) {
+    va_list arg_list;
     
-    va_start(ArgList, Format);
-    ReportWarningList(Ast->MyFile->FileData, Ast->MyFile->FileName,
-                      Ast->MyLine, Ast->MyColumn,
-                      Format, ArgList);
-    va_end(ArgList);
+    va_start(arg_list, format);
+    report_warning_list(file, line, column, format, arg_list);
+    va_end(arg_list);
 }
 
 internal void
-AstError(ast* Ast, const char* Format, ...)
-{
-    va_list ArgList;
+report_warning(Token* token, const char* format, ...) {
+    va_list arg_list;
     
-    va_start(ArgList, Format);
-    ReportErrorList(Ast->MyFile->FileData, Ast->MyFile->FileName,
-                    Ast->MyLine, Ast->MyColumn,
-                    Format, ArgList);
-    va_end(ArgList);
+    va_start(arg_list, format);
+    report_warning_list(token->file, token->line_number,
+                        token->column_number, format, arg_list);
+    va_end(arg_list);
+}
+
+internal void
+report_warning(Ast* ast, const char* format, ...) {
+    va_list arg_list;
+    
+    va_start(arg_list, format);
+    report_warning_list(ast->my_file, ast->my_line,
+                        ast->my_column, format, arg_list);
+    va_end(arg_list);
 }
 
 #define BUILD_ERRORS_H

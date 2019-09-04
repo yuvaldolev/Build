@@ -46,8 +46,7 @@ typedef uintptr_t yd_umm;
 # define YD_ASSERT(expression) if (!(expression)) { *(volatile int*)0 = 0; }
 #endif // #if !defined(YD_ASSERT)
 
-struct String
-{
+struct String {
     char* data;
     yd_umm count;
     yd_umm capacity;
@@ -145,7 +144,7 @@ yd_b32 concat(String* dest, String source_a, String source_b);
 void replace_range(String* str, yd_umm first, yd_umm one_past_last, char with);
 void replace_range(String* str, yd_umm first, yd_umm one_past_last, const char* with);
 void replace_range(String* str, yd_umm first, yd_umm one_past_last, String with);
-void replace(String* str, char to_replace, char ׳ith);
+void replace(String* str, char to_replace, char with);
 void replace(String* str, const char* to_replace, const char* with);
 void replace(String* str, const char* to_replace, String with);
 void replace(String* str, String to_replace, const char* with);
@@ -315,7 +314,7 @@ skip_whitespace(String str) {
 }
 
 yd_internal inline String
-skip_chop_whitespace(String str, yd_umm* ou_skip_count) {
+skip_chop_whitespace(String str, yd_umm* out_skip_count) {
     String result = skip_whitespace(str, out_skip_count);
     result = chop_whitespace(result);
     return result;
@@ -611,38 +610,38 @@ append(String* dest, String source) {
 //
 
 yd_internal inline yd_b32
-concat_strings(char* dest, yd_umm dest_count,
-               const char* source_a, yd_umm source_a_count,
-               const char* source_b, yd_umm source_b_count) {
+concat(char* dest, yd_umm dest_count,
+       const char* source_a, yd_umm source_a_count,
+       const char* source_b, yd_umm source_b_count) {
     String dest_string = make_string(dest, dest_count - 1);
     String source_a_string = make_string((char*)source_a, source_a_count);
     String source_b_string = make_string((char*)source_b, source_b_count);
     
-    yd_b32 result = concat_strings(&dest_string, source_a_string, source_b_string);
+    yd_b32 result = concat(&dest_string, source_a_string, source_b_string);
     dest[dest_string.count] = 0;
     
     return result;
 }
 
 yd_internal inline yd_b32
-concat_strings(char* dest, yd_umm dest_count,
-               String source_a, String source_b) {
+concat(char* dest, yd_umm dest_count,
+       String source_a, String source_b) {
     String dest_string = make_string(dest, dest_count - 1);
     
-    yd_b32 result = concat_strings(&dest_string, source_a, source_b);
+    yd_b32 result = concat(&dest_string, source_a, source_b);
     dest[dest_string.count] = 0;
     
     return result;
 }
 
 yd_internal inline yd_b32
-concat_strings(String* dest,
-               const char* source_a, yd_umm source_a_count,
-               const char* source_b, yd_umm source_b_count) {
+concat(String* dest,
+       const char* source_a, yd_umm source_a_count,
+       const char* source_b, yd_umm source_b_count) {
     String source_a_string = make_string((char*)source_a, source_a_count);
     String source_b_string = make_string((char*)source_b, source_b_count);
     
-    yd_b32 result = concat_strings(dest, source_a_string, source_b_string);
+    yd_b32 result = concat(dest, source_a_string, source_b_string);
     return result;
 }
 
@@ -1071,6 +1070,12 @@ s32_to_hex_char(yd_s32 value) {
 // NOTE(yuval): File / Directory Strings Management Functions
 //
 
+yd_internal inline yd_umm
+reverse_seek_slash(String str) {
+    yd_umm result = reverse_seek_slash(str, 0);
+    return result;
+}
+
 yd_internal inline yd_b32
 is_slash(char c) {
     yd_b32 result = ((c == '/') || (c == '\\'));
@@ -1086,12 +1091,6 @@ front_of_directory(String dir) {
 yd_internal inline String
 path_of_directory(String dir) {
     String result = substr(dir, 0, reverse_seek_slash(dir) + 1);
-    return result;
-}
-
-yd_internal inline yd_umm
-reverse_seek_slash(String str) {
-    yd_umm result = reverse_seek_slash(str, 0);
     return result;
 }
 
@@ -1286,7 +1285,7 @@ strings_match(String a, const char* b) {
         
         result = (*at == 0);
     } else {
-        result = (A.count == 0);
+        result = (a.count == 0);
     }
     
     return result;
@@ -1313,7 +1312,7 @@ strings_match(const char* a, yd_umm a_count, const char* b) {
     yd_b32 result = false;
     
     if (b) {
-        const char* at = B;
+        const char* at = b;
         
         for (yd_umm index = 0; index < a_count; ++index) {
             if ((*at == 0) || (a[index] != *at)) {
@@ -1394,7 +1393,7 @@ strings_match_part(String a, const char* b, yd_umm* out_count) {
         
         result = true;
     } else {
-        result = (A.count == 0);
+        result = (a.count == 0);
     }
     
     *out_count = index;
@@ -1425,11 +1424,11 @@ strings_match_part(const char* a, String b, yd_umm* out_count) {
 
 yd_b32
 strings_match_part(String a, String b, yd_umm* out_count) {
-    yd_b32 result = (A.count >= B.count);
+    yd_b32 result = (a.count >= b.count);
     yd_umm index = 0;
     
     if (result) {
-        for (; index < B.count; ++index) {
+        for (; index < b.count; ++index) {
             if (a.data[index] != b.data[index]) {
                 result = false;
                 break;
@@ -1447,11 +1446,11 @@ strings_match_insensitive(const char* a, const char* b) {
     
     if (a && b) {
         while (*a && *b && (to_lower(*a) == to_lower(*b))) {
-            ++A;
-            ++B;
+            ++a;
+            ++b;
         }
         
-        result = ((*A == 0) && (*B == 0));
+        result = ((*a == 0) && (*b == 0));
     }
     
     return result;
@@ -1480,7 +1479,7 @@ strings_match_insensitive(String a, const char* b) {
 
 yd_b32
 strings_match_insensitive(String a, String b) {
-    yd_b32 result = (A.count == B.count);
+    yd_b32 result = (a.count == b.count);
     
     if (result) {
         for (yd_umm index = 0; index < a.count; ++index) {
@@ -1528,7 +1527,7 @@ strings_match_part_insensitive(String a, const char* b, yd_umm* out_count) {
         
         result = true;
     } else {
-        result = (A.count == 0);
+        result = (a.count == 0);
     }
     
     *out_count = index;
@@ -1633,7 +1632,7 @@ compare(String a, String b) {
     }
     
     yd_umm index = 0;
-    while ((index < min_count) && (A.data[index] == B.data[index])) {
+    while ((index < min_count) && (a.data[index] == b.data[index])) {
         ++index;
     }
     
@@ -2214,7 +2213,7 @@ append_padding(String* dest, char c, yd_umm target_count) {
 //
 
 yd_b32
-concat_strings(String* dest, String source_a, String source_b) {
+concat(String* dest, String source_a, String source_b) {
     yd_b32 can_fit_concat = (dest->capacity >= source_a.count + source_b.count);
     
     if (can_fit_concat) {

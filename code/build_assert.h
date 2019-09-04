@@ -23,9 +23,9 @@ if (!(expression)) { \
     #expression, __FILE__, __FUNCTION__, __LINE__); \
     NSAlert *alert = [[[NSAlert alloc] init] autorelease]; \
     NSString* message_string = [NSString stringWithUTF8String:message]; \
-    [Alert setMessageText:@"ASSERSION FAILURE"]; \
-    [Alert setInformativeText:message_string]; \
-    [Alert runModal]; \
+    [alert setMessageText:@"ASSERSION FAILURE"]; \
+    [alert setInformativeText:message_string]; \
+    [alert runModal]; \
     if (should_crash) { \
         *(volatile int*)0 = 0; \
     } \

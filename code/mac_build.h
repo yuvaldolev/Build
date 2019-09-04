@@ -1,26 +1,23 @@
 #if !defined(MAC_BUILD_H)
 
-struct platform_work_queue_entry
-{
-    platform_work_queue_callback* Callback;
-    void* Data;
+struct Platform_Work_Queue_Entry {
+    Platform_Work_Queue_Callback* callback;
+    void* data;
 };
 
-struct platform_work_queue
-{
-    sem_t SemaphoreHandle;
+struct Platform_Work_Queue {
+    sem_t semaphore_handle;
     
-    platform_work_queue_entry Entries[256];
-    volatile u32 NextEntryToRead;
-    volatile u32 NextEntryToWrite;
+    Platform_Work_Queue_Entry entries[256];
+    volatile u32 next_entry_to_read;
+    volatile u32 next_entry_to_write;
     
-    volatile u32 CompletionCount;
-    volatile u32 CompletionGoal;
+    volatile u32 completion_count;
+    volatile u32 completion_goal;
 };
 
-struct mac_thread_startup
-{
-    platform_work_queue* Queue;
+struct Mac_Thread_Startup {
+    Platform_Work_Queue* queue;
 };
 
 #define MAC_BUILD_H
