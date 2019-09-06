@@ -19,16 +19,16 @@ global Token_Name_And_Type global_pp_keywords[] = {
 internal String
 get_token_type_name(Token_Type type) {
     switch (type) {
-#define TOKEN_TYPE(type) case JOIN2(TOKEN_, type): { return MAKE_LIT_STRING(#type); }
+#define TOKEN_TYPE(type) case JOIN2(TOKEN_, type): { return BUNDLE_LITERAL(#type); }
         TOKEN_TYPES
 #undef TOKEN_TYPE
         
-#define KEYWORD_TOKEN_TYPE(type, ...) case JOIN2(TOKEN_, type): { return MAKE_LIT_STRING(#type); }
+#define KEYWORD_TOKEN_TYPE(type, ...) case JOIN2(TOKEN_, type): { return BUNDLE_LITERAL(#type); }
             KEYWORD_TOKEN_TYPES
 #undef KEYWORD_TOKEN_TYPE
     }
     
-    return MAKE_LIT_STRING("Unknown");
+    return BUNDLE_LITERAL("Unknown");
 }
 
 internal b32

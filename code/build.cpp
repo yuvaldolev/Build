@@ -7,7 +7,7 @@
 #include "yd/yd_string.h"
 
 #include "build_lexer.cpp"
-//#include "build_parser.cpp"
+#include "build_parser.cpp"
 
 global Time_Events_Queue global_time_events_queue;
 global b32 global_build_succeeded = true;
@@ -491,16 +491,16 @@ build_startup(Build_Application* app) {
     
     // NOTE(yuval): Build File Workspace Setup
     Build_Workspace build_file_workspace = {};
-    build_file_workspace.name = MAKE_LIT_STRING("Build File");
+    build_file_workspace.name = BUNDLE_LITERAL("Build File");
     
     Build_Options* options = &build_file_workspace.options;
     options->optimization_level = 0; // TODO(yuval): Use max optimization level
     options->output_type = BUILD_OUTPUT_SHARED_LIBRARY;
-    options->output_name = MAKE_LIT_STRING("build_file");
-    options->output_path = MAKE_LIT_STRING(""); // TODO(yuval): Add an output path;
+    options->output_name = BUNDLE_LITERAL("build_file");
+    options->output_path = BUNDLE_LITERAL(""); // TODO(yuval): Add an output path;
     options->compiler = BUILD_COMPILER_AUTO;
     
-    build_add_file(&build_file_workspace, MAKE_LIT_STRING(GENERATED_BUILD_FILE_NAME));
+    build_add_file(&build_file_workspace, BUNDLE_LITERAL(GENERATED_BUILD_FILE_NAME));
     
     // NOTE(yuval): Build File Workspace Building
     Time_Events_Queue build_file_time_events_queue;

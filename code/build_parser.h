@@ -169,7 +169,7 @@ struct Ast_Decl_Statement {
 
 struct Ast_Statement {
     Ast_Statement_Type type;
-    Ast* scope; // Block
+    Ast* my_scope; // Block
     
     union {
         Ast_Decl_Statement decl_stmt;
@@ -199,19 +199,19 @@ enum Ast_Type_Definition_Type {
 struct Ast_Union {
     // NOTE(yuval): Declarations
     Ast* decls[512]; // Declaration
-    umm count;
+    umm decl_count;
 };
 
 struct Ast_Enum {
     // NOTE(yuval): Declarations
     Ast* decls[512]; // Declaration
-    umm count;
+    umm decl_count;
 };
 
 struct Ast_Struct {
     // NOTE(yuval): Members
     Ast* members[512]; // Declaration
-    umm count;
+    umm member_count;
 };
 
 struct Ast_Type_Definition {
@@ -245,7 +245,7 @@ struct Ast_Tag {
 };
 
 struct Ast_Identifier {
-    String my_name;
+    String name;
 };
 
 struct Ast_Function {
@@ -257,13 +257,13 @@ struct Ast_Function {
     Ast* params[512]; // Declaration
     umm param_count;
     
-    Ast* MyBody; // Statement
+    Ast* my_body; // Statement
 };
 
 struct Ast_Declaration {
     Ast_Declaration_Type type;
     
-    Ast_Identifier* identifier;
+    Ast_Identifier* my_identifier;
     Ast* my_scope; // Block
     
     // NOTE(yuval): Tags
@@ -316,7 +316,7 @@ struct Ast {
         Ast_Declaration decl;
         Ast_Type_Definition type_def;
         Ast_Statement stmt;
-        Ast_Expression Expr;
+        Ast_Expression expr;
     };
 };
 
@@ -331,11 +331,11 @@ struct Ast_Translation_Unit {
 //         Parser         //
 ////////////////////////////
 struct Parser {
-    Memory_Arena parser_arena;
+    Memory_Arena arena;
     
     Ast_Translation_Unit* translation_unit;
     
-    Lexer* lexer;
+    Lexer lexer;
     Token token;
 };
 

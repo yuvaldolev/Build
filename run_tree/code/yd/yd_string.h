@@ -251,12 +251,12 @@ make_string_slowly(const void* str) {
     return result;
 }
 
-#if !defined(MAKE_LIT_STRING)
-# define MAKE_LIT_STRING(str) (make_string((char*)(str), sizeof(str) - 1, sizeof(str)))
-#endif // #if !defined(MAKE_LIT_STRING)
+#if !defined(BUNDLE_LITERAL)
+# define BUNDLE_LITERAL(str) (make_string((char*)(str), sizeof(str) - 1, sizeof(str)))
+#endif // #if !defined(BUNDLE_LITERAL)
 
 #if !defined(MAKE_FIXED_WIDTH_STRING)
-# define MAKE_FIXED_WIDTH_STRING(str) (make_string((char*)(str), 0, sizeof(str)))
+# define BUNDLE_LITERAL_FIXED_WIDTH(str) (make_string((char*)(str), 0, sizeof(str)))
 #endif // #if !defined(MAKE_FIXED_WIDTH_STRING)
 
 //
@@ -1968,9 +1968,9 @@ String
 get_first_double_line(String source) {
     String result = {};
     
-    yd_umm pos = find(source, MAKE_LIT_STRING("\n\n"));
+    yd_umm pos = find(source, BUNDLE_LITERAL("\n\n"));
     if (pos == STRING_NOT_FOUND) {
-        pos = find(source, MAKE_LIT_STRING("\r\n\r\n"));
+        pos = find(source, BUNDLE_LITERAL("\r\n\r\n"));
     }
     
     if (pos != STRING_NOT_FOUND) {
@@ -1993,9 +1993,9 @@ get_next_double_line(String source, String line) {
     yd_umm start = line_end_index + 1;
     
     if (start < source.count) {
-        yd_umm pos = find(source, MAKE_LIT_STRING("\n\n"), start);
+        yd_umm pos = find(source, BUNDLE_LITERAL("\n\n"), start);
         if (pos == STRING_NOT_FOUND) {
-            pos = find(source, MAKE_LIT_STRING("\r\n\r\n"), start);
+            pos = find(source, BUNDLE_LITERAL("\r\n\r\n"), start);
         }
         
         if (pos != STRING_NOT_FOUND) {

@@ -53,7 +53,7 @@ print_report(String type, Code_File file, s32 line, s32 column,
 internal void
 report_error_list(Code_File file, s32 line, s32 column,
                   const char* format, va_list arg_list) {
-    print_report(MAKE_LIT_STRING("error"), file, line, column, format, arg_list);
+    print_report(BUNDLE_LITERAL("error"), file, line, column, format, arg_list);
 }
 
 internal void
@@ -88,7 +88,7 @@ report_error(Ast* ast, const char* format, ...) {
 internal void
 report_warning_list(Code_File file, s32 line, s32 column,
                     const char* format, va_list arg_list) {
-    print_report(MAKE_LIT_STRING("warning"), file, line, column, format, arg_list);
+    print_report(BUNDLE_LITERAL("warning"), file, line, column, format, arg_list);
 }
 
 internal void
