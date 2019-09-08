@@ -113,21 +113,14 @@ internal PLATFORM_GET_SECONDS_ELAPSED(mac_get_seconds_elapsed) {
     return result;
 }
 
-internal void
-mac_free_file_memory(void* memory) {
+internal PLATFORM_FREE_FILE_MEMORY(mac_free_file_memory) {
     // TODO(yuval): Stop using crt for this
     if (memory) {
         free(memory);
     }
 }
 
-struct Read_File_Result {
-    void* contents;
-    umm contents_size;
-};
-
-internal Read_File_Result
-mac_read_entire_file(const char* filename) {
+internal PLATFORM_READ_ENTIRE_FILE(mac_read_entire_file) {
     Read_File_Result result = {};
     
     s32 file_handle = open(filename, O_RDONLY);
@@ -163,8 +156,7 @@ mac_read_entire_file(const char* filename) {
     return result;
 }
 
-internal b32
-mac_write_entire_file(const char* filename, void* memory, umm memory_size) {
+internal PLATFORM_WRITE_ENTIRE_FILE(mac_write_entire_file) {
     b32 result = false;
     
     s32 file_handle = open(filename, O_WRONLY | O_CREAT, 0644);
@@ -287,7 +279,7 @@ main(int arg_count, const char* args[]) {
         s32 build_app_path_count = proc_pidpath(pid, build_app_path, sizeof(build_app_path));
         
         if (build_app_path_count > 0) {
-            Build_Application* app = BOOTSTRAP_PUSH_STRUCT(Build_Application, app_arena);
+            Build_Application* app = BOOTSTRAP_PUSH_STRUCT(Build_Application, arena);
             
             yd_umm build_app_path_last_slash_index = rfind(build_app_path, build_app_path_count, '/');
             concat(app->platform_api.build_run_tree_code_path,
@@ -301,22 +293,22 @@ main(int arg_count, const char* args[]) {
             Compiler_Info* compiler = app->platform_api.compilers;
             compiler->type = BUILD_COMPILER_CLANG;
             compiler->name = "clang";
-            compiler->path = mac_get_compiler_path(compiler->name, env_path, &app->app_arena);
+            compiler->path = mac_get_compiler_path(compiler->name, env_path, &app->arena);
             ++compiler;
             
             compiler->type = BUILD_COMPILER_GPP;
             compiler->name = "g++";
-            compiler->path = mac_get_compiler_path(compiler->name, env_path, &app->app_arena);
+            compiler->path = mac_get_compiler_path(compiler->name, env_path, &app->arena);
             ++compiler;
             
             compiler->type = BUILD_COMPILER_GCC;
             compiler->name = "gcc";
-            compiler->path = mac_get_compiler_path(compiler->name, env_path, &app->app_arena);
+            compiler->path = mac_get_compiler_path(compiler->name, env_path, &app->arena);
             ++compiler;
             
             compiler->type = BUILD_COMPILER_MSVC;
             compiler->name = "cl";
-            compiler->path = mac_get_compiler_path(compiler->name, env_path, &app->app_arena);
+            compiler->path = mac_get_compiler_path(compiler->name, env_path, &app->arena);
             
             // NOTE(yuval): Work Queue Creation
             Platform_Work_Queue work_queue = {};
@@ -338,9 +330,13 @@ main(int arg_count, const char* args[]) {
             
             app->platform_api.work_queue = &work_queue;
             
-            // NOTE(yuval): PlatformAPI Functions Initilization
+            // NOTE(yuval): Platform API Functions Initilization
             app->platform_api.add_work_queue_entry = mac_add_work_queue_entry;
             app->platform_api.complete_all_work_queue_work = mac_complete_all_work_queue_work;
+            
+            app->platform_api.free_file_memory = mac_free_file_memory;
+            app->platform_api.read_entire_file = mac_read_entire_file;
+            app->platform_api.write_entire_file = mac_write_entire_file;
             
             app->platform_api.get_output_extension = mac_get_output_extension;
             app->platform_api.exec_process_and_wait = mac_exec_process_and_wait;

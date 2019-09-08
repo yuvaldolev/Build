@@ -6,6 +6,9 @@
 #define YD_STRING_IMPLEMENTATION
 #include "yd/yd_string.h"
 
+#define YD_STRING_FORMAT_IMPLEMENTATION
+#include "yd/yd_string_format.h"
+
 #include "build_lexer.cpp"
 #include "build_parser.cpp"
 
@@ -193,47 +196,6 @@ FunctionMeta(Tokenizer* tokenizer)
     }
 }
 
-internal string
-ReadEntireFileIntoMemory(string FileName)
-{
-    string Result = {};
-    FILE* File = fopen(FileName.Data, "r");
-    
-    if (File)
-    {
-        fseek(File, 0, SEEK_END);
-        
-        // NOTE(yuval): ftell returnes the position indicator in bytes
-        Result.Count = ftell(File);
-        Result.MemorySize = Result.Count;
-        
-        fseek(File, 0, SEEK_SET);
-        
-        // TODO(yuval): Replace malloc with memory arena allocation
-        Result.Data = (char*)malloc(Result.MemorySize);
-        fread(Result.Data, Result.MemorySize, 1, File);
-        
-        fclose(File);
-    }
-    
-    return Result;
-}
-
-internal void
-MetaToolProcessFile(string FileName)
-{
-    if (!MetaToolIsInitialized)
-    {
-        InitDefaultTypes();
-    }
-    
-    printf("Processing: %.*s\n", (s32)FileName.Count, FileName.Data);
-    
-    string FileContents = ReadEntireFileIntoMemory(FileName);
-    
-    ast_file* File = ParseFile(FileName, FileContents);
-    DumpAstFile(File);
-}
 #endif // #if 0
 
 #define COMPILATION_TIMED_BLOCK_NAME "Compilation"
@@ -375,8 +337,23 @@ link_workspace(Build_Workspace* workspace, Memory_Arena* arena, b32 is_verbose_b
     end_temporary_memory(temp_mem);
 }
 
+internal void
+meta_process_translation_unit(const char* filename, Parser* parser) {
+    printf("Processing: %s\n", filename);
+    
+    // TODO(yuval): Proper conversion to null terminated string
+    Read_File_Result file_contents = platform.read_entire_file(filename);
+    Code_File file = {make_string_slowly(filename), make_string(file_contents.contents,
+                                                                file_contents.contents_size)};
+    
+    Ast_Translation_Unit* translation_unit = parse_translation_unit(parser, file);
+    dump_translation_unit_ast(translation_unit);
+}
+
 internal PLATFORM_WORK_QUEUE_CALLBACK(do_compilation_work) {
     Compilation_Work* work = (Compilation_Work*)data;
+    
+    meta_process_translation_unit(work->filename, work->app->parser);
     
     const char* compiler_args[512] = {};
     compiler_args[0] = work->compiler_info->name;
@@ -394,13 +371,13 @@ internal PLATFORM_WORK_QUEUE_CALLBACK(do_compilation_work) {
     }
     
     int exit_code = platform.exec_process_and_wait(work->compiler_info->path,
-                                                   (char**)compiler_args, work->memory_arena);
+                                                   (char**)compiler_args, &work->app->arena);
     
     global_build_succeeded &= (exit_code == 0);
 }
 
 internal void
-compile_workspace(Build_Workspace* workspace, Memory_Arena* arena, b32 is_verbose_build) {
+compile_workspace(Build_Workspace* workspace, Build_Application* app, b32 is_verbose_build) {
     Build_Options* build_options = &workspace->options;
     Compiler_Info* compiler_info = 0;
     array_foreach(platform.compilers) {
@@ -413,15 +390,13 @@ compile_workspace(Build_Workspace* workspace, Memory_Arena* arena, b32 is_verbos
     }
     
     if (compiler_info) {
-        for (umm index = 0;
-             index < workspace->files.count;
-             ++index) {
-            Compilation_Work* work = PUSH_STRUCT(arena, Compilation_Work);
+        for (umm index = 0; index < workspace->files.count; ++index) {
+            Compilation_Work* work = PUSH_STRUCT(&app->arena, Compilation_Work);
             
             // TODO(yuval): Add the workspace's object file path to the file name
-            work->filename = push_copy_z(arena, workspace->files.paths[index]);
+            work->app = app;
+            work->filename = push_copy_z(&app->arena, workspace->files.paths[index]);
             work->compiler_info = compiler_info;
-            work->memory_arena = arena;
             work->is_verbose_build = is_verbose_build;
             
 #if 0
@@ -450,10 +425,10 @@ internal START_BUILD(app_start_build) {
     Build_Application* the_app = (Build_Application*)app;
     
     // NOTE(yuval): Compilation
-    Temporary_Memory temp_mem = begin_temporary_memory(&the_app->app_arena);
+    Temporary_Memory temp_mem = begin_temporary_memory(&the_app->arena);
     for (umm index = 0; index < app->workspaces.count; ++index) {
         compile_workspace(&app->workspaces.workspaces[index],
-                          &the_app->app_arena, the_app->is_verbose_build);
+                          the_app, the_app->is_verbose_build);
         
         //PrintWorkspaceBuildStats(&WorkspaceTimeEventsQueue);
     }
@@ -461,13 +436,12 @@ internal START_BUILD(app_start_build) {
     end_temporary_memory(temp_mem);
     
     // NOTE(yuval): Compilation Succeeded
-    if (global_build_succeeded)
-    {
+    if (global_build_succeeded) {
         // NOTE(yuval): Linkage
         // TODO(yuval): Link workspaces according to their depencencies on each other
         for (umm index = 0; index < app->workspaces.count; ++index) {
             link_workspace(&app->workspaces.workspaces[index],
-                           &the_app->app_arena, the_app->is_verbose_build);
+                           &the_app->arena, the_app->is_verbose_build);
         }
     }
 }
@@ -489,6 +463,10 @@ build_startup(Build_Application* app) {
     app->app_links.start_build_ = app_start_build;
     app->app_links.wait_for_message_ = app_wait_for_message;
     
+    app->parser = BOOTSTRAP_PUSH_STRUCT(Parser, arena);
+    // TODO(yuval): Maybe create the default types in the parser struct?
+    init_default_types(&app->parser->arena);
+    
     // NOTE(yuval): Build File Workspace Setup
     Build_Workspace build_file_workspace = {};
     build_file_workspace.name = BUNDLE_LITERAL("Build File");
@@ -504,7 +482,7 @@ build_startup(Build_Application* app) {
     
     // NOTE(yuval): Build File Workspace Building
     Time_Events_Queue build_file_time_events_queue;
-    // b32 Result = build_workspace(&build_file_workspace, &App->AppArena, &BuildFileTimeEventsQueue, false);
+    // TODO(yuval): b32 Result = build_workspace(&build_file_workspace, &App->AppArena, &BuildFileTimeEventsQueue, false);
     b32 result = true;
     return result;
 }

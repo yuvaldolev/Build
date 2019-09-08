@@ -20,13 +20,6 @@ enum Ast_Expression_Type {
 enum Ast_Operator {
     AST_OP_NONE,
     
-    AST_OP_AMP,
-    AST_OP_AMP_AMP,
-    AST_OP_AMP_EQUAL,
-    
-    AST_OP_START,
-    AST_OP_START_EQUAL,
-    
     AST_OP_PLUS,
     AST_OP_PLUS_PLUS,
     AST_OP_PLUS_EQUAL,
@@ -35,13 +28,32 @@ enum Ast_Operator {
     AST_OP_MINUS_MINUS,
     AST_OP_MINUS_EQUAL,
     
-    AST_OP_ARROW,
+    AST_OP_MUL,
+    AST_OP_MUL_EQUAL,
+    
+    AST_OP_DIV,
+    AST_OP_DIV_EQUAL,
+    
+    AST_OP_MOD,
+    AST_OP_MOD_EQUAL,
+    
+    AST_OP_AND,
+    AST_OP_AND_AND,
+    AST_OP_AND_EQUAL,
+    
+    AST_OP_OR,
+    AST_OP_OR_OR,
+    AST_OP_OR_EQUAL,
+    
+    AST_OP_XOR,
+    AST_OP_XOR_XOR,
+    AST_OP_XOR_EQUAL,
+    
+    AST_OP_EQUAL,
+    AST_OP_EQUAL_EQUAL,
     
     AST_OP_NOT,
     AST_OP_NOT_EQUAL,
-    
-    AST_OP_PERCENT,
-    AST_OP_PERCENT_EQUAL,
     
     AST_OP_LESS,
     AST_OP_LESS_EQUAL,
@@ -49,19 +61,7 @@ enum Ast_Operator {
     AST_OP_GREATER,
     AST_OP_GREATER_EQUAL,
     
-    AST_OP_CARET,
-    AST_OP_CARET_CARET,
-    AST_OP_CARET_EQUAL,
-    
-    AST_OP_PIPE,
-    AST_OP_PIPE_PIPE,
-    AST_OP_PIPE_EQUAL,
-    
-    AST_OP_COLON,
-    AST_OP_COLON_COLON,
-    
-    AST_OP_EQUAL,
-    AST_OP_EQUAL_EQUAL,
+    AST_OP_ARROW,
     
     AST_OP_HASH,
     AST_OP_HASH_HASH
@@ -84,7 +84,8 @@ struct Ast_Cast {
 
 struct Ast_Assignment {
     Ast* decl; // Declaration
-    Ast* expression; // Expression
+    Ast_Operator op;
+    Ast* expr; // Expression
 };
 
 struct Ast_Decl_Ref {
@@ -308,8 +309,8 @@ struct Ast {
     s32 my_line;
     s32 my_column;
     
-    Ast* left;
-    Ast* right;
+    Ast* lhs;
+    Ast* rhs;
     
     union {
         Ast_Block block;

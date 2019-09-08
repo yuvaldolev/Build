@@ -20,9 +20,10 @@ struct Code_File {
 
 struct Compilation_Work
 {
+    Build_Application* app;
+    
     char* filename;
     Compiler_Info* compiler_info;
-    Memory_Arena* memory_arena;
     b32 is_verbose_build;
 };
 

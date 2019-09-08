@@ -23,6 +23,21 @@ typedef PLATFORM_ADD_WORK_QUEUE_ENTRY(Platform_Add_Work_Queue_Entry);
 #define PLATFORM_COMPLETE_ALL_WORK_QUEUE_WORK(name) void name(Platform_Work_Queue* queue)
 typedef PLATFORM_COMPLETE_ALL_WORK_QUEUE_WORK(Platform_Complete_All_Work_Queue_Work);
 
+#define PLATFORM_FREE_FILE_MEMORY(name) void name(void* memory)
+typedef PLATFORM_FREE_FILE_MEMORY(Platform_Free_File_Memory);
+
+struct Read_File_Result {
+    void* contents;
+    umm contents_size;
+};
+
+#define PLATFORM_READ_ENTIRE_FILE(name) Read_File_Result name(const char* filename)
+typedef PLATFORM_READ_ENTIRE_FILE(Platform_Read_Entire_File);
+
+#define PLATFORM_WRITE_ENTIRE_FILE(name) b32 name(const char* filename, void* memory, \
+umm memory_size)
+typedef PLATFORM_WRITE_ENTIRE_FILE(Platform_Write_Entire_File);
+
 #define PLATFORM_GET_OUTPUT_EXTENSION(name) const char* name(Build_Output_Type output_type)
 typedef PLATFORM_GET_OUTPUT_EXTENSION(Platform_Get_Output_Extension);
 
@@ -44,6 +59,10 @@ struct Platform_API {
     Platform_Add_Work_Queue_Entry* add_work_queue_entry;
     Platform_Complete_All_Work_Queue_Work* complete_all_work_queue_work;
     
+    Platform_Free_File_Memory* free_file_memory;
+    Platform_Read_Entire_File* read_entire_file;
+    Platform_Write_Entire_File* write_entire_file;
+    
     Platform_Get_Output_Extension* get_output_extension;
     Platform_Exec_Process_And_Wait* exec_process_and_wait;
     
@@ -59,8 +78,10 @@ extern Platform_API platform;
 struct Build_Application {
     Build_Application_Links app_links;
     
-    Memory_Arena app_arena;
+    Memory_Arena arena;
     Platform_API platform_api;
+    
+    struct Parser* parser;
     
     b32 is_verbose_build;
 };

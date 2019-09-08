@@ -293,7 +293,7 @@ format_string_list(char* dest_init, yd_umm dest_size, const char* format, va_lis
                     ++at;
                 } else if((*at >= '0') && (*at <= '9')) {
                     width = s32_from_z_internal(&at);
-                    with_specified = true;
+                    width_specified = true;
                 }
                 
                 //
@@ -364,7 +364,7 @@ format_string_list(char* dest_init, yd_umm dest_size, const char* format, va_lis
                             value = -value;
                         }
                         
-                        u64_to_ascii(&tempDest, (yd_u64)value, 10, yd_string_format__dec_chars);
+                        u64_to_ascii(&temp_dest, (yd_u64)value, 10, yd_string_format__dec_chars);
                         
                         // TODO(yuval): Make this a common routine once floating
                         // point is available.
@@ -381,7 +381,7 @@ format_string_list(char* dest_init, yd_umm dest_size, const char* format, va_lis
                     
                     case 'u': {
                         yd_u64 value = YD_READ_VAR_ARG_UNSIGNED_INTEGER(integer_length, arg_list);
-                        u64_to_ascii(&tempDest, value, 10, yd_string_format__dec_chars);
+                        u64_to_ascii(&temp_dest, value, 10, yd_string_format__dec_chars);
                     } break;
                     
                     case 'o': {
@@ -389,7 +389,7 @@ format_string_list(char* dest_init, yd_umm dest_size, const char* format, va_lis
                         u64_to_ascii(&temp_dest, value, 8, yd_string_format__dec_chars);
                         
                         if (annotate_if_not_zero && (value != 0)) {
-                            Prefix = "0";
+                            prefix = "0";
                         }
                     } break;
                     
@@ -407,7 +407,7 @@ format_string_list(char* dest_init, yd_umm dest_size, const char* format, va_lis
                         u64_to_ascii(&temp_dest, value, 16, yd_string_format__upper_hex_chars);
                         
                         if (annotate_if_not_zero && (value != 0)) {
-                            Prefix = "0X";
+                            prefix = "0X";
                         }
                     } break;
                     
@@ -422,7 +422,7 @@ format_string_list(char* dest_init, yd_umm dest_size, const char* format, va_lis
                     case 'a':
                     case 'A': {
                         yd_f64 value = YD_READ_VAR_ARG_FLOAT(float_length, arg_list);
-                        f64_to_ascii(&tempDest, value, precision);
+                        f64_to_ascii(&temp_dest, value, precision);
                         is_float = true;
                     } break;
                     
@@ -442,17 +442,17 @@ format_string_list(char* dest_init, yd_umm dest_size, const char* format, va_lis
                             for(char* scan = string;
                                 *scan && (temp_dest.size < precision);
                                 ++scan) {
-                                ++tempDest.size;
+                                ++temp_dest.size;
                             }
                         } else {
-                            tempDest.size = string_length(string);
+                            temp_dest.size = string_length(string);
                         }
                         
                         temp_dest.at = string + temp_dest.size;
                     } break;
                     
                     case 'S': {
-                        String string = va_arg(arg_list, string);
+                        String string = va_arg(arg_list, String);
                         
                         // TODO(yuval): Obey precision, width, etc.
                         
@@ -514,8 +514,8 @@ format_string_list(char* dest_init, yd_umm dest_size, const char* format, va_lis
                     }
                     
                     for (const char *pre = prefix; *pre && use_width; ++pre) {
-                        out_char(&Dest, *Pre);
-                        --use-width;
+                        out_char(&dest, *pre);
+                        --use_width;
                     }
                     
                     if (use_precision > use_width) {
