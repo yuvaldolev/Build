@@ -26,10 +26,16 @@ pushd "../.build" > /dev/null
 echo "Compiling Using: $CXX"
 
 # Mac Build
-CommonFlags+=" -DBUILD_MACOS=1"
-MacFlags="-framework Cocoa -framework IOKit -framework Security" #-framework OpenGL -framework AudioToolbox"
-CrashpadIncludeFlags="-I../crashpad/crashpad -I../crashpad/crashpad/third_party/mini_chromium/mini_chromium" CrashpadLinkerFlags="-L../crashpad/crashpad/out/Default -lclient -lhandler -lutil -lbase -lbsm"
-$CXX $CommonFlags $CrashpadIncludeFlags ../code/mac_build.mm -o ../run_tree/mac_build -ldl $MacFlags $CrashpadLinkerFlags $PathFlags
+MacCompilerFlags="-DBUILD_MACOS=1"
+MacLinkerFlags="-framework Cocoa -framework IOKit -framework Security" #-framework OpenGL -framework AudioToolbox"
+
+if [ $BacktraceIntegration -eq 1 ]
+then
+  MacCompilerFlags+=" -I../crashpad/crashpad -I../crashpad/crashpad/third_party/mini_chromium/mini_chromium"
+  MacLinkerFlags+=" -L../crashpad/crashpad/out/Default -lclient -lhandler -lutil -lbase -lbsm"
+fi
+
+$CXX $CommonFlags $MacCompilerFlags ../code/mac_build.mm -o ../run_tree/mac_build -ldl $MacLinkerFlags $PathFlags
 
 # Getting the compilation exit code
 CompilationExitCode=$?
@@ -57,3 +63,5 @@ then
 fi
 
 popd > /dev/null
+
+exit $CompilationExitCode
