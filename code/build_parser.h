@@ -9,12 +9,13 @@ struct Ast_Translation_Unit;
 //        Expressions        //
 ///////////////////////////////
 enum Ast_Expression_Type {
-    AST_EXPR_OPERATOR,
     AST_EXPR_DECL_REF,
     AST_EXPR_ASSIGNMENT,
+    AST_EXPR_CONDITIONAL,
     AST_EXPR_BINARY,
     AST_EXPR_CAST,
-    AST_EXPR_CONSTANT
+    AST_EXPR_CONSTANT,
+    AST_EXPR_TERNARY
 };
 
 enum Ast_Operator {
@@ -67,6 +68,12 @@ enum Ast_Operator {
     AST_OP_HASH_HASH
 };
 
+struct Ast_Ternary {
+    Ast* condition_expr; // Expression
+    Ast* then_expr; // Expression
+    Ast* else_expr; // Expression
+};
+
 struct Ast_Constant {
     union {
         u64 int_constant;
@@ -82,11 +89,13 @@ struct Ast_Cast {
     Ast* cast_type; // Expression
 };
 
+# if 0
 struct Ast_Assignment {
     Ast* decl; // Declaration
     Ast_Operator op;
     Ast* expr; // Expression
 };
+#endif
 
 struct Ast_Decl_Ref {
     Ast* decl_ref; // Declaration
@@ -96,11 +105,12 @@ struct Ast_Expression {
     Ast_Expression_Type type;
     
     union {
-        Ast_Operator operator_expr;
+        Ast_Operator op;
         Ast_Decl_Ref decl_ref;
         Ast_Assignment assignment;
         Ast_Cast cast;
         Ast_Constant constant;
+        Ast_Ternary ternary;
     };
 };
 

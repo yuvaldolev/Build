@@ -16,5 +16,5 @@ matrix:
         # build & test
         - echo Starting Build...
         - pushd code
-        - bash build_travis.sh
+        - bash build.sh
         - popd

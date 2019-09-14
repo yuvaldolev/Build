@@ -73,19 +73,6 @@ ast_new_expr(Ast_Expression_Type type,
     return result;
 }
 
-internal Ast*
-ast_new_assignment_expr(Ast* decl, Ast_Operator op, Ast* expr, Parser* parser) {
-    Ast* result = ast_new_expr(AST_EXPR_ASSIGNMENT, parser);
-    Ast_Expression* expr = &result->expr;
-    
-    Ast_Assignment* assignment = &expr->assignemnt;
-    assignment->decl = decl;
-    assignment->op = op;
-    assignment->expr = expr;
-    
-    return result;
-}
-
 internal void
 init_default_types(Memory_Arena* arena) {
 #define DEFAULT_TYPE(type_name, name) JOIN2(global_type_def_, type_name) = PUSH_STRUCT(arena, Ast); \
@@ -272,64 +259,125 @@ internal Ast*
 parse_compound_statement(Parser* parser, Ast* scope);
 
 internal Ast*
-parse_conditional_expression(Parser* parser, Ast* scope) {
+parse_expression(Parser* parser, Ast* scope);
+
+internal Ast*
+ast_new_binop_expr(Ast_Expression_Type type, Ast* lhs,
+                   Ast_Operator op, Ast* rhs, Parser* parser) {
+    Ast* result = ast_new_expr(type, parser);
+    result->lhs = lhs;
+    result->rhs = rhs;
     
+    Ast_Expression* expr = &result->expr;
+    expr->op = op;
+    
+    return result;
+}
+
+
+internal Ast*
+parse_or_conditional_expression(Parser* parser, Ast* scope) {
 }
 
 internal Ast*
+parse_conditional_expression(Parser* parser, Ast* scope) {
+    Ast* result = parse_or_conditional_expression();
+    
+    if (AST_OPTIONAL_TOKEN(TOKEN_TERNARY)) {
+        AST_GET_TOKEN(parser);
+        
+        Ast* ternary_ast = ast_new_expr(AST_EXPR_TERNARY, parser);
+        Ast_Expression* expr = &result->expr;
+        
+        Ast_Ternary* ternary = &expr->ternary;
+        ternary->condition_expr = result;
+        ternary->then_expr = parse_expression();
+        
+        AST_REQUIRE_TOKEN(parser, TOKEN_COLON);
+        
+        // TODO(yuval): Maybe parse conditional expression only?
+        ternary->else_expr = parse_expression();
+        
+        result = ternary_ast;
+    }
+    
+    return result;
+}
+
+
+internal Ast*
 parse_assignment_expression(Parser* parser, Ast* scope) {
-    Ast* result = 0;
-    Ast* decl = parse_conditional_expression(parser, scope);
+    Ast* result = parse_conditional_expression(parser, scope);
     
     AST_GET_TOKEN(parser);
     
     switch (parser->token.type) {
         case TOKEN_EQUAL: {
-            result = ast_new_assignment_expr(decl, AST_OP_EQUAL,
-                                             parse_assignment_expression(parser, scope),
-                                             parser);
+            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+                                        AST_OP_EQUAL,
+                                        parse_assignment_expression(parser, scope),
+                                        parser);
         } break;
         
         case TOKEN_PLUS_EQUAL: {
-            result = ast_new_assignment_expr(decl, AST_OP_PLUS_EQUAL,
-                                             parse_assignment_expression(parser, scope));
+            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+                                        AST_OP_PLUS_EQUAL,
+                                        parse_assignment_expression(parser, scope),
+                                        parser);
         } break;
         
         case TOKEN_MINUS_EQUAL: {
-            result = ast_new_assignment_expr(decl, AST_OP_MINUS_EQUAL,
-                                             parse_assignment_expression(parser, scope));
+            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+                                        AST_OP_MINUS_EQUAL,
+                                        parse_assignment_expression(parser, scope),
+                                        parser);
         } break;
         
         case TOKEN_STAR_EQUAL: {
-            result = ast_new_assignment_expr(decl, AST_OP_MUL_EQUAL,
-                                             parse_assignment_expression(parser, scope));
+            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+                                        AST_OP_MUL_EQUAL,
+                                        parse_assignment_expression(parser, scope),
+                                        parser);
         } break;
         
         case TOKEN_SLASH_EQUAL: {
-            result = ast_new_assignment_expr(decl, AST_OP_DIV_EQUAL,
-                                             parse_assignment_expression(parser, scope));
+            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+                                        AST_OP_DIV_EQUAL,
+                                        parse_assignment_expression(parser, scope),
+                                        parser);
         } break;
         
         case TOKEN_PERCENT_EQUAL: {
-            result = ast_new_assignment_expr(decl, AST_OP_MOD_EQUAL,
-                                             parse_assignment_expression(parser, scope));
+            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+                                        AST_OP_MOD_EQUAL,
+                                        parse_assignment_expression(parser, scope),
+                                        parser);
         } break;
         
         case TOKEN_AMP_EQUAL: {
-            result = ast_new_assignment_expr(decl, AST_OP_AND_EQUAL,
-                                             parse_assignment_expression(parser, scope));
+            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+                                        AST_OP_AND_EQUAL,
+                                        parse_assignment_expression(parser, scope),
+                                        parser);
         } break;
         
         case TOKEN_PIPE_EQUAL: {
-            result = ast_new_assignment_expr(decl, AST_OP_OR_EQUAL,
-                                             parse_assignment_expression(parser, scope));
+            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+                                        AST_OP_OR_EQUAL,
+                                        parse_assignment_expression(parser, scope),
+                                        parser);
         } break;
         
         case TOKEN_CARET_EQUAL: {
-            result = ast_new_assignment_expr(decl, AST_OP_XOR_EQUAL,
-                                             parse_assignment_expression(parser, scope));
+            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+                                        
+                                        AST_OP_XOR_EQUAL,
+                                        parse_assignment_expression(parser, scope),
+                                        parser);
         } break;
     }
+    
+    return result;
 }
 
 internal Ast*
