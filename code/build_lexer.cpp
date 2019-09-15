@@ -201,7 +201,10 @@ get_token_raw(Lexer* lexer) {
             } break;
             
             case '<': {
-                if (lexer->at[0] == '=') {
+                if (lexer->at[0] == '<') {
+                    token.type = TOKEN_LESS_LESS;
+                    advance_chars(lexer, 1);
+                } else if (lexer->at[0] == '=') {
                     token.type = TOKEN_LESS_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
@@ -210,7 +213,10 @@ get_token_raw(Lexer* lexer) {
             } break;
             
             case '>': {
-                if (lexer->at[0] == '=') {
+                if (lexer->at[0] == '>') {
+                    token.type = TOKEN_GREATER_GREATER;
+                    advance_chars(lexer, 1);
+                } else if (lexer->at[0] == '=') {
                     token.type = TOKEN_GREATER_EQUAL;
                     advance_chars(lexer, 1);
                 } else {

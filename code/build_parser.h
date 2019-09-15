@@ -12,6 +12,10 @@ enum Ast_Expression_Type {
     AST_EXPR_DECL_REF,
     AST_EXPR_ASSIGNMENT,
     AST_EXPR_CONDITIONAL,
+    AST_EXPR_ARITHMETIC,
+    AST_EXPR_BIT_OPERATION,
+    AST_EXPR_BOOL_OPERATION,
+    AST_EXPR_MEMORY_OPERATION,
     AST_EXPR_BINARY,
     AST_EXPR_CAST,
     AST_EXPR_CONSTANT,
@@ -47,8 +51,10 @@ enum Ast_Operator {
     AST_OP_OR_EQUAL,
     
     AST_OP_XOR,
-    AST_OP_XOR_XOR,
     AST_OP_XOR_EQUAL,
+    
+    AST_OP_SHL,
+    AST_OP_SHR,
     
     AST_OP_EQUAL,
     AST_OP_EQUAL_EQUAL,
@@ -62,7 +68,13 @@ enum Ast_Operator {
     AST_OP_GREATER,
     AST_OP_GREATER_EQUAL,
     
+    AST_OP_ADDR,
+    AST_OP_DEREF,
+    
     AST_OP_ARROW,
+    
+    AST_OP_SIZEOF,
+    AST_OP_ALIGNOF,
     
     AST_OP_HASH,
     AST_OP_HASH_HASH

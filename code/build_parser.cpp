@@ -22,82 +22,11 @@ DEFAULT_TYPES
 #define BEGIN_AST_DUMP_BLOCK(...) ++global_indentation;
 #define END_AST_DUMP_BLOCK(...) --global_indentation;
 
+//
+// NOTE(yuval): AST Dumping
+//
+
 global u32 global_indentation = 0;
-
-internal Ast*
-ast_new(Ast_Type type, Parser* parser, Token* token = 0) {
-    Ast* result = PUSH_STRUCT(&parser->arena, Ast);
-    
-    result->type = type;
-    result->my_file = parser->lexer.file;
-    
-    if (!token) {
-        token = &parser->token;
-    }
-    
-    result->my_line = token->line_number;
-    result->my_column = token->column_number;
-    
-    return result;
-}
-
-internal Ast*
-ast_new_decl(Ast_Declaration_Type type,
-             Parser* parser, Token* token = 0) {
-    Ast* result = ast_new(AST_DECLARATION, parser, token);
-    result->decl.type = type;
-    return result;
-}
-
-internal Ast*
-ast_new_type_def(Ast_Type_Definition_Type type,
-                 Parser* parser, Token* token = 0) {
-    Ast* result = ast_new(AST_TYPE_DEFINITION, parser, token);
-    result->type_def.type = type;
-    return result;
-}
-
-internal Ast*
-ast_new_stmt(Ast_Statement_Type type,
-             Parser* parser, Token* token = 0) {
-    Ast* result = ast_new(AST_STATEMENT, parser, token);
-    result->stmt.type = type;
-    return result;
-}
-
-internal Ast*
-ast_new_expr(Ast_Expression_Type type,
-             Parser* parser, Token* token = 0) {
-    Ast* result = ast_new(AST_EXPRESSION, parser, token);
-    result->expr.type = type;
-    return result;
-}
-
-internal void
-init_default_types(Memory_Arena* arena) {
-#define DEFAULT_TYPE(type_name, name) JOIN2(global_type_def_, type_name) = PUSH_STRUCT(arena, Ast); \
-    JOIN2(global_type_def_, type_name)->type = AST_TYPE_DEFINITION; \
-    JOIN2(global_type_def_, type_name)->type_def.type = AST_TYPE_DEF_DEFAULT; \
-    JOIN2(global_type_def_, type_name)->type_def.default_type_name = name;
-    
-    DEFAULT_TYPES
-    
-#undef DEFAULT_TYPE
-}
-
-internal Ast*
-get_default_type(String type_name) {
-#define DEFAULT_TYPE(type, name) \
-    if (strings_match(type_name, name)) { \
-        return JOIN2(global_type_def_, type); \
-    }
-    
-    DEFAULT_TYPES
-    
-#undef DEFAULT_TYPE
-    
-        return 0;
-}
 
 internal void
 indent_line(u32 n_spaces) {
@@ -221,6 +150,85 @@ dump_translation_unit_ast(Ast_Translation_Unit* translation_unit) {
     }
 }
 
+//
+// NOTE(yuval): AST Parsing
+//
+
+internal Ast*
+ast_new(Ast_Type type, Parser* parser, Token* token = 0) {
+    Ast* result = PUSH_STRUCT(&parser->arena, Ast);
+    
+    result->type = type;
+    result->my_file = parser->lexer.file;
+    
+    if (!token) {
+        token = &parser->token;
+    }
+    
+    result->my_line = token->line_number;
+    result->my_column = token->column_number;
+    
+    return result;
+}
+
+internal Ast*
+ast_new_decl(Ast_Declaration_Type type,
+             Parser* parser, Token* token = 0) {
+    Ast* result = ast_new(AST_DECLARATION, parser, token);
+    result->decl.type = type;
+    return result;
+}
+
+internal Ast*
+ast_new_type_def(Ast_Type_Definition_Type type,
+                 Parser* parser, Token* token = 0) {
+    Ast* result = ast_new(AST_TYPE_DEFINITION, parser, token);
+    result->type_def.type = type;
+    return result;
+}
+
+internal Ast*
+ast_new_stmt(Ast_Statement_Type type,
+             Parser* parser, Token* token = 0) {
+    Ast* result = ast_new(AST_STATEMENT, parser, token);
+    result->stmt.type = type;
+    return result;
+}
+
+internal Ast*
+ast_new_expr(Ast_Expression_Type type,
+             Parser* parser, Token* token = 0) {
+    Ast* result = ast_new(AST_EXPRESSION, parser, token);
+    result->expr.type = type;
+    return result;
+}
+
+internal void
+init_default_types(Memory_Arena* arena) {
+#define DEFAULT_TYPE(type_name, name) JOIN2(global_type_def_, type_name) = PUSH_STRUCT(arena, Ast); \
+    JOIN2(global_type_def_, type_name)->type = AST_TYPE_DEFINITION; \
+    JOIN2(global_type_def_, type_name)->type_def.type = AST_TYPE_DEF_DEFAULT; \
+    JOIN2(global_type_def_, type_name)->type_def.default_type_name = name;
+    
+    DEFAULT_TYPES
+    
+#undef DEFAULT_TYPE
+}
+
+internal Ast*
+get_default_type(String type_name) {
+#define DEFAULT_TYPE(type, name) \
+    if (strings_match(type_name, name)) { \
+        return JOIN2(global_type_def_, type); \
+    }
+    
+    DEFAULT_TYPES
+    
+#undef DEFAULT_TYPE
+    
+        return 0;
+}
+
 internal Ast*
 find_type(Ast* scope, String type_name) {
     Ast* result = get_default_type(type_name);
@@ -253,15 +261,6 @@ find_type(Ast* scope, String type_name) {
 }
 
 internal Ast*
-parse_declaration(Parser* parser, Ast* scope);
-
-internal Ast*
-parse_compound_statement(Parser* parser, Ast* scope);
-
-internal Ast*
-parse_expression(Parser* parser, Ast* scope);
-
-internal Ast*
 ast_new_binop_expr(Ast_Expression_Type type, Ast* lhs,
                    Ast_Operator op, Ast* rhs, Parser* parser) {
     Ast* result = ast_new_expr(type, parser);
@@ -274,14 +273,337 @@ ast_new_binop_expr(Ast_Expression_Type type, Ast* lhs,
     return result;
 }
 
+internal Ast*
+ast_new_unary_expr(Ast_Expression_Type type,
+                   Ast_Operator op, Ast* rhs,
+                   Parser* parser) {
+    Ast* result = ast_new_binop_expr(type, 0, op, rhs, parser);
+}
+
+internal Ast*
+parse_declaration(Parser* parser, Ast* scope);
+
+internal Ast*
+parse_compound_statement(Parser* parser, Ast* scope);
+
+internal Ast*
+parse_expression(Parser* parser, Ast* scope);
+
+internal Ast*
+parse_postfix_expression(Parser* parser, Ast* scope) {
+    Ast* result = parse_primary_expression(parser, scope);
+    
+    b32 parsing = true;
+    while (parsing) {
+        if (AST_OPTIONAL_TOKEN(TOKEN_PLUS_PLUS)) {
+            
+        } else if (AST_OPTIONAL_TOKEN(TOKEN_MINUS_MINUS)) {
+            
+        } else if (AST_OPTIONAL_TOKEN(TOKEN_PERIOD)) {
+            
+        } else if (AST_OPTIONAL_TOKEN(TOKEN_ARROW)) { // TODO(yuval): Maybe get rid of the arrow operator
+            
+        } else if (AST_OPTIONAL_TOKEN(TOKEN_OPEN_BRACKET)) {
+            
+        }
+    }
+}
+
+internal Ast*
+parse_unary_expression(Parser* parser, Ast* scope) {
+    Ast* result;
+    Token* token = AST_PEEK_TOKEN(parser);
+    
+    switch (token->type) {
+        case TOKEN_MINUS: {
+            AST_GET_TOKEN(parser);
+            result = ast_new_unary_expr(AST_EXPR_ARITHMETIC,
+                                        AST_OP_MINUS,
+                                        parse_unary_expression(parser, scope),
+                                        parser);
+        } break;
+        
+        case TOKEN_STAR: {
+            AST_GET_TOKEN(parser);
+            result = ast_new_unary_expr(AST_EXPR_MEMORY_OPERATION,
+                                        AST_OP_DEREF,
+                                        parse_unary_expression(parser, scope),
+                                        parser);
+        } break;
+        
+        case TOKEN_AMP: {
+            AST_GET_TOKEN(parser);
+            result = ast_new_unary_expr(AST_EXPR_MEMORY_OPERATION,
+                                        AST_OP_ADDR,
+                                        parse_unary_expression(parser, scope),
+                                        parser);
+        } break;
+        
+        case TOKEN_NOT: {
+            AST_GET_TOKEN(parser);
+            result = ast_new_unary_expr(AST_EXPR_BOOL_OPERATION,
+                                        AST_OP_NOT,
+                                        parse_unary_expression(parser, scope),
+                                        parser);
+        } break;
+        
+        case TOKEN_TILDE: {
+            AST_GET_TOKEN(parser);
+            result = ast_new_unary_expr(AST_EXPR_BIT_OPERATION,
+                                        AST_OP_NOT,
+                                        parse_unary_expression(parser, scope),
+                                        parser);
+        } break;
+        
+        case TOKEN_SIZEOF: {
+            AST_GET_TOKEN(parser);
+            AST_REQUIRE_TOKEN(parser, TOKEN_OPEN_PAREN);
+            result = ast_new_unary_expr(AST_EXPR_MEMORY_OPERATION,
+                                        AST_OP_SIZEOF,
+                                        parse_unary_expression(parser, scope),
+                                        parser);
+            AST_REQUIRE_TOKEN(parser, TOKEN_CLOSE_PAREN);
+        } break;
+        
+        case TOKEN_ALIGNOF: {
+            AST_GET_TOKEN(parser);
+            AST_REQUIRE_TOKEN(parser, TOKEN_OPEN_PAREN);
+            result = ast_new_unary_expr(AST_EXPR_MEMORY_OPERATION,
+                                        AST_OP_ALIGNOF,
+                                        parse_unary_expression(parser, scope),
+                                        parser);
+            AST_REQUIRE_TOKEN(parser, TOKEN_CLOSE_PAREN);
+        } break;
+        
+        case TOKEN_PLUS_PLUS: {
+            AST_GET_TOKEN(parser);
+            result = ast_new_unary_expr(AST_EXPR_ARITHMETIC,
+                                        AST_OP_PLUS_PLUS,
+                                        parse_unary_expression(parser, scope),
+                                        parser);
+        } break;
+        
+        case TOKEN_MINUS_MINUS: {
+            AST_GET_TOKEN(parser);
+            result = ast_new_unary_expr(AST_EXPR_ARITHMETIC,
+                                        AST_OP_MINUS_MINUS,
+                                        parse_unary_expression(parser, scope),
+                                        parser);
+        } break;
+        
+        default: {
+            result = parse_postfix_expression(parser, scope);
+        } break;
+    }
+    
+    return result;
+}
+
+internal Ast*
+parse_mul_arithmetic_expression(Parser* parser, Ast* scope) {
+    Ast* result = parse_unary_expression(parser, scope);
+    
+    b32 parsing = true;
+    while (parsing) {
+        if (AST_OPTIONAL_TOKEN(parser, TOKEN_STAR)) {
+            result = ast_new_binop_expr(AST_EXPR_ARITHMETIC,
+                                        result, AST_OP_MUL,
+                                        parse_unary_expression(parser, scope),
+                                        parser);
+        } else if (AST_OPTIONAL_TOKEN(parser, TOKEN_SLASH)) {
+            result = ast_new_binop_expr(AST_EXPR_ARITHMETIC,
+                                        result, AST_OP_DIV,
+                                        parse_unary_expression(parser, scope),
+                                        parser);
+        } else if (AST_OPTIONAL_TOKEN(parser, TOKEN_PERCENT)) {
+            result = ast_new_binop_expr(AST_EXPR_ARITHMETIC,
+                                        result, AST_OP_MOD,
+                                        parse_unary_expression(parser, scope),
+                                        parser);
+        } else {
+            parsing = false;
+        }
+    }
+    
+    return result;
+}
+
+internal Ast*
+parse_add_arithmetic_expression(Parser* parser, Ast* scope) {
+    Ast* result = parse_mul_arithmetic_expression(parser, scope);
+    
+    b32 parsing = true;
+    while (parsing) {
+        if (AST_OPTIONAL_TOKEN(parser, TOKEN_PLUS)) {
+            result = ast_new_binop_expr(AST_EXPR_ARITHMETIC,
+                                        result, AST_OP_PLUS,
+                                        parse_mul_arithmetic_expression(parser, scope),
+                                        parser);
+        } else if (AST_OPTIONAL_TOKEN(parser, TOKEN_MINUS)) {
+            result = ast_new_binop_expr(AST_EXPR_ARITHMETIC,
+                                        result, AST_OP_MINUS,
+                                        parse_mul_arithmetic_expression(parser, scope),
+                                        parser);
+        } else {
+            parsing = false;
+        }
+    }
+    
+    return result;
+}
+
+internal Ast*
+parse_bit_shift_expression(Parser* parser, Ast* scope) {
+    Ast* result = parse_add_arithmetic_expression(parser, scope);
+    
+    b32 parsing = true;
+    while (parsing) {
+        if (AST_OPTIONAL_TOKEN(parser, TOKEN_LESS_LESS)) {
+            result = ast_new_binop_expr(AST_EXPR_BIT_OPERATION,
+                                        result, AST_OP_SHL,
+                                        parse_add_arithmetic_expression(parser, scope),
+                                        parser);
+        } else if (AST_OPTIONAL_TOKEN(parser, TOKEN_GREATER_GREATER)) {
+            result = ast_new_binop_expr(AST_EXPR_BIT_OPERATION,
+                                        result, AST_OP_SHR,
+                                        parse_add_arithmetic_expression(parser, scope),
+                                        parser);
+        } else {
+            parsing = false;
+        }
+    }
+    
+    return result;
+}
+
+internal Ast*
+parse_relational_conditional_expression(Parser* parser, Ast* scope) {
+    Ast* result = parse_bit_shift_expression(parser, scope);
+    
+    b32 parsing = true;
+    while (parsing) {
+        if (AST_OPTIONAL_TOKEN(parser, TOKEN_LESS)) {
+            result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+                                        result, AST_OP_LESS,
+                                        parse_bit_shift_expression(parser, scope),
+                                        parser);
+        } else if (AST_OPTIONAL_TOKEN(parser, TOKEN_GREATER)) {
+            result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+                                        result, AST_OP_GREATER,
+                                        parse_bit_shift_expression(parser, scope),
+                                        parser);
+        } else if (AST_OPTIONAL_TOKEN(parser, TOKEN_LESS_EQUAL)) {
+            result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+                                        result, AST_OP_LESS_EQUAL,
+                                        parse_bit_shift_expression(parser, scope),
+                                        parser);
+        } else if (AST_OPTIONAL_TOKEN(parser, TOKEN_GREATER_EQUAL)) {
+            result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+                                        result, AST_OP_GREATER_EQUAL,
+                                        parse_bit_shift_expression(parser, scope),
+                                        parser);
+        } else {
+            parsing = false;
+        }
+    }
+}
+
+internal Ast*
+parse_equality_conditional_expression(Parser* parser, Ast* scope) {
+    Ast* result = parse_relational_conditional_expression(parser, scope);
+    
+    b32 parsing = true;
+    while (parsing) {
+        if (AST_OPTIONAL_TOKEN(parser, TOKEN_EQUAL_EQUAL)) {
+            result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+                                        result, AST_OP_EQUAL_EQUAL,
+                                        parse_relational_conditional_expression(parser, scope),
+                                        parser);
+        } else if (AST_OPTIONAL_TOKEN(parser, TOKEN_NOT_EQUAL)) {
+            result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+                                        result, AST_OP_NOT_EQUAL,
+                                        parse_relational_conditional_expression(parser, scope),
+                                        parser);
+        } else {
+            parsing = false;
+        }
+    }
+    
+    return result;
+}
+
+internal Ast*
+parse_bit_and_expression(Parser* parser, Ast* scope) {
+    Ast* result = parse_equality_conditional_expression(parser, scope);
+    
+    while (AST_OPTIONAL_TOKEN(TOKEN_AMP)) {
+        result = ast_new_binop_expr(AST_EXPR_BIT_OPERATION,
+                                    result, AST_OP_AND,
+                                    parse_equality_conditional_expression(parser, scope));
+    }
+    
+    return result;
+}
+
+internal Ast*
+parse_bit_xor_expression(Parser* parser, Ast* scope) {
+    Ast* result = parse_bit_and_expression(parser, scope);
+    
+    while (AST_OPTIONAL_TOKEN(parser, TOKEN_CARET)) {
+        result = ast_new_binop_expr(AST_EXPR_BIT_OPERATION,
+                                    result, AST_OP_XOR,
+                                    parse_bit_and_expression(parser, scope),
+                                    parser);
+    }
+    
+    return result;
+}
+
+internal Ast*
+parse_bit_or_expression(Parser* parser, Ast* scope) {
+    Ast* result = parse_bit_xor_expression(parser, scope);
+    
+    while (AST_OPTIONAL_TOKEN(TOKEN_PIPE)) {
+        result = ast_new_binop_expr(AST_EXPR_BIT_OPERATION,
+                                    result, AST_OP_OR,
+                                    parse_bit_xor_expression(parser, scope),
+                                    parser);
+    }
+    
+    return result;
+}
+
+internal Ast*
+parse_and_conditional_expression(Parser* parser, Ast* scope) {
+    Ast* result = parse_bit_or_expression(parser, scope);
+    
+    while (AST_OPTIONAL_TOKEN(TOKEN_AMP_AMP)) {
+        result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+                                    result, AST_OP_AND_AND,
+                                    parse_bit_or_expression(parser, scope),
+                                    parser);
+    }
+    
+    return result;
+}
 
 internal Ast*
 parse_or_conditional_expression(Parser* parser, Ast* scope) {
+    Ast* result = parse_and_conditional_expression(parser, scope);
+    
+    while (AST_OPTIONAL_TOKEN(TOKEN_PIPE_PIPE)) {
+        result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+                                    result, AST_OP_OR_OR,
+                                    parse_and_conditional_expression(parser, scope),
+                                    parser);
+    }
+    
+    return result;
 }
 
 internal Ast*
 parse_conditional_expression(Parser* parser, Ast* scope) {
-    Ast* result = parse_or_conditional_expression();
+    Ast* result = parse_or_conditional_expression(parser, scope);
     
     if (AST_OPTIONAL_TOKEN(TOKEN_TERNARY)) {
         AST_GET_TOKEN(parser);
