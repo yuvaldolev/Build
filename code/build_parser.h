@@ -19,6 +19,7 @@ enum Ast_Expression_Type {
     AST_EXPR_SUBSCRIPT,
     AST_EXPR_CAST,
     AST_EXPR_DECL_REF,
+    AST_EXPR_FUNC_CALL,
     AST_EXPR_CONSTANT
 };
 
@@ -105,6 +106,11 @@ struct Ast_Decl_Ref {
     Ast* decl; // Declaration
 };
 
+struct Ast_Function_Call {
+    Ast* func;
+    Ast* first_arg;
+};
+
 struct Ast_Cast {
     Ast* cast_type; // Type Definition
     Ast* casted_expr; // Expression
@@ -129,6 +135,7 @@ struct Ast_Expression {
         Ast_Ternary ternary;
         Ast_Subscript subscript;
         Ast_Cast cast;
+        Ast_Function_Call func_call;
         Ast_Decl_Ref decl_ref;
         Ast_Constant constant;
     };
@@ -265,6 +272,8 @@ struct Ast_Type_Definition {
 //        Declarations        //
 ////////////////////////////////
 enum Ast_Declaration_Type {
+    AST_DECL_UNDEFINED,
+    
     AST_DECL_TYPE,
     AST_DECL_FUNC,
     AST_DECL_VAR

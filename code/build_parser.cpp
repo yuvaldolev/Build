@@ -230,31 +230,44 @@ get_default_type(String type_name) {
 }
 
 internal Ast*
+find_decl(Ast* scope, String name, Ast_Declaration_Type type = AST_DECL_UNDEFINED) {
+    // TODO(yuval): Use this for find_type!
+    Ast* result = 0;
+    Ast* curr_scope = scope;
+    
+    while (curr_scope) {
+        for (umm decl_index = 0;
+             decl_index < curr_scope->block.decl_count;
+             ++decl_index) {
+            Ast* it = curr_scope->block.decls[decl_index];
+            
+            if (it) {
+                Ast_Declaration_Type it_type = it->decl.type;
+                String* it_name = &it->decl.my_identifier->name;
+                
+                if (((type == AST_DECL_UNDEFINED) || (it_type == type)) &&
+                    strings_match(*it_name, name)) {
+                    result = it;
+                    goto doublebreak;
+                }
+            }
+        }
+        
+        curr_scope = curr_scope->block.parent;
+    }
+    
+    doublebreak:;
+    
+    return result;
+}
+
+internal Ast*
 find_type(Ast* scope, String type_name) {
     Ast* result = get_default_type(type_name);
     
     if (!result) {
-        Ast* curr_scope = scope;
-        
-        while (curr_scope) {
-            for (umm decl_index = 0; decl_index < curr_scope->block.decl_count; ++decl_index) {
-                Ast* it = curr_scope->block.decls[decl_index];
-                
-                if (it) {
-                    String* name = &it->decl.my_identifier->name;
-                    
-                    if ((it->decl.type == AST_DECL_TYPE) &&
-                        (strings_match(*name, type_name))) {
-                        result = it->decl.my_type;
-                        goto doublebreak;
-                    }
-                }
-            }
-            
-            curr_scope = curr_scope->block.parent;
-        }
-        
-        doublebreak:;
+        Ast* type_decl = find_decl(scope, type_name, AST_DECL_TYPE);
+        result = type_decl->decl.my_type;
     }
     
     return result;
@@ -303,16 +316,21 @@ internal Ast*
 parse_assignment_expression(Parser* parser, Ast* scope);
 
 internal Ast*
+parse_decl_ref_expression(Parser* parser, Ast* scope) {
+    
+}
+
+internal Ast*
 parse_primary_expression(Parser* parser, Ast* scope) {
     Ast* result = 0;
-    Token* token = AST_GET_TOKEN(parser);
+    AST_GET_TOKEN(parser);
     
-    switch (token->type) {
+    switch (parser->token.type) {
         case TOKEN_OPEN_PAREN: {
-            token = AST_PEEK_TOKEN(parser);
+            Token token = AST_PEEK_TOKEN(parser);
             
             b32 is_cast_expr = false;
-            if (token->type == TOKEN_IDENTIFIER) {
+            if (token.type == TOKEN_IDENTIFIER) {
                 Ast* cast_type = find_type(scope, token->text);
                 if (cast_type) {
                     AST_GET_TOKEN(parser);
@@ -332,7 +350,53 @@ parse_primary_expression(Parser* parser, Ast* scope) {
         } break;
         
         case TOKEN_IDENTIFIER: {
-            
+            Token token = AST_PEEK_TOKEN(parser);
+            if (token.type == TOKEN_OPEN_PAREN) {
+                // NOTE(yuval): Function Call
+                Ast* function_decl = find_decl(scope, parser->token.text, AST_DECL_FUNC);
+                
+                if (function_decl) {
+                    result = ast_new_expr(AST_EXPR_FUNC_CALL, parser);
+                    
+                    AST_GET_TOKEN(parser);
+                    
+                    Ast_Function_Call* func_call = &result->expr.func_call;
+                    func_call->func = function_decl;
+                    
+                    Ast* prev_arg = 0;
+                    while (!AST_OPTIONAL_TOKEN(parser, TOKEN_CLOSE_PAREN)) {
+                        Ast* arg = parse_assignment_expression(parser, scope);
+                        
+                        if (arg) {
+                            if (prev_arg) {
+                                arg->lhs = prev_arg;
+                                prev_arg->rhs = arg;
+                                prev_arg = arg;
+                            } else {
+                                func_call->first_arg = arg;
+                                prev_arg = arg;
+                            }
+                        } else {
+                            report_error(&parser->token, "expected ')'");
+                        }
+                    }
+                } else {
+                    report_error(&parser->token, "\"%S\" is not a function",
+                                 parser->token.text);
+                }
+            } else {
+                // NOTE(yuval): Decl Ref
+                Ast* decl = find_decl(scope, parser->token.text);
+                
+                if (decl) {
+                    result = ast_new_expr(AST_EXPR_DECL_REF, parser);
+                    Ast_Decl_Ref* decl_ref = &result->expr.decl_ref;
+                    decl_ref->decl = decl;
+                } else {
+                    report_error(&parser->token, "undefined declaration %S",
+                                 parser->token.text);
+                }
+            }
         } break;
         
         case TOKEN_NUMBER: {
@@ -1024,8 +1088,8 @@ parse_compound_statement(Parser* parser, Ast* scope) {
         Ast* stmt = parse_statement(parser, scope);
         
         if (stmt) {
-            stmt->left = prev_stmt;
-            prev_stmt->right = stmt;
+            stmt->lhs = prev_stmt;
+            prev_stmt->rhs = stmt;
             prev_stmt = stmt;
         } else {
             report_error(&parser->token, "expected '}'");
