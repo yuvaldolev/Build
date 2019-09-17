@@ -9,17 +9,17 @@ struct Ast_Translation_Unit;
 //        Expressions        //
 ///////////////////////////////
 enum Ast_Expression_Type {
-    AST_EXPR_DECL_REF,
     AST_EXPR_ASSIGNMENT,
     AST_EXPR_CONDITIONAL,
+    AST_EXPR_TERNARY,
     AST_EXPR_ARITHMETIC,
     AST_EXPR_BIT_OPERATION,
     AST_EXPR_BOOL_OPERATION,
     AST_EXPR_MEMORY_OPERATION,
-    AST_EXPR_BINARY,
+    AST_EXPR_SUBSCRIPT,
     AST_EXPR_CAST,
-    AST_EXPR_CONSTANT,
-    AST_EXPR_TERNARY
+    AST_EXPR_DECL_REF,
+    AST_EXPR_CONSTANT
 };
 
 enum Ast_Operator {
@@ -71,7 +71,7 @@ enum Ast_Operator {
     AST_OP_ADDR,
     AST_OP_DEREF,
     
-    AST_OP_ARROW,
+    AST_OP_DOT,
     
     AST_OP_SIZEOF,
     AST_OP_ALIGNOF,
@@ -80,37 +80,45 @@ enum Ast_Operator {
     AST_OP_HASH_HASH
 };
 
+enum Ast_Constant_Type {
+    AST_CONST_NUMBER,
+    AST_CONST_CHAR,
+    AST_CONST_BOOL,
+    AST_CONST_STRING_LITERAL
+}
+
+struct Ast_Constant {
+    Ast_Constant_Type type;
+    
+    union {
+        struct {
+            u64 int_constant;
+            f64 float_constant;
+        };
+        char char_constant;
+        b32 bool_constant;
+        String string_literal;
+    };
+};
+
+struct Ast_Decl_Ref {
+    Ast* decl; // Declaration
+};
+
+struct Ast_Cast {
+    Ast* cast_type; // Type Definition
+    Ast* casted_expr; // Expression
+};
+
+struct Ast_Subscript {
+    Ast* decl;
+    Ast* subscript;
+};
+
 struct Ast_Ternary {
     Ast* condition_expr; // Expression
     Ast* then_expr; // Expression
     Ast* else_expr; // Expression
-};
-
-struct Ast_Constant {
-    union {
-        u64 int_constant;
-        f64 float_constant;
-        String string_literal;
-        char char_constant;
-        b32 bool_constant;
-    };
-};
-
-struct Ast_Cast {
-    Ast* casted_expr; // Expression
-    Ast* cast_type; // Expression
-};
-
-# if 0
-struct Ast_Assignment {
-    Ast* decl; // Declaration
-    Ast_Operator op;
-    Ast* expr; // Expression
-};
-#endif
-
-struct Ast_Decl_Ref {
-    Ast* decl_ref; // Declaration
 };
 
 struct Ast_Expression {
@@ -118,11 +126,11 @@ struct Ast_Expression {
     
     union {
         Ast_Operator op;
-        Ast_Decl_Ref decl_ref;
-        Ast_Assignment assignment;
-        Ast_Cast cast;
-        Ast_Constant constant;
         Ast_Ternary ternary;
+        Ast_Subscript subscript;
+        Ast_Cast cast;
+        Ast_Decl_Ref decl_ref;
+        Ast_Constant constant;
     };
 };
 
@@ -187,7 +195,7 @@ struct Ast_Expr_Statement {
 
 struct Ast_Decl_Statement {
     Ast* decl; // Declaration
-    Ast* expression; // Expression
+    Ast* init_expr; // Expression
 };
 
 struct Ast_Statement {
@@ -196,7 +204,6 @@ struct Ast_Statement {
     
     union {
         Ast_Decl_Statement decl_stmt;
-        Ast_Assignment assignment;
         Ast_Expr_Statement expr_stmt;
         Ast_If if_stmt;
         Ast_Switch switch_stmt;

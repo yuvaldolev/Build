@@ -261,8 +261,9 @@ find_type(Ast* scope, String type_name) {
 }
 
 internal Ast*
-ast_new_binop_expr(Ast_Expression_Type type, Ast* lhs,
-                   Ast_Operator op, Ast* rhs, Parser* parser) {
+ast_new_binop_expr(Ast_Expression_Type type,
+                   Ast* lhs, Ast_Operator op, Ast* rhs,
+                   Parser* parser) {
     Ast* result = ast_new_expr(type, parser);
     result->lhs = lhs;
     result->rhs = rhs;
@@ -278,6 +279,15 @@ ast_new_unary_expr(Ast_Expression_Type type,
                    Ast_Operator op, Ast* rhs,
                    Parser* parser) {
     Ast* result = ast_new_binop_expr(type, 0, op, rhs, parser);
+    return result;
+}
+
+internal Ast*
+ast_new_postfix_expr(Ast_Expression_Type type,
+                     Ast* lhs, Ast_Operator op,
+                     Parser* parser) {
+    Ast* result = ast_new_binop_expr(type, lhs, op, 0, parser);
+    return result;
 }
 
 internal Ast*
@@ -290,23 +300,118 @@ internal Ast*
 parse_expression(Parser* parser, Ast* scope);
 
 internal Ast*
+parse_assignment_expression(Parser* parser, Ast* scope);
+
+internal Ast*
+parse_primary_expression(Parser* parser, Ast* scope) {
+    Ast* result = 0;
+    Token* token = AST_GET_TOKEN(parser);
+    
+    switch (token->type) {
+        case TOKEN_OPEN_PAREN: {
+            token = AST_PEEK_TOKEN(parser);
+            
+            b32 is_cast_expr = false;
+            if (token->type == TOKEN_IDENTIFIER) {
+                Ast* cast_type = find_type(scope, token->text);
+                if (cast_type) {
+                    AST_GET_TOKEN(parser);
+                    result = ast_new_expr(AST_EXPR_CAST, parser);
+                    Ast_Cast* cast = &result->expr.cast;
+                    cast->cast_type = cast_type;
+                    cast->casted_expr = parse_expression(parser, scope);
+                    is_cast_expr = true;
+                }
+            }
+            
+            if (!is_cast_expr) {
+                result = parse_expression(parser, scope);
+            }
+            
+            AST_REQUIRE_TOKEN(parser, TOKEN_CLOSE_PAREN);
+        } break;
+        
+        case TOKEN_IDENTIFIER: {
+            
+        } break;
+        
+        case TOKEN_NUMBER: {
+            result = ast_new_expr(AST_EXPR_CONSTANT, parser);
+            Ast_Constant* constant = &result->expr.constant;
+            constant->int_constant = token->value_s32;
+            constant->float_constant = token->value_f32;
+        } break;
+        
+        case TOKEN_CHAR_CONSTANT: {
+            result = ast_new_expr(AST_EXPR_CONSTANT, parser);
+            Ast_Constant* constant = &result->expr.constant;
+            
+            if (token->text.count == 1) {
+                constant->char_constant = token->text.data[0];
+            } else {
+                report_error(token, "char literal can only contain a single character");
+            }
+        } break;
+        
+        case TOKEN_BOOL_CONSTANT: {
+            result = ast_new_expr(AST_EXPR_CONSTANT, parser);
+            Ast_Constant* constant = &result->expr.constant;
+            
+            // TODO(yuval): Temporary! Determine the bool constant value in the lexer!!!!!
+            if (strings_match(token->text, "true")) {
+                constant->bool_constant = true;
+            } else {
+                constant->bool_constant = false;
+            }
+        } break;
+        
+        case TOKEN_STRING_LITERAL: {
+            result = ast_new_expr(AST_EXPR_CONSTANT, parser);
+            Ast_Constant* constant = &result->expr.constant;
+            constant->string_literal = token->text;
+        } break;
+        
+        default: {
+            report_error(token, "primary expression expected");
+        } break;
+    }
+    
+    return result;
+}
+
+internal Ast*
 parse_postfix_expression(Parser* parser, Ast* scope) {
     Ast* result = parse_primary_expression(parser, scope);
     
     b32 parsing = true;
     while (parsing) {
         if (AST_OPTIONAL_TOKEN(TOKEN_PLUS_PLUS)) {
-            
+            result = ast_new_postfix_expr(AST_EXPR_ARITHMETIC,
+                                          result, AST_OP_PLUS_PLUS,
+                                          parser);
         } else if (AST_OPTIONAL_TOKEN(TOKEN_MINUS_MINUS)) {
-            
-        } else if (AST_OPTIONAL_TOKEN(TOKEN_PERIOD)) {
-            
-        } else if (AST_OPTIONAL_TOKEN(TOKEN_ARROW)) { // TODO(yuval): Maybe get rid of the arrow operator
-            
+            result = ast_new_postfix_expr(AST_EXPR_ARITHMETIC,
+                                          result, AST_OP_MINUS_MINUS,
+                                          parser);
+        } else if (AST_OPTIONAL_TOKEN(TOKEN_DOT)) {
+            // NOTE(yuval): Dot operator is used for both pointers
+            // and regular structs (no arrow operator)
+            // TODO(yuval): Parse field identifier (right side of dot operator)
+            result = ast_new_binop_expr(AST_EXPR_MEMORY_OPERATION,
+                                        result, AST_OP_DOT,
+                                        parser);
         } else if (AST_OPTIONAL_TOKEN(TOKEN_OPEN_BRACKET)) {
-            
+            result = ast_new_expr(AST_EXPR_SUBSCRIPT, parser);
+            Ast_Subscript* subscript = &result->expr.subscript;
+            subscript->decl = result;
+            subscript->subscript = parse_assignment_expression(parser, scope);
+            AST_REQUIRE_TOKEN(parser, TOKEN_CLOSE_BRACKET);
+        } else {
+            parsing = false;
         }
     }
+    
+    return result;
 }
 
 internal Ast*

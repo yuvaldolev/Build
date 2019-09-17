@@ -60,24 +60,18 @@ advance_chars(Lexer* lexer, umm count) {
 
 internal void
 get_literal(Token* token, Lexer* lexer, char enclosing) {
-    while (lexer->at[0] && lexer->at[0] != enclosing)
-    {
-        if ((lexer->at[0] == '\\') &&
-            lexer->at[1])
-        {
+    while (lexer->at[0] && lexer->at[0] != enclosing) {
+        if ((lexer->at[0] == '\\') && lexer->at[1]) {
             advance_chars(lexer, 1);
         }
         
         advance_chars(lexer, 1);
     }
     
-    if (lexer->at[0] == enclosing)
-    {
+    if (lexer->at[0] == enclosing) {
         advance_chars(lexer, 1);
-    }
-    else
-    {
-        report_error(token, "unclosed literal");
+    } else {
+        report_error(token, "unclosed literal: %c expected", enclosing);
     }
 }
 
@@ -127,7 +121,7 @@ get_token_raw(Lexer* lexer) {
             case ')': { token.type = TOKEN_CLOSE_PAREN; } break;
             case '{': { token.type = TOKEN_OPEN_BRACE; } break;
             case '}': { token.type = TOKEN_CLOSE_BRACE; } break;
-            case '.': { token.type = TOKEN_PERIOD; } break;
+            case '.': { token.type = TOKEN_DOT; } break;
             case '~': { token.type = TOKEN_TILDE; } break;
             case ';': { token.type = TOKEN_SEMI; } break;
             case ',': { token.type = TOKEN_COMMA; } break;
@@ -173,9 +167,6 @@ get_token_raw(Lexer* lexer) {
                     advance_chars(lexer, 1);
                 } else if (lexer->at[0] == '=') {
                     token.type = TOKEN_MINUS_EQUAL;
-                    advance_chars(lexer, 1);
-                } else if (lexer->at[0] == '>') {
-                    token.type = TOKEN_ARROW;
                     advance_chars(lexer, 1);
                 } else {
                     token.type = TOKEN_MINUS;
@@ -362,6 +353,7 @@ get_token_raw(Lexer* lexer) {
                     }
                     
                     if (lexer->at[0] == '.') {
+                        advance_chars(lexer, 1);
                         f32 coefficient = 0.1f;
                         
                         while (is_numeric(lexer->at[0])) {
