@@ -9,6 +9,7 @@ struct Ast_Translation_Unit;
 //        Expressions        //
 ///////////////////////////////
 enum Ast_Expression_Type {
+    AST_EXPR_COMMA,
     AST_EXPR_ASSIGNMENT,
     AST_EXPR_CONDITIONAL,
     AST_EXPR_TERNARY,
@@ -16,6 +17,7 @@ enum Ast_Expression_Type {
     AST_EXPR_BIT_OPERATION,
     AST_EXPR_BOOL_OPERATION,
     AST_EXPR_MEMORY_OPERATION,
+    AST_EXPR_DOT,
     AST_EXPR_SUBSCRIPT,
     AST_EXPR_CAST,
     AST_EXPR_DECL_REF,
@@ -25,6 +27,8 @@ enum Ast_Expression_Type {
 
 enum Ast_Operator {
     AST_OP_NONE,
+    
+    AST_OP_COMMA,
     
     AST_OP_PLUS,
     AST_OP_PLUS_PLUS,
@@ -86,7 +90,7 @@ enum Ast_Constant_Type {
     AST_CONST_CHAR,
     AST_CONST_BOOL,
     AST_CONST_STRING_LITERAL
-}
+};
 
 struct Ast_Constant {
     Ast_Constant_Type type;
@@ -117,8 +121,11 @@ struct Ast_Cast {
 };
 
 struct Ast_Subscript {
-    Ast* decl;
-    Ast* subscript;
+    Ast* subscript; // Expression
+};
+
+struct Ast_Dot {
+    String field_name;
 };
 
 struct Ast_Ternary {
@@ -133,6 +140,7 @@ struct Ast_Expression {
     union {
         Ast_Operator op;
         Ast_Ternary ternary;
+        Ast_Dot dot;
         Ast_Subscript subscript;
         Ast_Cast cast;
         Ast_Function_Call func_call;
