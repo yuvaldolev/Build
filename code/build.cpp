@@ -11,6 +11,7 @@
 
 #include "build_lexer.cpp"
 #include "build_parser.cpp"
+#include "build_cpp_converter.cpp"
 
 global Time_Events_Queue global_time_events_queue;
 global b32 global_build_succeeded = true;
@@ -347,7 +348,12 @@ meta_process_translation_unit(const char* filename, Parser* parser) {
                                                                 file_contents.contents_size)};
     
     Ast_Translation_Unit* translation_unit = parse_translation_unit(parser, file);
-    dump_translation_unit_ast(translation_unit);
+    
+    // TODO(yuval): Temporary
+    printf("\n--------------------------------------\n");
+    cpp_convert_translation_unit(translation_unit);
+    // TODO(yuval): Temporary
+    printf("--------------------------------------\n\n");
 }
 
 internal PLATFORM_WORK_QUEUE_CALLBACK(do_compilation_work) {
