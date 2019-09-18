@@ -154,7 +154,7 @@ struct Ast_Expression {
 //////////////////////////////
 enum Ast_Statement_Type {
     AST_STMT_DECL,
-    AST_STMT_EXPR_STMT,
+    AST_STMT_EXPR,
     AST_STMT_IF,
     AST_STMT_SWITCH,
     AST_STMT_CASE,
@@ -204,13 +204,12 @@ struct Ast_If {
     Ast* else_stmt; // Statement
 };
 
-struct Ast_Expr_Statement {
-    
+struct Ast_Expression_Statement {
+    Ast* expr; // Expression
 };
 
-struct Ast_Decl_Statement {
+struct Ast_Declaration_Statement {
     Ast* decl; // Declaration
-    Ast* init_expr; // Expression
 };
 
 struct Ast_Statement {
@@ -218,8 +217,8 @@ struct Ast_Statement {
     Ast* my_scope; // Block
     
     union {
-        Ast_Decl_Statement decl_stmt;
-        Ast_Expr_Statement expr_stmt;
+        Ast_Declaration_Statement decl_stmt;
+        Ast_Expression_Statement expr_stmt;
         Ast_If if_stmt;
         Ast_Switch switch_stmt;
         Ast_Case case_stmt;

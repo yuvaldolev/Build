@@ -898,16 +898,6 @@ parse_statement(Parser* parser, Ast* parent_scope) {
     AST_GET_TOKEN(parser);
     
     switch (parser->token.type) {
-        case TOKEN_IDENTIFIER: {
-            Ast* type_def = find_type(parent_scope, parser->token.text);
-            
-            if (type_def) {
-                // NOTE(yuval): Declaration Statement
-            } else {
-                // NOTE(yuval): Assignment Statement
-            }
-        } break;
-        
         case TOKEN_IF: {
             result = ast_new_stmt(AST_STMT_IF, parser);
             Ast_Statement* stmt = &result->stmt;
@@ -919,7 +909,7 @@ parse_statement(Parser* parser, Ast* parent_scope) {
             
             // NOTE(yuval): If Condition
             AST_REQUIRE_TOKEN(parser, TOKEN_OPEN_PAREN);
-            // TODO(yuval): if_stmt->condition_expr = parse_expression();
+            if_stmt->condition_expr = parse_expression(parser, parent_scope);
             AST_REQUIRE_TOKEN(parser, TOKEN_CLOSE_PAREN);
             
             // NOTE(yuval): If Body
@@ -942,7 +932,7 @@ parse_statement(Parser* parser, Ast* parent_scope) {
             
             // NOTE(yuval): Switch Condition
             AST_REQUIRE_TOKEN(parser, TOKEN_OPEN_PAREN);
-            // TODO(yuval): switch_stmt->condition = parse_expression();
+            switch_stmt->condition_expr = parse_expression(parser, parent_scope);
             AST_REQUIRE_TOKEN(parser, TOKEN_CLOSE_PAREN);
             
             // NOTE(yuval): Switch Body
@@ -966,7 +956,7 @@ parse_statement(Parser* parser, Ast* parent_scope) {
             Ast_Case* case_stmt = &stmt->case_stmt;
             
             // NOTE(yuval): Case Expression
-            // TODO(yuval): case_stmt->value = parse_expression();
+            case_stmt->value = parse_expression(parser, parent_scope);
             
             // NOTE(yuval): Case Body
             case_stmt->body = parse_statement(parser, stmt->my_scope);
@@ -1011,13 +1001,13 @@ parse_statement(Parser* parser, Ast* parent_scope) {
             
             // NOTE(yuval): For Condition Expression
             if (!AST_OPTIONAL_TOKEN(parser, TOKEN_SEMI)) {
-                // TODO(yuval): for_stmt->condition = parse_expression();
+                for_stmt->condition = parse_expression(parser, parent_scope);
                 AST_REQUIRE_TOKEN(parser, TOKEN_SEMI);
             }
             
             // NOTE(yuval): For Incrementation Expression
             if (!AST_OPTIONAL_TOKEN(parser, TOKEN_CLOSE_PAREN)) {
-                // TODO(yuval): for_stmt->inc = parse_expression();
+                for_stmt->inc = parse_expression(parser, parent_scope);
                 AST_REQUIRE_TOKEN(parser, TOKEN_CLOSE_PAREN);
             }
             
@@ -1036,7 +1026,7 @@ parse_statement(Parser* parser, Ast* parent_scope) {
             
             // NOTE(yuval): While Condition
             AST_REQUIRE_TOKEN(parser, TOKEN_OPEN_PAREN);
-            // TODO(yuval): while_stmt->condition = parse_expression();
+            while_stmt->condition = parse_expression(parser, parent_scope);
             AST_REQUIRE_TOKEN(parser, TOKEN_CLOSE_PAREN);
             
             // NOTE(yuval): While Body
@@ -1059,7 +1049,7 @@ parse_statement(Parser* parser, Ast* parent_scope) {
             AST_REQUIRE_TOKEN(parser, TOKEN_WHILE);
             
             AST_REQUIRE_TOKEN(parser, TOKEN_OPEN_PAREN);
-            // TODO(yuval): while_stmt->condition = parse_expression();
+            while_stmt->condition = parse_expression(parser, parent_scope);
             AST_REQUIRE_TOKEN(parser, TOKEN_CLOSE_PAREN);
             
             AST_REQUIRE_TOKEN(parser, TOKEN_SEMI);
@@ -1077,18 +1067,46 @@ parse_statement(Parser* parser, Ast* parent_scope) {
         
         case TOKEN_RETURN: {
             result = ast_new_stmt(AST_STMT_RETURN, parser);
-            Ast_Statement* stmt = &result->stmt;
             
+            Ast_Statement* stmt = &result->stmt;
             stmt->my_scope = parent_scope;
             
             Ast_Return* return_stmt = &stmt->return_stmt;
-            // TODO(yuval): return_stmt->expr = parse_expression();
+            return_stmt->expr = parse_expression(parser, parent_scope);
             AST_REQUIRE_TOKEN(parser, TOKEN_SEMI);
         } break;
         
         case TOKEN_OPEN_BRACE: {
             result = parse_compound_statement(parser, parent_scope);
         } break;
+        
+        default: {
+            Ast* type_def = 0;
+            
+            if (parser->token.type == TOKEN_IDENTIFIER) {
+                type_def = find_type(parent_scope, parser->token.text);
+            }
+            
+            if (type_def) {
+                // NOTE(yuval: Declaration Statement
+                result = ast_new_stmt(AST_STMT_DECL, parser);
+                
+                Ast_Statement* stmt = &result->stmt;
+                stmt->my_scope = parent_scope;
+                
+                Ast_Declaration_Statement* decl_stmt = &stmt->decl_stmt;
+                decl_stmt->decl = parse_declaration(parser, parent_scope);
+            } else {
+                // NOTE(yuval): Expression Statement
+                result = ast_new_stmt(AST_STMT_EXPR, parser);
+                
+                Ast_Statement* stmt = &result->stmt;
+                stmt->my_scope = parent_scope;
+                
+                Ast_Expression_Statement* expr_stmt = &stmt->expr_stmt;
+                expr_stmt->expr = parse_expression(parser, parent_scope);
+            }
+        }
     }
     
     return result;

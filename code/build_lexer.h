@@ -1,17 +1,5 @@
 #if !defined(BUILD_LEXER_H)
 
-/* TODO(yuval): Create Default Ast Types For These Keywords:
-KEYWORD_TOKEN_TYPE(Void, "void")
-KEYWORD_TOKEN_TYPE(Bool, "bool")
-KEYWORD_TOKEN_TYPE(Char, "char")
-KEYWORD_TOKEN_TYPE(Int, "int")
-KEYWORD_TOKEN_TYPE(Float, "float")
-KEYWORD_TOKEN_TYPE(Double, "double")
-KEYWORD_TOKEN_TYPE(Long, "long")
-KEYWORD_TOKEN_TYPE(Short, "short")
-KEYWORD_TOKEN_TYPE(Unsigned, "unsigned")
-*/
-
 #define TOKEN_TYPES \
 TOKEN_TYPE(UNKNOWN) \
 TOKEN_TYPE(TERNARY) \
