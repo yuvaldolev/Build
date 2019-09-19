@@ -380,9 +380,7 @@ struct Parser {
     Memory_Arena arena;
     
     Ast_Translation_Unit* translation_unit;
-    
     Lexer lexer;
-    Token token;
 };
 
 #define BUILD_PARSER_H

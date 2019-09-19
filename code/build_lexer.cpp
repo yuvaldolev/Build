@@ -16,6 +16,18 @@ global Token_Name_And_Type global_pp_keywords[] = {
 #undef PP_KEYWORD_TOKEN_TYPE
 };
 
+internal b32
+is_null_token(Token token) {
+    b32 result = (token.type == TOKEN_NULL);
+    return result;
+}
+
+internal b32
+token_equals(Token token, const char* match) {
+    b32 result = strings_match(token.text, match);
+    return result;
+}
+
 internal String
 get_token_type_name(Token_Type type) {
     switch (type) {
@@ -29,12 +41,6 @@ get_token_type_name(Token_Type type) {
     }
     
     return BUNDLE_LITERAL("Unknown");
-}
-
-internal b32
-token_equals(Token token, const char* match) {
-    b32 result = strings_match(token.text, match);
-    return result;
 }
 
 internal void
@@ -381,44 +387,55 @@ get_token_raw(Lexer* lexer) {
 
 internal Token
 get_token(Lexer* lexer) {
-    Token token = {};
+    Token token;
     
-    for (;;) {
-        token = get_token_raw(lexer);
+    // TODO(yuval): Maybe move getting & resetting the next token to get_token_raw?
+    if (is_null_token(lexer->next_token)) {
+        // NOTE(yuval): The next token was not peeked already,
+        // so we need to get a new token
         
-        if ((token.type == TOKEN_SPACING) ||
-            (token.type == TOKEN_END_OF_LINE) ||
-            (token.type == TOKEN_COMMENT)) {
-            // NOTE(yuval): These tokens are ignored
-        } else {
-            if (token.type == TOKEN_STRING_LITERAL) {
-                if ((token.text.count != 0) &&
-                    (token.text.data[0] == '"')) {
-                    ++token.text.data;
-                    --token.text.count;
+        for (;;) {
+            token = get_token_raw(lexer);
+            
+            if ((token.type == TOKEN_SPACING) ||
+                (token.type == TOKEN_END_OF_LINE) ||
+                (token.type == TOKEN_COMMENT)) {
+                // NOTE(yuval): These tokens are ignored
+            } else {
+                if (token.type == TOKEN_STRING_LITERAL) {
+                    if ((token.text.count != 0) &&
+                        (token.text.data[0] == '"')) {
+                        ++token.text.data;
+                        --token.text.count;
+                    }
+                    
+                    if ((token.text.count != 0) &&
+                        (token.text.data[token.text.count - 1] == '"')) {
+                        --token.text.count;
+                    }
                 }
                 
-                if ((token.text.count != 0) &&
-                    (token.text.data[token.text.count - 1] == '"')) {
-                    --token.text.count;
-                }
-            }
-            
-            if (token.type == TOKEN_CHAR_CONSTANT) {
-                if ((token.text.count != 0) &&
-                    (token.text.data[0] == '\'')) {
-                    ++token.text.data;
-                    --token.text.count;
+                if (token.type == TOKEN_CHAR_CONSTANT) {
+                    if ((token.text.count != 0) &&
+                        (token.text.data[0] == '\'')) {
+                        ++token.text.data;
+                        --token.text.count;
+                    }
+                    
+                    if ((token.text.count != 0) &&
+                        (token.text.data[token.text.count - 1] == '\'')) {
+                        --token.text.count;
+                    }
                 }
                 
-                if ((token.text.count != 0) &&
-                    (token.text.data[token.text.count - 1] == '\'')) {
-                    --token.text.count;
-                }
+                break;
             }
-            
-            break;
         }
+    } else {
+        // NOTE(yuval): The next token has already been peeked at,
+        // so we don't need to get a new tokent
+        token = lexer->next_token;
+        lexer->next_token = NULL_TOKEN;
     }
     
     return token;
@@ -428,13 +445,6 @@ internal b32
 get_token_check_type(Lexer* lexer, Token_Type desired_type, Token* out_token) {
     *out_token = get_token(lexer);
     b32 result = (out_token->type == desired_type);
-    return result;
-}
-
-internal Token
-peek_token(Lexer* lexer) {
-    Lexer temp = *lexer;
-    Token result = get_token(&temp);
     return result;
 }
 
@@ -450,17 +460,28 @@ require_token(Lexer* lexer, Token_Type desired_type) {
     return token;
 }
 
+internal Token
+peek_token(Lexer* lexer) {
+    Token result;
+    
+    if (is_null_token(lexer->next_token)) {
+        Lexer temp = *lexer;
+        result = get_token(&temp);
+        lexer->next_token = result;
+    } else {
+        result = lexer->next_token;
+    }
+    
+    return result;
+}
+
 internal b32
-optional_token(Lexer* lexer, Token_Type desired_type, Token* out_token = 0) {
+optional_token(Lexer* lexer, Token_Type desired_type) {
     Token token = peek_token(lexer);
     b32 result = (token.type == desired_type);
     
     if (result) {
-        Token temp = get_token(lexer);
-        
-        if (out_token) {
-            *out_token = temp;
-        }
+        get_token(lexer);
     }
     
     return result;

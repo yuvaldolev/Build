@@ -118,6 +118,8 @@ PP_KEYWORD_TOKEN_TYPE(PP_USING, "USING")
 
 enum Token_Type
 {
+    TOKEN_NULL,
+    
 #define TOKEN_TYPE(type) JOIN2(TOKEN_, type),
     TOKEN_TYPES
 #undef TOKEN_TYPE
@@ -146,6 +148,8 @@ struct Token {
     f32 value_f32;
 };
 
+Token NULL_TOKEN = {};
+
 struct Lexer {
     Code_File file;
     
@@ -155,7 +159,8 @@ struct Lexer {
     String input;
     char at[2];
     
-    b32 error;
+    Token curr_token;
+    Token next_token;
 };
 
 // TODO(yuval): Maybe add a better data structure for faster lookup

@@ -1,9 +1,3 @@
-#define AST_GET_TOKEN(parser) (parser)->token = get_token(&(parser)->lexer)
-#define AST_PEEK_TOKEN(parser) peek_token(&(parser)->lexer)
-#define AST_GET_TOKEN_CHECK_TYPE(parser, type) get_token_check_type(&(parser)->lexer, type, &(parser)->token)
-#define AST_REQUIRE_TOKEN(parser, type) (parser)->token = require_token(&(parser)->lexer, type)
-#define AST_OPTIONAL_TOKEN(parser, type) optional_token(&(parser)->lexer, type, &(parser)->token)
-
 #define DEFAULT_TYPES \
 DEFAULT_TYPE(void, BUNDLE_LITERAL("void")) \
 DEFAULT_TYPE(bool, BUNDLE_LITERAL("bool")) \
@@ -154,55 +148,6 @@ dump_translation_unit_ast(Ast_Translation_Unit* translation_unit) {
 // NOTE(yuval): AST Parsing
 //
 
-internal Ast*
-ast_new(Ast_Type type, Parser* parser, Token* token = 0) {
-    Ast* result = PUSH_STRUCT(&parser->arena, Ast);
-    
-    result->type = type;
-    result->my_file = parser->lexer.file;
-    
-    if (!token) {
-        token = &parser->token;
-    }
-    
-    result->my_line = token->line_number;
-    result->my_column = token->column_number;
-    
-    return result;
-}
-
-internal Ast*
-ast_new_decl(Ast_Declaration_Type type,
-             Parser* parser, Token* token = 0) {
-    Ast* result = ast_new(AST_DECLARATION, parser, token);
-    result->decl.type = type;
-    return result;
-}
-
-internal Ast*
-ast_new_type_def(Ast_Type_Definition_Type type,
-                 Parser* parser, Token* token = 0) {
-    Ast* result = ast_new(AST_TYPE_DEFINITION, parser, token);
-    result->type_def.type = type;
-    return result;
-}
-
-internal Ast*
-ast_new_stmt(Ast_Statement_Type type,
-             Parser* parser, Token* token = 0) {
-    Ast* result = ast_new(AST_STATEMENT, parser, token);
-    result->stmt.type = type;
-    return result;
-}
-
-internal Ast*
-ast_new_expr(Ast_Expression_Type type,
-             Parser* parser, Token* token = 0) {
-    Ast* result = ast_new(AST_EXPRESSION, parser, token);
-    result->expr.type = type;
-    return result;
-}
-
 internal void
 init_default_types(Memory_Arena* arena) {
 #define DEFAULT_TYPE(type_name, name) JOIN2(global_type_def_, type_name) = PUSH_STRUCT(arena, Ast); \
@@ -227,6 +172,47 @@ get_default_type(String type_name) {
 #undef DEFAULT_TYPE
     
         return 0;
+}
+
+internal Ast*
+ast_new(Ast_Type type, Parser* parser) {
+    Ast* result = PUSH_STRUCT(&parser->arena, Ast);
+    
+    result->type = type;
+    result->my_file = parser->lexer.file;
+    
+    result->my_line = parser->lexer.line_number;
+    result->my_column = parser->lexer.column_number;
+    
+    return result;
+}
+
+internal Ast*
+ast_new_decl(Ast_Declaration_Type type, Parser* parser) {
+    Ast* result = ast_new(AST_DECLARATION, parser);
+    result->decl.type = type;
+    return result;
+}
+
+internal Ast*
+ast_new_type_def(Ast_Type_Definition_Type type, Parser* parser) {
+    Ast* result = ast_new(AST_TYPE_DEFINITION, parser);
+    result->type_def.type = type;
+    return result;
+}
+
+internal Ast*
+ast_new_stmt(Ast_Statement_Type type, Parser* parser) {
+    Ast* result = ast_new(AST_STATEMENT, parser);
+    result->stmt.type = type;
+    return result;
+}
+
+internal Ast*
+ast_new_expr(Ast_Expression_Type type, Parser* parser) {
+    Ast* result = ast_new(AST_EXPRESSION, parser);
+    result->expr.type = type;
+    return result;
 }
 
 internal Ast*
@@ -1189,16 +1175,19 @@ internal Ast*
 parse_declaration(Parser* parser, Ast* scope) {
     Ast* result = 0;
     
+    Token token = peek_token(&parser->lexer);
+    
     // NOTE(yuval): Tag Parsing
     Ast_Tag* tags[16] = {};
     u32 tag_count = 0;
     
-    while (parser->token.type == TOKEN_AT) {
-        AST_REQUIRE_TOKEN(parser, TOKEN_IDENTIFIER);
+    while (token.type == TOKEN_AT) {
+        get_token(&parser->lexer);
+        token = require_token(&parser->lexer, TOKEN_IDENTIFIER);
         Ast_Tag* tag = PUSH_STRUCT(&parser->arena, Ast_Tag);
-        tag->tag = parser->token.text;
+        tag->tag = token.text;
         tags[tag_count++] = tag;
-        AST_GET_TOKEN(parser);
+        token = peek_token(&parser->lexer);
     }
     
     switch (parser->token.type) {
@@ -1232,14 +1221,23 @@ parse_declaration(Parser* parser, Ast* scope) {
                 Ast_Function* func = &decl->func;
                 func->return_type = type;
                 
-                // NOTE(yuval): Function Declaration Parsing
-                while (!AST_GET_TOKEN_CHECK_TYPE(parser, TOKEN_CLOSE_BRACE)) {
+                // NOTE(yuval): Function Parameters Parsing
+                do {
+                    AST_GET_TOKEN(parser);
                     func->params[func->param_count++] = parse_declaration(parser, scope);
-                }
+                } while (AST_OPTIONAL_TOKEN(parser, TOKEN_COMMA));
                 
-                // NOTE(yuval): Function Body Parsing
-                AST_REQUIRE_TOKEN(parser, TOKEN_OPEN_BRACE);
-                func->my_body = parse_compound_statement(parser, decl->my_scope);
+                AST_REQUIRE_TOKEN(parser, TOKEN_CLOSE_PAREN);
+                
+                if (AST_OPTIONAL_TOKEN(parser, TOKEN_OPEN_BRACE)) {
+                    // NOTE(yuval): Function Definition
+                    func->is_function_definition = true;
+                    func->my_body = parse_compound_statement(parser, decl->my_scope);
+                } else {
+                    // NOTE(yuval): Function Declaration
+                    func->is_function_definition = false;
+                    AST_REQUIRE_TOKEN(parser, TOKEN_SEMI);
+                }
             } else {
                 // NOTE(yuval): Variable Declaration Parsing
                 // TODO(yuval): Handle default value assignment
@@ -1285,13 +1283,13 @@ parse_top_level(Parser* parser) {
 
 internal Ast_Translation_Unit*
 parse_translation_unit(Parser* parser, Code_File file) {
-    Ast_Translation_Unit* translation_unit = PUSH_STRUCT(&parser->arena,
-                                                         Ast_Translation_Unit);
+    Ast_Translation_Unit* translation_unit =
+        PUSH_STRUCT(&parser->arena, Ast_Translation_Unit);
     
     parser->translation_unit = translation_unit;
     parser->lexer = lex(file);
     
-    while (!AST_GET_TOKEN_CHECK_TYPE(parser, TOKEN_END_OF_STREAM)) {
+    while (!optional_token(&parser->lexer, TOKEN_END_OF_STREAM)) {
         parse_top_level(parser);
     }
     
