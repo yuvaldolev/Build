@@ -8,92 +8,83 @@ struct Ast_Translation_Unit;
 ///////////////////////////////
 //        Expressions        //
 ///////////////////////////////
-enum Ast_Expression_Type {
-    AST_EXPR_COMMA,
-    AST_EXPR_ASSIGNMENT,
-    AST_EXPR_CONDITIONAL,
-    AST_EXPR_TERNARY,
-    AST_EXPR_ARITHMETIC,
-    AST_EXPR_BIT_OPERATION,
-    AST_EXPR_BOOL_OPERATION,
-    AST_EXPR_MEMORY_OPERATION,
-    AST_EXPR_DOT,
-    AST_EXPR_SUBSCRIPT,
-    AST_EXPR_CAST,
-    AST_EXPR_DECL_REF,
-    AST_EXPR_FUNC_CALL,
-    AST_EXPR_CONSTANT
-};
+namespace Ast_Expression_Kind {
+    
+}
 
-enum Ast_Operator {
-    AST_OP_NONE,
-    
-    AST_OP_COMMA,
-    
-    AST_OP_PLUS,
-    AST_OP_PLUS_PLUS,
-    AST_OP_PLUS_EQUAL,
-    
-    AST_OP_MINUS,
-    AST_OP_MINUS_MINUS,
-    AST_OP_MINUS_EQUAL,
-    
-    AST_OP_MUL,
-    AST_OP_MUL_EQUAL,
-    
-    AST_OP_DIV,
-    AST_OP_DIV_EQUAL,
-    
-    AST_OP_MOD,
-    AST_OP_MOD_EQUAL,
-    
-    AST_OP_AND,
-    AST_OP_AND_AND,
-    AST_OP_AND_EQUAL,
-    
-    AST_OP_OR,
-    AST_OP_OR_OR,
-    AST_OP_OR_EQUAL,
-    
-    AST_OP_XOR,
-    AST_OP_XOR_EQUAL,
-    
-    AST_OP_SHL,
-    AST_OP_SHR,
-    
-    AST_OP_EQUAL,
-    AST_OP_EQUAL_EQUAL,
-    
-    AST_OP_NOT,
-    AST_OP_NOT_EQUAL,
-    
-    AST_OP_LESS,
-    AST_OP_LESS_EQUAL,
-    
-    AST_OP_GREATER,
-    AST_OP_GREATER_EQUAL,
-    
-    AST_OP_ADDR,
-    AST_OP_DEREF,
-    
-    AST_OP_DOT,
-    
-    AST_OP_SIZEOF,
-    AST_OP_ALIGNOF,
-    
-    AST_OP_HASH,
-    AST_OP_HASH_HASH
-};
+namespace Ast_Operator {
+    enum Type {
+        NONE,
+        
+        COMMA,
+        
+        PLUS,
+        PLUS_PLUS,
+        PLUS_EQUAL,
+        
+        MINUS,
+        MINUS_MINUS,
+        MINUS_EQUAL,
+        
+        MUL,
+        MUL_EQUAL,
+        
+        DIV,
+        EQUAL,
+        
+        MOD,
+        MOD_EQUAL,
+        
+        AND,
+        AND_AND,
+        AND_EQUAL,
+        
+        OR,
+        OR_OR,
+        OR_EQUAL,
+        
+        XOR,
+        XOR_EQUAL,
+        
+        SHL,
+        SHR,
+        
+        EQUAL,
+        EQUAL_EQUAL,
+        
+        NOT,
+        NOT_EQUAL,
+        
+        LESS,
+        LESS_EQUAL,
+        
+        GREATER,
+        GREATER_EQUAL,
+        
+        ADDR,
+        DEREF,
+        
+        DOT,
+        
+        SIZEOF,
+        ALIGNOF,
+        
+        HASH,
+        HASH_HASH
+    };
+}
 
-enum Ast_Constant_Type {
-    AST_CONST_NUMBER,
-    AST_CONST_CHAR,
-    AST_CONST_BOOL,
-    AST_CONST_STRING_LITERAL
-};
+namespace Ast_Constant_Kind {
+    
+}
 
 struct Ast_Constant {
-    Ast_Constant_Type type;
+    enum Kind {
+        NUMBER,
+        CHAR,
+        BOOL,
+        STRING_LITERAL
+    } kind;
     
     union {
         struct {
@@ -135,10 +126,25 @@ struct Ast_Ternary {
 };
 
 struct Ast_Expression {
-    Ast_Expression_Type type;
+    enum Kind {
+        COMMA,
+        ASSIGNMENT,
+        CONDITIONAL,
+        TERNARY,
+        ARITHMETIC,
+        BIT_OPERATION,
+        BOOL_OPERATION,
+        MEMORY_OPERATION,
+        DOT,
+        SUBSCRIPT,
+        CAST,
+        DECL_REF,
+        FUNC_CALL,
+        CONSTANT
+    } kind;
     
     union {
-        Ast_Operator op;
+        Ast_Operator::Type op;
         Ast_Ternary ternary;
         Ast_Dot dot;
         Ast_Subscript subscript;
@@ -152,21 +158,6 @@ struct Ast_Expression {
 //////////////////////////////
 //        Statements        //
 //////////////////////////////
-enum Ast_Statement_Type {
-    AST_STMT_DECL,
-    AST_STMT_EXPR,
-    AST_STMT_IF,
-    AST_STMT_SWITCH,
-    AST_STMT_CASE,
-    AST_STMT_DEFAULT,
-    AST_STMT_FOR,
-    AST_STMT_WHILE,
-    AST_STMT_DO_WHILE,
-    AST_STMT_BREAK,
-    AST_STMT_CONTINUE,
-    AST_STMT_RETURN
-};
-
 struct Ast_Return {
     Ast* expr;
 };
@@ -213,7 +204,21 @@ struct Ast_Declaration_Statement {
 };
 
 struct Ast_Statement {
-    Ast_Statement_Type type;
+    enum Kind {
+        DECL,
+        EXPR,
+        IF,
+        SWITCH,
+        CASE,
+        DEFAULT,
+        FOR,
+        WHILE,
+        DO_WHILE,
+        BREAK,
+        CONTINUE,
+        RETURN
+    } kind;
+    
     Ast* my_scope; // Block
     
     union {
@@ -232,14 +237,6 @@ struct Ast_Statement {
 //////////////////////////////////
 //       Type Definitions       //
 //////////////////////////////////
-enum Ast_Type_Definition_Type {
-    AST_TYPE_DEF_DEFAULT,
-    AST_TYPE_DEF_POINTER,
-    AST_TYPE_DEF_STRUCT,
-    AST_TYPE_DEF_ENUM,
-    AST_TYPE_DEF_UNION
-};
-
 struct Ast_Union {
     // NOTE(yuval): Declarations
     Ast* decls[512]; // Declaration
@@ -259,7 +256,13 @@ struct Ast_Struct {
 };
 
 struct Ast_Type_Definition {
-    Ast_Type_Definition_Type type;
+    enum Kind {
+        DEFAULT,
+        POINTER,
+        STRUCT,
+        ENUM,
+        UNION
+    } kind;
     
     Ast* my_decl; // Declaration
     
@@ -278,14 +281,6 @@ struct Ast_Type_Definition {
 ////////////////////////////////
 //        Declarations        //
 ////////////////////////////////
-enum Ast_Declaration_Type {
-    AST_DECL_UNDEFINED,
-    
-    AST_DECL_TYPE,
-    AST_DECL_FUNC,
-    AST_DECL_VAR
-};
-
 struct Ast_Tag {
     String tag;
 };
@@ -307,7 +302,13 @@ struct Ast_Function {
 };
 
 struct Ast_Declaration {
-    Ast_Declaration_Type type;
+    enum Kind {
+        UNDEFINED,
+        
+        TYPE,
+        FUNC,
+        VAR
+    } kind;
     
     Ast_Identifier* my_identifier;
     Ast* my_scope; // Block
@@ -337,16 +338,14 @@ struct Ast_Block {
 /////////////////////////////
 //           AST           //
 /////////////////////////////
-enum Ast_Type {
-    AST_BLOCK,
-    AST_DECLARATION,
-    AST_TYPE_DEFINITION,
-    AST_STATEMENT,
-    AST_EXPRESSION
-};
-
 struct Ast {
-    Ast_Type type;
+    enum Kind {
+        BLOCK,
+        DECLARATION,
+        TYPE_DEFINITION,
+        STATEMENT,
+        EXPRESSION
+    } kind;
     
     Ast_Translation_Unit* my_translation_unit;
     

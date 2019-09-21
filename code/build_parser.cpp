@@ -1103,7 +1103,7 @@ parse_compound_statement(Parser* parser, Ast* scope) {
     Ast* first_stmt = parse_statement(parser, scope);
     Ast* prev_stmt = first_stmt;
     
-    while (!AST_OPTIONAL_TOKEN(parser, TOKEN_CLOSE_BRACE)) {
+    while (!optional_token(&parser->lexer, TOKEN_CLOSE_BRACE)) {
         Ast* stmt = parse_statement(parser, scope);
         
         if (stmt) {
@@ -1119,20 +1119,21 @@ parse_compound_statement(Parser* parser, Ast* scope) {
 }
 
 internal Ast*
-parse_type_declaration(Parser* parser, Ast* parent_scope, Ast_Type_Definition_Type type) {
-    Ast* result = ast_new_decl(AST_DECL_TYPE, parser);
+parse_type_declaration(Parser* parser, Ast* parent_scope, Ast_Type_Definition::Kind kind) {
+    Ast* result = ast_new_decl(Ast_Declaration::TYPE, parser);
+    
+    Token token = require_token(&parser->lexer, Token::IDENTIFIER);
+    
     Ast_Declaration* decl = &result->decl;
-    
-    AST_REQUIRE_TOKEN(parser, TOKEN_IDENTIFIER);
     decl->my_identifier = PUSH_STRUCT(&parser->arena, Ast_Identifier);
-    decl->my_identifier->name = parser->token.text;
+    decl->my_identifier->name = token.text;
     
-    if (AST_OPTIONAL_TOKEN(parser, TOKEN_OPEN_BRACE)) {
-        decl->my_scope = ast_new(AST_BLOCK, parser);
+    if (optional_token(&parser->lexer, Token::OPEN_BRACE)) {
+        decl->my_scope = ast_new(Ast::BLOCK, parser);
         decl->my_scope->block.parent = parent_scope;
         decl->my_scope->block.owning_decl = result;
         
-        decl->my_type = ast_new_type_def(type, parser);
+        decl->my_type = ast_new_type_def(kind, parser);
         Ast_Type_Definition* type_def = &decl->my_type->type_def;
         type_def->my_decl = result;
         
@@ -1141,28 +1142,28 @@ parse_type_declaration(Parser* parser, Ast* parent_scope, Ast_Type_Definition_Ty
         umm* decl_count = 0;
         
         switch (type) {
-            case AST_TYPE_DEF_STRUCT: {
+            case Ast_Type_Definition::STRUCT: {
                 decls = (Ast**)&type_def->struct_type_def.members;
                 decl_count = &type_def->struct_type_def.member_count;
             } break;
             
-            case AST_TYPE_DEF_ENUM: {
+            case Ast_Type_Definition::ENUM: {
                 decls = (Ast**)&type_def->enum_type_def.decls;
                 decl_count= &type_def->enum_type_def.decl_count;
             } break;
             
-            case AST_TYPE_DEF_UNION: {
+            case Ast_Type_Definition::UNION: {
                 decls = (Ast**)&type_def->union_type_def.decls;
                 decl_count= &type_def->union_type_def.decl_count;
             } break;
         }
         
         // NOTE(yuval): Member Declarations Parsing
-        while (!AST_GET_TOKEN_CHECK_TYPE(parser, TOKEN_CLOSE_BRACE)) {
+        while (!optional_token(&parser->lexer, Token::CLOSE_BRACE)) {
             decls[*decl_count] = parse_declaration(parser, decl->my_scope);
             ++(*decl_count);
             
-            AST_REQUIRE_TOKEN(parser, TOKEN_SEMI);
+            require_token(&parser->lexer, Token::SEMI);
         }
     } else {
         // TODO(yuval): Think about forward declarations
@@ -1181,36 +1182,38 @@ parse_declaration(Parser* parser, Ast* scope) {
     Ast_Tag* tags[16] = {};
     u32 tag_count = 0;
     
-    while (token.type == TOKEN_AT) {
-        get_token(&parser->lexer);
-        token = require_token(&parser->lexer, TOKEN_IDENTIFIER);
+    while (token.kind == Token::AT) {
+        eat_token(&parser->lexer);
+        token = require_token(&parser->lexer, Token::IDENTIFIER);
         Ast_Tag* tag = PUSH_STRUCT(&parser->arena, Ast_Tag);
         tag->tag = token.text;
         tags[tag_count++] = tag;
         token = peek_token(&parser->lexer);
     }
     
-    switch (parser->token.type) {
-        case TOKEN_TYPEDEF: {
+    switch (token.kind) {
+        case Token::TYPEDEF: {
         } break;
         
-        case TOKEN_CONST: {
+        case Token::CONST: {
         } break;
         
-        case TOKEN_IDENTIFIER: {
+        case Token::IDENTIFIER: {
             Ast* type = find_type(scope, parser->token.text);
             
             if (!type) {
-                report_error(&parser->token, "use of undeclared identifier '%S'",
-                             parser->token.text);
+                report_error(&token, "use of undeclared identifier '%S'",
+                             token.text);
             }
             
-            AST_REQUIRE_TOKEN(parser, TOKEN_IDENTIFIER);
-            Ast_Identifier* identifier = PUSH_STRUCT(&parser->arena, Ast_Identifier);
-            identifier->name = parser->token.text;
+            eat_token(&parser->lexer);
             
-            if (AST_OPTIONAL_TOKEN(parser, TOKEN_OPEN_PAREN)) {
-                result = ast_new_decl(AST_DECL_FUNC, parser);
+            token = require_token(&parser->lexer, Token::IDENTIFIER);
+            Ast_Identifier* identifier = PUSH_STRUCT(&parser->arena, Ast_Identifier);
+            identifier->name = token.text;
+            
+            if (optional_token(&parser->lexer, Token::OPEN_PAREN)) {
+                result = ast_new_decl(Ast_Declaration::FUNC, parser);
                 
                 // TODO(yuval): Maybe unite this code with the variable declaration code below?
                 Ast_Declaration* decl = &result->decl;
@@ -1223,25 +1226,24 @@ parse_declaration(Parser* parser, Ast* scope) {
                 
                 // NOTE(yuval): Function Parameters Parsing
                 do {
-                    AST_GET_TOKEN(parser);
                     func->params[func->param_count++] = parse_declaration(parser, scope);
-                } while (AST_OPTIONAL_TOKEN(parser, TOKEN_COMMA));
+                } while (optional_token(&parser->lexer, Token::COMMA));
                 
-                AST_REQUIRE_TOKEN(parser, TOKEN_CLOSE_PAREN);
+                require_token(parser, Token::CLOSE_PAREN);
                 
-                if (AST_OPTIONAL_TOKEN(parser, TOKEN_OPEN_BRACE)) {
+                if (optional_token(&parser->lexer, Token::OPEN_BRACE)) {
                     // NOTE(yuval): Function Definition
                     func->is_function_definition = true;
                     func->my_body = parse_compound_statement(parser, decl->my_scope);
                 } else {
                     // NOTE(yuval): Function Declaration
                     func->is_function_definition = false;
-                    AST_REQUIRE_TOKEN(parser, TOKEN_SEMI);
+                    require_token(&parser->lexer, Token::SEMI);
                 }
             } else {
                 // NOTE(yuval): Variable Declaration Parsing
                 // TODO(yuval): Handle default value assignment
-                result = ast_new_decl(AST_DECL_VAR, parser);
+                result = ast_new_decl(Ast_Declaration::VAR, parser);
                 
                 Ast_Declaration* decl = &result->decl;
                 decl->my_identifier = identifier;
@@ -1251,15 +1253,18 @@ parse_declaration(Parser* parser, Ast* scope) {
         } break;
         
         case TOKEN_STRUCT: {
-            result = parse_type_declaration(parser, scope, AST_TYPE_DEF_STRUCT);
+            eat_token(&parser->lexer);
+            result = parse_type_declaration(parser, scope, Ast_Type_Definition::STRUCT);
         } break;
         
         case TOKEN_ENUM: {
-            result = parse_type_declaration(parser, scope, AST_TYPE_DEF_ENUM);
+            eat_token(&parser->lexer);
+            result = parse_type_declaration(parser, scope, Ast_Type_Definition::ENUM);
         } break;
         
         case TOKEN_UNION: {
-            result = parse_type_declaration(parser, scope, AST_TYPE_DEF_UNION);
+            eat_token(&parser->lexer);
+            result = parse_type_declaration(parser, scope, Ast_Type_Definition::UNION);
         } break;
     }
     
@@ -1275,9 +1280,9 @@ internal void
 parse_top_level(Parser* parser) {
     Ast* decl = parse_declaration(parser, &parser->translation_unit->global_scope);
     
-    if (decl->decl.type == AST_DECL_TYPE ||
-        decl->decl.type == AST_DECL_VAR) {
-        AST_REQUIRE_TOKEN(parser, TOKEN_SEMI);
+    if (decl->decl.kind == Ast_Declaration::TYPE ||
+        decl->decl.kind == Ast_Declaration::VAR) {
+        require_token(&parser->lexer, Token::SEMI);
     }
 }
 
@@ -1289,7 +1294,7 @@ parse_translation_unit(Parser* parser, Code_File file) {
     parser->translation_unit = translation_unit;
     parser->lexer = lex(file);
     
-    while (!optional_token(&parser->lexer, TOKEN_END_OF_STREAM)) {
+    while (!optional_token(&parser->lexer, Token::END_OF_STREAM)) {
         parse_top_level(parser);
     }
     

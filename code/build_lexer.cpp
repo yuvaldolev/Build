@@ -1,24 +1,24 @@
 // TODO(yuval): Maybe add support for LINE, FILE, etc. preprocessor tokens
 // TODO(yuval): Add C++ support (class, new, delete, try, catch...)
-global Token_Name_And_Type global_keywords[] = {
-#define KEYWORD_TOKEN_TYPE(type, name) {name, JOIN2(TOKEN_, type)},
-    KEYWORD_TOKEN_TYPES
-#undef KEYWORD_TOKEN_TYPE
+global Token_Name_And_Kind global_keywords[] = {
+#define KEYWORD_TOKEN_KIND(kind, name) {name, JOIN2(Token::, kind)},
+    KEYWORD_TOKEN_KINDS
+#undef KEYWORD_TOKEN_KIND
     
         // NOTE(yuval): BoolConstant can be true as well as false
-    {"false", TOKEN_BOOL_CONSTANT}
+    {"false", Token::BOOL_CONSTANT}
 };
 
-global Token_Name_And_Type global_pp_keywords[] = {
-#define PP_KEYWORD_TOKEN_TYPE(type, name) {name, JOIN2(TOKEN_, type)},
-    PP_KEYWORD_TOKEN_TYPES
-        PP_KEYWORD_TOKEN_TYPES_UPPER
-#undef PP_KEYWORD_TOKEN_TYPE
+global Token_Name_And_Kind global_pp_keywords[] = {
+#define PP_KEYWORD_TOKEN_KIND(kind, name) {name, JOIN2(Token::, kind)},
+    PP_KEYWORD_TOKEN_KINDS
+        PP_KEYWORD_TOKEN_KINDS_UPPER
+#undef PP_KEYWORD_TOKEN_KIND
 };
 
 internal b32
 is_null_token(Token token) {
-    b32 result = (token.type == TOKEN_NULL);
+    b32 result = (token.kind == Token::NULL);
     return result;
 }
 
@@ -29,15 +29,15 @@ token_equals(Token token, const char* match) {
 }
 
 internal String
-get_token_type_name(Token_Type type) {
+get_token_kind_name(Token::Kind type) {
     switch (type) {
-#define TOKEN_TYPE(type) case JOIN2(TOKEN_, type): { return BUNDLE_LITERAL(#type); }
-        TOKEN_TYPES
-#undef TOKEN_TYPE
+#define TOKEN_KIND(kind) case JOIN2(Token::, kind): { return BUNDLE_LITERAL(#kind); }
+        TOKEN_KINDS
+#undef TOKEN_KIND
         
-#define KEYWORD_TOKEN_TYPE(type, ...) case JOIN2(TOKEN_, type): { return BUNDLE_LITERAL(#type); }
-            KEYWORD_TOKEN_TYPES
-#undef KEYWORD_TOKEN_TYPE
+#define KEYWORD_TOKEN_KIND(kind, ...) case JOIN2(Token::, kind): { return BUNDLE_LITERAL(#kind); }
+            KEYWORD_TOKEN_KINDS
+#undef KEYWORD_TOKEN_KIND
     }
     
     return BUNDLE_LITERAL("Unknown");
@@ -96,14 +96,14 @@ get_token_raw(Lexer* lexer) {
             if (strings_match_part(lexer->input, it.name)) {
                 // TODO(yuval): Copy-and-paste - string_length is called twice
                 advance_chars(lexer, string_length(it.name));
-                token.type = it.type;
+                token.kind = it.kind;
                 is_keyword = true;
                 array_break;
             }
         }
         
         if (!is_keyword) {
-            token.type = TOKEN_IDENTIFIER;
+            token.kind = Token::IDENTIFIER;
             
             advance_chars(lexer, 1);
             
@@ -118,154 +118,154 @@ get_token_raw(Lexer* lexer) {
         advance_chars(lexer, 1);
         
         switch (c) {
-            case '\0': { token.type = TOKEN_END_OF_STREAM; } break;
+            case '\0': { token.kind = Token::END_OF_STREAM; } break;
             
-            case '?': { token.type = TOKEN_TERNARY; } break;
-            case '[': { token.type = TOKEN_OPEN_BRACKET; } break;
-            case ']': { token.type = TOKEN_CLOSE_BRACKET; } break;
-            case '(': { token.type = TOKEN_OPEN_PAREN; } break;
-            case ')': { token.type = TOKEN_CLOSE_PAREN; } break;
-            case '{': { token.type = TOKEN_OPEN_BRACE; } break;
-            case '}': { token.type = TOKEN_CLOSE_BRACE; } break;
-            case '.': { token.type = TOKEN_DOT; } break;
-            case '~': { token.type = TOKEN_TILDE; } break;
-            case ';': { token.type = TOKEN_SEMI; } break;
-            case ',': { token.type = TOKEN_COMMA; } break;
-            case '@': { token.type = TOKEN_AT; } break;
+            case '?': { token.kind = Token::TERNARY; } break;
+            case '[': { token.kind = Token::OPEN_BRACKET; } break;
+            case ']': { token.kind = Token::CLOSE_BRACKET; } break;
+            case '(': { token.kind = Token::OPEN_PAREN; } break;
+            case ')': { token.kind = Token::CLOSE_PAREN; } break;
+            case '{': { token.kind = Token::OPEN_BRACE; } break;
+            case '}': { token.kind = Token::CLOSE_BRACE; } break;
+            case '.': { token.kind = Token::DOT; } break;
+            case '~': { token.kind = Token::TILDE; } break;
+            case ';': { token.kind = Token::SEMI; } break;
+            case ',': { token.kind = Token::COMMA; } break;
+            case '@': { token.kind = Token::AT; } break;
             
             case '&': {
                 if (lexer->at[0] == '&') {
-                    token.type = TOKEN_AMP_AMP;
+                    token.kind = Token::AMP_AMP;
                     advance_chars(lexer, 1);
                 } else if (lexer->at[0] == '=') {
-                    token.type = TOKEN_AMP_EQUAL;
+                    token.kind = Token::AMP_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.type = TOKEN_AMP;
+                    token.kind = Token::AMP;
                 }
             } break;
             
             case '*': {
                 if (lexer->at[0] == '=') {
-                    token.type = TOKEN_STAR_EQUAL;
+                    token.kind = Token::STAR_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.type = TOKEN_STAR;
+                    token.kind = Token::STAR;
                 }
             } break;
             
             case '+': {
                 if (lexer->at[0] == '+') {
-                    token.type = TOKEN_PLUS_PLUS;
+                    token.kind = Token::PLUS_PLUS;
                     advance_chars(lexer, 1);
                 }
                 else if (lexer->at[0] == '=') {
-                    token.type = TOKEN_PLUS_EQUAL;
+                    token.kind = Token::PLUS_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.type = TOKEN_PLUS;
+                    token.kind = Token::PLUS;
                 }
             } break;
             
             case '-': {
                 if (lexer->at[0] == '-') {
-                    token.type = TOKEN_MINUS_MINUS;
+                    token.kind = Token::MINUS_MINUS;
                     advance_chars(lexer, 1);
                 } else if (lexer->at[0] == '=') {
-                    token.type = TOKEN_MINUS_EQUAL;
+                    token.kind = Token::MINUS_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.type = TOKEN_MINUS;
+                    token.kind = Token::MINUS;
                 }
             } break;
             
             case '!': {
                 if (lexer->at[0] == '=') {
-                    token.type = TOKEN_NOT_EQUAL;
+                    token.kind = Token::NOT_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.type = TOKEN_NOT;
+                    token.kind = Token::NOT;
                 }
             } break;
             
             case '%': {
                 if (lexer->at[0] == '=') {
-                    token.type = TOKEN_PERCENT_EQUAL;
+                    token.kind = Token::PERCENT_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.type = TOKEN_PERCENT;
+                    token.kind = Token::PERCENT;
                 }
             } break;
             
             case '<': {
                 if (lexer->at[0] == '<') {
-                    token.type = TOKEN_LESS_LESS;
+                    token.kind = Token::LESS_LESS;
                     advance_chars(lexer, 1);
                 } else if (lexer->at[0] == '=') {
-                    token.type = TOKEN_LESS_EQUAL;
+                    token.kind = Token::LESS_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.type = TOKEN_LESS;
+                    token.kind = Token::LESS;
                 }
             } break;
             
             case '>': {
                 if (lexer->at[0] == '>') {
-                    token.type = TOKEN_GREATER_GREATER;
+                    token.kind = Token::GREATER_GREATER;
                     advance_chars(lexer, 1);
                 } else if (lexer->at[0] == '=') {
-                    token.type = TOKEN_GREATER_EQUAL;
+                    token.kind = Token::GREATER_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.type = TOKEN_GREATER;
+                    token.kind = Token::GREATER;
                 }
             } break;
             
             case '^': {
                 if (lexer->at[0] == '^') {
-                    token.type = TOKEN_CARET_CARET;
+                    token.kind = Token::CARET_CARET;
                     advance_chars(lexer, 1);
                 } else if (lexer->at[0] == '=') {
-                    token.type = TOKEN_CARET_EQUAL;
+                    token.kind = Token::CARET_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.type = TOKEN_CARET;
+                    token.kind = Token::CARET;
                 }
             } break;
             
             case '|': {
                 if (lexer->at[0] == '|') {
-                    token.type = TOKEN_PIPE_PIPE;
+                    token.kind = Token::PIPE_PIPE;
                     advance_chars(lexer, 1);
                 } else if (lexer->at[0] == '=') {
-                    token.type = TOKEN_PIPE_EQUAL;
+                    token.kind = Token::PIPE_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.type = TOKEN_PIPE;
+                    token.kind = Token::PIPE;
                 }
             } break;
             
             case ':': {
                 if (lexer->at[0] == ':') {
-                    token.type = TOKEN_COLON_COLON;
+                    token.kind = Token::COLON_COLON;
                     advance_chars(lexer, 1);
                 } else {
-                    token.type = TOKEN_COLON;
+                    token.kind = Token::COLON;
                 }
             } break;
             
             case '=': {
                 if (lexer->at[0] == '=') {
-                    token.type = TOKEN_EQUAL_EQUAL;
+                    token.kind = Token::EQUAL_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.type = TOKEN_EQUAL;
+                    token.kind = Token::EQUAL;
                 }
             } break;
             
             case '#': {
                 if (lexer->at[0] == '#') {
-                    token.type = TOKEN_HASH_HASH;
+                    token.kind = Token::HASH_HASH;
                     advance_chars(lexer, 1);
                 } else {
                     b32 is_keyword = false;
@@ -274,28 +274,28 @@ get_token_raw(Lexer* lexer) {
                         if (strings_match_part(lexer->input, it.name)) {
                             // TODO(yuval): Copy-and-paste - string_length is called twice
                             advance_chars(lexer, string_length(it.name));
-                            token.type = it.type;
+                            token.kind = it.type;
                             is_keyword = true;
                             array_break;
                         }
                     }
                     
                     if (!is_keyword) {
-                        token.type = TOKEN_HASH;
+                        token.kind = Token::HASH;
                     }
                 }
             } break;
             
             case '/': {
                 if (lexer->at[0] == '/') {
-                    token.type = TOKEN_COMMENT;
+                    token.kind = Token::COMMENT;
                     advance_chars(lexer, 2);
                     
                     while (lexer->at[0] && !is_end_of_line(lexer->at[0])) {
                         advance_chars(lexer, 1);
                     }
                 } else if (lexer->at[0] == '*') {
-                    token.type = TOKEN_COMMENT;
+                    token.kind = Token::COMMENT;
                     advance_chars(lexer, 2);
                     
                     while (lexer->at[0] &&
@@ -312,26 +312,26 @@ get_token_raw(Lexer* lexer) {
                         advance_chars(lexer, 1);
                     }
                 } else if (lexer->at[0] == '=') {
-                    token.type = TOKEN_SLASH_EQUAL;
+                    token.kind = Token::SLASH_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.type = TOKEN_SLASH;
+                    token.kind = Token::SLASH;
                 }
             } break;
             
             case '"': {
-                token.type = TOKEN_STRING_LITERAL;
+                token.kind = Token::STRING_LITERAL;
                 get_literal(&token, lexer, '"');
             } break;
             
             case '\'': {
-                token.type = TOKEN_CHAR_CONSTANT;
+                token.kind = Token::CHAR_CONSTANT;
                 get_literal(&token, lexer, '\'');
             } break;
             
             default: {
                 if (is_spacing(c)) {
-                    token.type = TOKEN_SPACING;
+                    token.kind = Token::SPACING;
                     
                     while (is_spacing(lexer->at[0]))
                     {
@@ -339,7 +339,7 @@ get_token_raw(Lexer* lexer) {
                     }
                 }
                 else if (is_end_of_line(c)) {
-                    token.type = TOKEN_END_OF_LINE;
+                    token.kind = Token::END_OF_LINE;
                     
                     if (((c == '\r') && (lexer->at[0] == '\n')) ||
                         ((c == '\n') && (lexer->at[0] == '\r'))) {
@@ -370,11 +370,11 @@ get_token_raw(Lexer* lexer) {
                         }
                     }
                     
-                    token.type = TOKEN_NUMBER;
+                    token.kind = Token::NUMBER;
                     token.value_f32 = number;
                     token.value_s32 = round_f32_to_s32(number);
                 } else {
-                    token.type = TOKEN_UNKNOWN;
+                    token.kind = Token::UNKNOWN;
                 }
             } break;
         }
@@ -389,72 +389,66 @@ internal Token
 get_token(Lexer* lexer) {
     Token token;
     
-    // TODO(yuval): Maybe move getting & resetting the next token to get_token_raw?
-    if (is_null_token(lexer->next_token)) {
-        // NOTE(yuval): The next token was not peeked already,
-        // so we need to get a new token
+    for (;;) {
+        token = get_token_raw(lexer);
         
-        for (;;) {
-            token = get_token_raw(lexer);
-            
-            if ((token.type == TOKEN_SPACING) ||
-                (token.type == TOKEN_END_OF_LINE) ||
-                (token.type == TOKEN_COMMENT)) {
-                // NOTE(yuval): These tokens are ignored
-            } else {
-                if (token.type == TOKEN_STRING_LITERAL) {
-                    if ((token.text.count != 0) &&
-                        (token.text.data[0] == '"')) {
-                        ++token.text.data;
-                        --token.text.count;
-                    }
-                    
-                    if ((token.text.count != 0) &&
-                        (token.text.data[token.text.count - 1] == '"')) {
-                        --token.text.count;
-                    }
+        if ((token.kind == Token::SPACING) ||
+            (token.kind == Token::END_OF_LINE) ||
+            (token.kind == Token::COMMENT)) {
+            // NOTE(yuval): These tokens are ignored
+        } else {
+            if (token.kind == Token::STRING_LITERAL) {
+                if ((token.text.count != 0) &&
+                    (token.text.data[0] == '"')) {
+                    ++token.text.data;
+                    --token.text.count;
                 }
                 
-                if (token.type == TOKEN_CHAR_CONSTANT) {
-                    if ((token.text.count != 0) &&
-                        (token.text.data[0] == '\'')) {
-                        ++token.text.data;
-                        --token.text.count;
-                    }
-                    
-                    if ((token.text.count != 0) &&
-                        (token.text.data[token.text.count - 1] == '\'')) {
-                        --token.text.count;
-                    }
+                if ((token.text.count != 0) &&
+                    (token.text.data[token.text.count - 1] == '"')) {
+                    --token.text.count;
                 }
-                
-                break;
             }
+            
+            if (token.kind == Token::CHAR_CONSTANT) {
+                if ((token.text.count != 0) &&
+                    (token.text.data[0] == '\'')) {
+                    ++token.text.data;
+                    --token.text.count;
+                }
+                
+                if ((token.text.count != 0) &&
+                    (token.text.data[token.text.count - 1] == '\'')) {
+                    --token.text.count;
+                }
+            }
+            
+            break;
         }
-    } else {
-        // NOTE(yuval): The next token has already been peeked at,
-        // so we don't need to get a new tokent
-        token = lexer->next_token;
-        lexer->next_token = NULL_TOKEN;
     }
     
     return token;
 }
 
+inline void
+eat_token(Lexer* lexer) {
+    get_token(lexer);
+}
+
 internal b32
-get_token_check_type(Lexer* lexer, Token_Type desired_type, Token* out_token) {
+get_token_check_type(Lexer* lexer, Token::Kind desired_kind, Token* out_token) {
     *out_token = get_token(lexer);
-    b32 result = (out_token->type == desired_type);
+    b32 result = (out_token->type == desired_kind);
     return result;
 }
 
 internal Token
-require_token(Lexer* lexer, Token_Type desired_type) {
+require_token(Lexer* lexer, Token::Kind desired_kind) {
     Token token = get_token(lexer);
     
-    if (token.type != desired_type) {
-        report_error(&token, "unexpected token type: %S (expected %S)",
-                     get_token_type_name(token.type), get_token_type_name(desired_type));
+    if (token.kind != desired_kind) {
+        report_error(&token, "unexpected token kind: %S (expected %S)",
+                     get_token_kind_name(token.kind), get_token_kind_name(desired_kind));
     }
     
     return token;
@@ -462,26 +456,20 @@ require_token(Lexer* lexer, Token_Type desired_type) {
 
 internal Token
 peek_token(Lexer* lexer) {
-    Token result;
-    
-    if (is_null_token(lexer->next_token)) {
-        Lexer temp = *lexer;
-        result = get_token(&temp);
-        lexer->next_token = result;
-    } else {
-        result = lexer->next_token;
-    }
+    Lexer temp = *lexer;
+    Token result = get_token(&temp);
+    lexer->next_token = result;
     
     return result;
 }
 
 internal b32
-optional_token(Lexer* lexer, Token_Type desired_type) {
+optional_token(Lexer* lexer, Token::Kind desired_kind) {
     Token token = peek_token(lexer);
-    b32 result = (token.type == desired_type);
+    b32 result = (token.kind == desired_kind);
     
     if (result) {
-        get_token(lexer);
+        eat_token(lexer);
     }
     
     return result;
