@@ -1,5 +1,13 @@
 * [X] Check switch parsing in build_parser.cpp
+
 * [ ] Profile the lexer and decide if saving the next token is necessary when peeking
 (currently the next token is not saved). Maybe get a token when the tokenizer is initialized
  and then when the user wants to peek on a token - just return the previously lexed token which
  is actually the next token (we're always one token ahead).
+ 
+ *****************************************************************************************************
+ * [X] Decide if I want to move Kind enums back to the global namespace. Now they are inside structs *
+ *****************************************************************************************************
+ 
+ * [ ] Maybe dereference struct pointers when using the dot operator from within the parser instead of
+ checking if the node is a pointer in the cpp converter (will spare checking in other converters).

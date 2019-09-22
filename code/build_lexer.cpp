@@ -1,16 +1,16 @@
 // TODO(yuval): Maybe add support for LINE, FILE, etc. preprocessor tokens
 // TODO(yuval): Add C++ support (class, new, delete, try, catch...)
 global Token_Name_And_Kind global_keywords[] = {
-#define KEYWORD_TOKEN_KIND(kind, name) {name, JOIN2(Token::, kind)},
+#define KEYWORD_TOKEN_KIND(kind, name) {name, JOIN2(Token_Kind::, kind)},
     KEYWORD_TOKEN_KINDS
 #undef KEYWORD_TOKEN_KIND
     
         // NOTE(yuval): BoolConstant can be true as well as false
-    {"false", Token::BOOL_CONSTANT}
+    {"false", Token_Kind::BOOL_CONSTANT}
 };
 
 global Token_Name_And_Kind global_pp_keywords[] = {
-#define PP_KEYWORD_TOKEN_KIND(kind, name) {name, JOIN2(Token::, kind)},
+#define PP_KEYWORD_TOKEN_KIND(kind, name) {name, JOIN2(Token_Kind::, kind)},
     PP_KEYWORD_TOKEN_KINDS
         PP_KEYWORD_TOKEN_KINDS_UPPER
 #undef PP_KEYWORD_TOKEN_KIND
@@ -18,7 +18,7 @@ global Token_Name_And_Kind global_pp_keywords[] = {
 
 internal b32
 is_null_token(Token token) {
-    b32 result = (token.kind == Token::NULL);
+    b32 result = (token.kind == Token_Kind::NONE);
     return result;
 }
 
@@ -29,13 +29,13 @@ token_equals(Token token, const char* match) {
 }
 
 internal String
-get_token_kind_name(Token::Kind type) {
+get_token_kind_name(Token_Kind::Type type) {
     switch (type) {
-#define TOKEN_KIND(kind) case JOIN2(Token::, kind): { return BUNDLE_LITERAL(#kind); }
+#define TOKEN_KIND(kind) case JOIN2(Token_Kind::, kind): { return BUNDLE_LITERAL(#kind); }
         TOKEN_KINDS
 #undef TOKEN_KIND
         
-#define KEYWORD_TOKEN_KIND(kind, ...) case JOIN2(Token::, kind): { return BUNDLE_LITERAL(#kind); }
+#define KEYWORD_TOKEN_KIND(kind, ...) case JOIN2(Token_Kind::, kind): { return BUNDLE_LITERAL(#kind); }
             KEYWORD_TOKEN_KINDS
 #undef KEYWORD_TOKEN_KIND
     }
@@ -83,6 +83,8 @@ get_literal(Token* token, Lexer* lexer, char enclosing) {
 
 internal Token
 get_token_raw(Lexer* lexer) {
+    using namespace Token_Kind;
+    
     Token token = {};
     token.file = lexer->file;
     token.line_number = lexer->line_number;
@@ -103,7 +105,7 @@ get_token_raw(Lexer* lexer) {
         }
         
         if (!is_keyword) {
-            token.kind = Token::IDENTIFIER;
+            token.kind = IDENTIFIER;
             
             advance_chars(lexer, 1);
             
@@ -118,154 +120,154 @@ get_token_raw(Lexer* lexer) {
         advance_chars(lexer, 1);
         
         switch (c) {
-            case '\0': { token.kind = Token::END_OF_STREAM; } break;
+            case '\0': { token.kind = END_OF_STREAM; } break;
             
-            case '?': { token.kind = Token::TERNARY; } break;
-            case '[': { token.kind = Token::OPEN_BRACKET; } break;
-            case ']': { token.kind = Token::CLOSE_BRACKET; } break;
-            case '(': { token.kind = Token::OPEN_PAREN; } break;
-            case ')': { token.kind = Token::CLOSE_PAREN; } break;
-            case '{': { token.kind = Token::OPEN_BRACE; } break;
-            case '}': { token.kind = Token::CLOSE_BRACE; } break;
-            case '.': { token.kind = Token::DOT; } break;
-            case '~': { token.kind = Token::TILDE; } break;
-            case ';': { token.kind = Token::SEMI; } break;
-            case ',': { token.kind = Token::COMMA; } break;
-            case '@': { token.kind = Token::AT; } break;
+            case '?': { token.kind = TERNARY; } break;
+            case '[': { token.kind = OPEN_BRACKET; } break;
+            case ']': { token.kind = CLOSE_BRACKET; } break;
+            case '(': { token.kind = OPEN_PAREN; } break;
+            case ')': { token.kind = CLOSE_PAREN; } break;
+            case '{': { token.kind = OPEN_BRACE; } break;
+            case '}': { token.kind = CLOSE_BRACE; } break;
+            case '.': { token.kind = DOT; } break;
+            case '~': { token.kind = TILDE; } break;
+            case ';': { token.kind = SEMI; } break;
+            case ',': { token.kind = COMMA; } break;
+            case '@': { token.kind = AT; } break;
             
             case '&': {
                 if (lexer->at[0] == '&') {
-                    token.kind = Token::AMP_AMP;
+                    token.kind = AMP_AMP;
                     advance_chars(lexer, 1);
                 } else if (lexer->at[0] == '=') {
-                    token.kind = Token::AMP_EQUAL;
+                    token.kind = AMP_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.kind = Token::AMP;
+                    token.kind = AMP;
                 }
             } break;
             
             case '*': {
                 if (lexer->at[0] == '=') {
-                    token.kind = Token::STAR_EQUAL;
+                    token.kind = STAR_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.kind = Token::STAR;
+                    token.kind = STAR;
                 }
             } break;
             
             case '+': {
                 if (lexer->at[0] == '+') {
-                    token.kind = Token::PLUS_PLUS;
+                    token.kind = PLUS_PLUS;
                     advance_chars(lexer, 1);
                 }
                 else if (lexer->at[0] == '=') {
-                    token.kind = Token::PLUS_EQUAL;
+                    token.kind = PLUS_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.kind = Token::PLUS;
+                    token.kind = PLUS;
                 }
             } break;
             
             case '-': {
                 if (lexer->at[0] == '-') {
-                    token.kind = Token::MINUS_MINUS;
+                    token.kind = MINUS_MINUS;
                     advance_chars(lexer, 1);
                 } else if (lexer->at[0] == '=') {
-                    token.kind = Token::MINUS_EQUAL;
+                    token.kind = MINUS_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.kind = Token::MINUS;
+                    token.kind = MINUS;
                 }
             } break;
             
             case '!': {
                 if (lexer->at[0] == '=') {
-                    token.kind = Token::NOT_EQUAL;
+                    token.kind = NOT_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.kind = Token::NOT;
+                    token.kind = NOT;
                 }
             } break;
             
             case '%': {
                 if (lexer->at[0] == '=') {
-                    token.kind = Token::PERCENT_EQUAL;
+                    token.kind = PERCENT_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.kind = Token::PERCENT;
+                    token.kind = PERCENT;
                 }
             } break;
             
             case '<': {
                 if (lexer->at[0] == '<') {
-                    token.kind = Token::LESS_LESS;
+                    token.kind = LESS_LESS;
                     advance_chars(lexer, 1);
                 } else if (lexer->at[0] == '=') {
-                    token.kind = Token::LESS_EQUAL;
+                    token.kind = LESS_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.kind = Token::LESS;
+                    token.kind = LESS;
                 }
             } break;
             
             case '>': {
                 if (lexer->at[0] == '>') {
-                    token.kind = Token::GREATER_GREATER;
+                    token.kind = GREATER_GREATER;
                     advance_chars(lexer, 1);
                 } else if (lexer->at[0] == '=') {
-                    token.kind = Token::GREATER_EQUAL;
+                    token.kind = GREATER_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.kind = Token::GREATER;
+                    token.kind = GREATER;
                 }
             } break;
             
             case '^': {
                 if (lexer->at[0] == '^') {
-                    token.kind = Token::CARET_CARET;
+                    token.kind = CARET_CARET;
                     advance_chars(lexer, 1);
                 } else if (lexer->at[0] == '=') {
-                    token.kind = Token::CARET_EQUAL;
+                    token.kind = CARET_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.kind = Token::CARET;
+                    token.kind = CARET;
                 }
             } break;
             
             case '|': {
                 if (lexer->at[0] == '|') {
-                    token.kind = Token::PIPE_PIPE;
+                    token.kind = PIPE_PIPE;
                     advance_chars(lexer, 1);
                 } else if (lexer->at[0] == '=') {
-                    token.kind = Token::PIPE_EQUAL;
+                    token.kind = PIPE_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.kind = Token::PIPE;
+                    token.kind = PIPE;
                 }
             } break;
             
             case ':': {
                 if (lexer->at[0] == ':') {
-                    token.kind = Token::COLON_COLON;
+                    token.kind = COLON_COLON;
                     advance_chars(lexer, 1);
                 } else {
-                    token.kind = Token::COLON;
+                    token.kind = COLON;
                 }
             } break;
             
             case '=': {
                 if (lexer->at[0] == '=') {
-                    token.kind = Token::EQUAL_EQUAL;
+                    token.kind = EQUAL_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.kind = Token::EQUAL;
+                    token.kind = EQUAL;
                 }
             } break;
             
             case '#': {
                 if (lexer->at[0] == '#') {
-                    token.kind = Token::HASH_HASH;
+                    token.kind = HASH_HASH;
                     advance_chars(lexer, 1);
                 } else {
                     b32 is_keyword = false;
@@ -281,21 +283,21 @@ get_token_raw(Lexer* lexer) {
                     }
                     
                     if (!is_keyword) {
-                        token.kind = Token::HASH;
+                        token.kind = HASH;
                     }
                 }
             } break;
             
             case '/': {
                 if (lexer->at[0] == '/') {
-                    token.kind = Token::COMMENT;
+                    token.kind = COMMENT;
                     advance_chars(lexer, 2);
                     
                     while (lexer->at[0] && !is_end_of_line(lexer->at[0])) {
                         advance_chars(lexer, 1);
                     }
                 } else if (lexer->at[0] == '*') {
-                    token.kind = Token::COMMENT;
+                    token.kind = COMMENT;
                     advance_chars(lexer, 2);
                     
                     while (lexer->at[0] &&
@@ -312,26 +314,26 @@ get_token_raw(Lexer* lexer) {
                         advance_chars(lexer, 1);
                     }
                 } else if (lexer->at[0] == '=') {
-                    token.kind = Token::SLASH_EQUAL;
+                    token.kind = SLASH_EQUAL;
                     advance_chars(lexer, 1);
                 } else {
-                    token.kind = Token::SLASH;
+                    token.kind = SLASH;
                 }
             } break;
             
             case '"': {
-                token.kind = Token::STRING_LITERAL;
+                token.kind = STRING_LITERAL;
                 get_literal(&token, lexer, '"');
             } break;
             
             case '\'': {
-                token.kind = Token::CHAR_CONSTANT;
+                token.kind = CHAR_CONSTANT;
                 get_literal(&token, lexer, '\'');
             } break;
             
             default: {
                 if (is_spacing(c)) {
-                    token.kind = Token::SPACING;
+                    token.kind = SPACING;
                     
                     while (is_spacing(lexer->at[0]))
                     {
@@ -339,7 +341,7 @@ get_token_raw(Lexer* lexer) {
                     }
                 }
                 else if (is_end_of_line(c)) {
-                    token.kind = Token::END_OF_LINE;
+                    token.kind = END_OF_LINE;
                     
                     if (((c == '\r') && (lexer->at[0] == '\n')) ||
                         ((c == '\n') && (lexer->at[0] == '\r'))) {
@@ -370,11 +372,11 @@ get_token_raw(Lexer* lexer) {
                         }
                     }
                     
-                    token.kind = Token::NUMBER;
+                    token.kind = NUMBER;
                     token.value_f32 = number;
                     token.value_s32 = round_f32_to_s32(number);
                 } else {
-                    token.kind = Token::UNKNOWN;
+                    token.kind = UNKNOWN;
                 }
             } break;
         }
@@ -387,17 +389,19 @@ get_token_raw(Lexer* lexer) {
 
 internal Token
 get_token(Lexer* lexer) {
+    using namespace Token_Kind;
+    
     Token token;
     
     for (;;) {
         token = get_token_raw(lexer);
         
-        if ((token.kind == Token::SPACING) ||
-            (token.kind == Token::END_OF_LINE) ||
-            (token.kind == Token::COMMENT)) {
+        if ((token.kind == SPACING) ||
+            (token.kind == END_OF_LINE) ||
+            (token.kind == COMMENT)) {
             // NOTE(yuval): These tokens are ignored
         } else {
-            if (token.kind == Token::STRING_LITERAL) {
+            if (token.kind == STRING_LITERAL) {
                 if ((token.text.count != 0) &&
                     (token.text.data[0] == '"')) {
                     ++token.text.data;
@@ -410,7 +414,7 @@ get_token(Lexer* lexer) {
                 }
             }
             
-            if (token.kind == Token::CHAR_CONSTANT) {
+            if (token.kind == CHAR_CONSTANT) {
                 if ((token.text.count != 0) &&
                     (token.text.data[0] == '\'')) {
                     ++token.text.data;
@@ -436,14 +440,14 @@ eat_token(Lexer* lexer) {
 }
 
 internal b32
-get_token_check_type(Lexer* lexer, Token::Kind desired_kind, Token* out_token) {
+get_token_check_type(Lexer* lexer, Token_Kind::Type desired_kind, Token* out_token) {
     *out_token = get_token(lexer);
     b32 result = (out_token->type == desired_kind);
     return result;
 }
 
 internal Token
-require_token(Lexer* lexer, Token::Kind desired_kind) {
+require_token(Lexer* lexer, Token_Kind::Type desired_kind) {
     Token token = get_token(lexer);
     
     if (token.kind != desired_kind) {
@@ -464,7 +468,7 @@ peek_token(Lexer* lexer) {
 }
 
 internal b32
-optional_token(Lexer* lexer, Token::Kind desired_kind) {
+optional_token(Lexer* lexer, Token_Kind::Type desired_kind) {
     Token token = peek_token(lexer);
     b32 result = (token.kind == desired_kind);
     

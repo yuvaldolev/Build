@@ -116,9 +116,9 @@ PP_KEYWORD_TOKEN_KIND(PP_UNDEF, "UNDEF") \
 PP_KEYWORD_TOKEN_KIND(PP_ERROR, "ERROR") \
 PP_KEYWORD_TOKEN_KIND(PP_USING, "USING")
 
-struct Token {
-    enum Kind {
-        NULL,
+namespace Token_Kind {
+    enum Type {
+        NONE,
         
 #define TOKEN_KIND(type) type,
         TOKEN_KINDS
@@ -131,7 +131,11 @@ struct Token {
 #define PP_KEYWORD_TOKEN_KIND(type, ...) type,
             PP_KEYWORD_TOKEN_KINDS
 #undef PP_KEYWORD_TOKEN_KIND
-    } kind;
+    };
+}
+
+struct Token {
+    Token_Kind::Type kind;
     
     Code_File file;
     s32 line_number;
@@ -160,7 +164,7 @@ struct Lexer {
 // TODO(yuval): Maybe add a better data structure for faster lookup
 struct Token_Name_And_Kind {
     const char* name;
-    Token::Kind kind;
+    Token_Kind::Type kind;
 };
 
 #define BUILD_LEXER_H

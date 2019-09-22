@@ -9,7 +9,22 @@ struct Ast_Translation_Unit;
 //        Expressions        //
 ///////////////////////////////
 namespace Ast_Expression_Kind {
-    
+    enum Type {
+        COMMA,
+        ASSIGNMENT,
+        CONDITIONAL,
+        TERNARY,
+        ARITHMETIC,
+        BIT_OPERATION,
+        BOOL_OPERATION,
+        MEMORY_OPERATION,
+        DOT,
+        SUBSCRIPT,
+        CAST,
+        DECL_REF,
+        FUNC_CALL,
+        CONSTANT
+    };
 }
 
 namespace Ast_Operator {
@@ -75,16 +90,16 @@ namespace Ast_Operator {
 }
 
 namespace Ast_Constant_Kind {
-    
-}
-
-struct Ast_Constant {
-    enum Kind {
+    enum Type {
         NUMBER,
         CHAR,
         BOOL,
         STRING_LITERAL
-    } kind;
+    };
+}
+
+struct Ast_Constant {
+    Ast_Constant_Kind::Type kind;
     
     union {
         struct {
@@ -126,22 +141,7 @@ struct Ast_Ternary {
 };
 
 struct Ast_Expression {
-    enum Kind {
-        COMMA,
-        ASSIGNMENT,
-        CONDITIONAL,
-        TERNARY,
-        ARITHMETIC,
-        BIT_OPERATION,
-        BOOL_OPERATION,
-        MEMORY_OPERATION,
-        DOT,
-        SUBSCRIPT,
-        CAST,
-        DECL_REF,
-        FUNC_CALL,
-        CONSTANT
-    } kind;
+    Ast_Expression_Kind::Type kind;
     
     union {
         Ast_Operator::Type op;
@@ -158,6 +158,23 @@ struct Ast_Expression {
 //////////////////////////////
 //        Statements        //
 //////////////////////////////
+namespace Ast_Statement_Kind {
+    enum Type {
+        DECL,
+        EXPR,
+        IF,
+        SWITCH,
+        CASE,
+        DEFAULT,
+        FOR,
+        WHILE,
+        DO_WHILE,
+        BREAK,
+        CONTINUE,
+        RETURN
+    };
+}
+
 struct Ast_Return {
     Ast* expr;
 };
@@ -186,7 +203,7 @@ struct Ast_Case {
 
 struct Ast_Switch {
     Ast* condition_expr; // Expression
-    Ast* first_case; // Case
+    Ast* body; // Statement
 };
 
 struct Ast_If {
@@ -204,20 +221,7 @@ struct Ast_Declaration_Statement {
 };
 
 struct Ast_Statement {
-    enum Kind {
-        DECL,
-        EXPR,
-        IF,
-        SWITCH,
-        CASE,
-        DEFAULT,
-        FOR,
-        WHILE,
-        DO_WHILE,
-        BREAK,
-        CONTINUE,
-        RETURN
-    } kind;
+    Ast_Statement_Kind::Type kind;
     
     Ast* my_scope; // Block
     
@@ -237,6 +241,16 @@ struct Ast_Statement {
 //////////////////////////////////
 //       Type Definitions       //
 //////////////////////////////////
+namespace Ast_Type_Definition_Kind {
+    enum Type {
+        DEFAULT,
+        POINTER,
+        STRUCT,
+        ENUM,
+        UNION
+    };
+}
+
 struct Ast_Union {
     // NOTE(yuval): Declarations
     Ast* decls[512]; // Declaration
@@ -256,13 +270,7 @@ struct Ast_Struct {
 };
 
 struct Ast_Type_Definition {
-    enum Kind {
-        DEFAULT,
-        POINTER,
-        STRUCT,
-        ENUM,
-        UNION
-    } kind;
+    Ast_Type_Definition_Kind::Type kind;
     
     Ast* my_decl; // Declaration
     
@@ -281,6 +289,16 @@ struct Ast_Type_Definition {
 ////////////////////////////////
 //        Declarations        //
 ////////////////////////////////
+namespace Ast_Declaration_Kind {
+    enum Type {
+        UNDEFINED,
+        
+        TYPE,
+        FUNC,
+        VAR
+    };
+}
+
 struct Ast_Tag {
     String tag;
 };
@@ -302,13 +320,7 @@ struct Ast_Function {
 };
 
 struct Ast_Declaration {
-    enum Kind {
-        UNDEFINED,
-        
-        TYPE,
-        FUNC,
-        VAR
-    } kind;
+    Ast_Declaration_Kind::Type kind;
     
     Ast_Identifier* my_identifier;
     Ast* my_scope; // Block
@@ -338,14 +350,18 @@ struct Ast_Block {
 /////////////////////////////
 //           AST           //
 /////////////////////////////
-struct Ast {
-    enum Kind {
+namespace Ast_Kind {
+    enum Type {
         BLOCK,
         DECLARATION,
         TYPE_DEFINITION,
         STATEMENT,
         EXPRESSION
-    } kind;
+    };
+}
+
+struct Ast {
+    Ast_Kind::Type kind;
     
     Ast_Translation_Unit* my_translation_unit;
     
