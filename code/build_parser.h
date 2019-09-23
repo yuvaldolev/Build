@@ -45,7 +45,7 @@ namespace Ast_Operator {
         MUL_EQUAL,
         
         DIV,
-        EQUAL,
+        DIV_EQUAL,
         
         MOD,
         MOD_EQUAL,

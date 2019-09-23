@@ -1,7 +1,7 @@
 // TODO(yuval): Maybe add support for LINE, FILE, etc. preprocessor tokens
 // TODO(yuval): Add C++ support (class, new, delete, try, catch...)
 global Token_Name_And_Kind global_keywords[] = {
-#define KEYWORD_TOKEN_KIND(kind, name) {name, JOIN2(Token_Kind::, kind)},
+#define KEYWORD_TOKEN_KIND(kind, name) {name, Token_Kind::kind},
     KEYWORD_TOKEN_KINDS
 #undef KEYWORD_TOKEN_KIND
     
@@ -10,7 +10,7 @@ global Token_Name_And_Kind global_keywords[] = {
 };
 
 global Token_Name_And_Kind global_pp_keywords[] = {
-#define PP_KEYWORD_TOKEN_KIND(kind, name) {name, JOIN2(Token_Kind::, kind)},
+#define PP_KEYWORD_TOKEN_KIND(kind, name) {name, Token_Kind::kind},
     PP_KEYWORD_TOKEN_KINDS
         PP_KEYWORD_TOKEN_KINDS_UPPER
 #undef PP_KEYWORD_TOKEN_KIND
@@ -31,11 +31,11 @@ token_equals(Token token, const char* match) {
 internal String
 get_token_kind_name(Token_Kind::Type type) {
     switch (type) {
-#define TOKEN_KIND(kind) case JOIN2(Token_Kind::, kind): { return BUNDLE_LITERAL(#kind); }
+#define TOKEN_KIND(kind) case Token_Kind::kind: { return BUNDLE_LITERAL(#kind); }
         TOKEN_KINDS
 #undef TOKEN_KIND
         
-#define KEYWORD_TOKEN_KIND(kind, ...) case JOIN2(Token_Kind::, kind): { return BUNDLE_LITERAL(#kind); }
+#define KEYWORD_TOKEN_KIND(kind, ...) case Token_Kind::kind: { return BUNDLE_LITERAL(#kind); }
             KEYWORD_TOKEN_KINDS
 #undef KEYWORD_TOKEN_KIND
     }
@@ -276,7 +276,7 @@ get_token_raw(Lexer* lexer) {
                         if (strings_match_part(lexer->input, it.name)) {
                             // TODO(yuval): Copy-and-paste - string_length is called twice
                             advance_chars(lexer, string_length(it.name));
-                            token.kind = it.type;
+                            token.kind = it.kind;
                             is_keyword = true;
                             array_break;
                         }
@@ -440,9 +440,9 @@ eat_token(Lexer* lexer) {
 }
 
 internal b32
-get_token_check_type(Lexer* lexer, Token_Kind::Type desired_kind, Token* out_token) {
+get_token_check_kind(Lexer* lexer, Token_Kind::Type desired_kind, Token* out_token) {
     *out_token = get_token(lexer);
-    b32 result = (out_token->type == desired_kind);
+    b32 result = (out_token->kind == desired_kind);
     return result;
 }
 
@@ -462,7 +462,6 @@ internal Token
 peek_token(Lexer* lexer) {
     Lexer temp = *lexer;
     Token result = get_token(&temp);
-    lexer->next_token = result;
     
     return result;
 }

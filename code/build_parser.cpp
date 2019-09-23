@@ -45,8 +45,8 @@ dump_ast_declaration(Ast* decl_ast) {
     Ast_Declaration* decl = &decl_ast->decl;
     Ast_Identifier* ident = decl->my_identifier;
     
-    switch (decl->type) {
-        case AST_DECL_TYPE: {
+    switch (decl->kind) {
+        case Ast_Declaration_Kind::TYPE: {
             printf("TypeDecl ");
             dump_ast_details(decl_ast);
             printf("%.*s ", PRINTABLE_STRING(ident->name));
@@ -58,24 +58,24 @@ dump_ast_declaration(Ast* decl_ast) {
             umm decl_count = 0;
             
             switch (type_def->type) {
-                case AST_TYPE_DEF_POINTER: {
+                case Ast_Type_Definition_Kind::POINTER: {
                 } break;
                 
-                case AST_TYPE_DEF_STRUCT: {
+                case Ast_Type_Definition_Kind::STRUCT: {
                     printf("'struct'");
                     
                     decls = (Ast**)type_def->struct_type_def.members;
                     decl_count = type_def->struct_type_def.member_count;
                 } break;
                 
-                case AST_TYPE_DEF_ENUM: {
+                case Ast_Type_Definition_Kind::ENUM: {
                     printf("'enum'");
                     
                     decls = (Ast**)type_def->enum_type_def.decls;
                     decl_count = type_def->enum_type_def.decl_count;
                 } break;
                 
-                case AST_TYPE_DEF_UNION: {
+                case Ast_Type_Definition_Kind::UNION: {
                     printf("'union'");
                     
                     decls = (Ast**)type_def->union_type_def.decls;
@@ -97,10 +97,10 @@ dump_ast_declaration(Ast* decl_ast) {
             
         } break;
         
-        case AST_DECL_FUNC: {
+        case Ast_Declaration_Kind::FUNC: {
         } break;
         
-        case AST_DECL_VAR: {
+        case Ast_Declaration_Kind::VAR: {
             printf("VarDecl ");
             dump_ast_details(decl_ast);
             printf("%.*s ", PRINTABLE_STRING(ident->name));
@@ -111,11 +111,11 @@ dump_ast_declaration(Ast* decl_ast) {
             String* type_name;
             
             switch (type_def->type) {
-                case AST_TYPE_DEF_DEFAULT: {
+                case Ast_Type_Definition_Kind::DEFAULT: {
                     type_name = &type_def->default_type_name;
                 } break;
                 
-                case AST_TYPE_DEF_POINTER: {
+                case Ast_Type_Definition_Kind::POINTER: {
                     // TODO(yuval): Handle Pointers
                     type_name = 0;
                 } break;
@@ -152,7 +152,7 @@ internal void
 init_default_types(Memory_Arena* arena) {
 #define DEFAULT_TYPE(type_name, name) JOIN2(global_type_def_, type_name) = PUSH_STRUCT(arena, Ast); \
     JOIN2(global_type_def_, type_name)->type = AST_TYPE_DEFINITION; \
-    JOIN2(global_type_def_, type_name)->type_def.type = AST_TYPE_DEF_DEFAULT; \
+    JOIN2(global_type_def_, type_name)->type_def.type = Ast_Type_Definition_Kind::DEFAULT; \
     JOIN2(global_type_def_, type_name)->type_def.default_type_name = name;
     
     DEFAULT_TYPES
@@ -216,7 +216,7 @@ ast_new_expr(Ast_Expression_Type type, Parser* parser) {
 }
 
 internal Ast*
-find_decl(Ast* scope, String name, Ast_Declaration_Type type = AST_DECL_UNDEFINED) {
+find_decl(Ast* scope, String name, Ast_Declaration_Type type = Ast_Declaration_Kind::UNDEFINED) {
     // TODO(yuval): Use this for find_type!
     Ast* result = 0;
     Ast* curr_scope = scope;
@@ -231,7 +231,7 @@ find_decl(Ast* scope, String name, Ast_Declaration_Type type = AST_DECL_UNDEFINE
                 Ast_Declaration_Type it_type = it->decl.type;
                 String* it_name = &it->decl.my_identifier->name;
                 
-                if (((type == AST_DECL_UNDEFINED) || (it_type == type)) &&
+                if (((type == Ast_Declaration_Kind::UNDEFINED) || (it_type == type)) &&
                     strings_match(*it_name, name)) {
                     result = it;
                     goto doublebreak;
@@ -252,7 +252,7 @@ find_type(Ast* scope, String type_name) {
     Ast* result = get_default_type(type_name);
     
     if (!result) {
-        Ast* type_decl = find_decl(scope, type_name, AST_DECL_TYPE);
+        Ast* type_decl = find_decl(scope, type_name, Ast_Declaration_Kind::TYPE);
         result = type_decl->decl.my_type;
     }
     
@@ -304,48 +304,56 @@ parse_assignment_expression(Parser* parser, Ast* scope);
 internal Ast*
 parse_primary_expression(Parser* parser, Ast* scope) {
     Ast* result = 0;
-    AST_GET_TOKEN(parser);
+    Token token = peek_token(&parser->lexer);
     
-    switch (parser->token.kind) {
+    switch (token.kind) {
         case Token_Kind::OPEN_PAREN: {
-            Token token = AST_PEEK_TOKEN(parser);
+            eat_token(&parser->lexer);
+            token = peek_token(&parser->lexer);
             
             b32 is_cast_expr = false;
             if (token.kind == Token_Kind::IDENTIFIER) {
                 Ast* cast_type = find_type(scope, token.text);
                 if (cast_type) {
-                    AST_GET_TOKEN(parser);
-                    result = ast_new_expr(AST_EXPR_CAST, parser);
+                    result = ast_new_expr(Ast_Expression_Kind::CAST, parser);
+                    
+                    eat_token(&parser->lexer);
+                    require_token(&parser->lexer, Token_Kind::CLOSE_PAREN);
+                    
                     Ast_Cast* cast = &result->expr.cast;
                     cast->cast_type = cast_type;
                     cast->casted_expr = parse_expression(parser, scope);
+                    
                     is_cast_expr = true;
                 }
             }
             
             if (!is_cast_expr) {
+                eat_token(&parser->lexer);
                 result = parse_expression(parser, scope);
+                AST_REQUIRE_TOKEN(parser, Token_Kind::CLOSE_PAREN);
             }
-            
-            AST_REQUIRE_TOKEN(parser, Token_Kind::CLOSE_PAREN);
         } break;
         
         case Token_Kind::IDENTIFIER: {
-            Token token = AST_PEEK_TOKEN(parser);
-            if (token.kind == Token_Kind::OPEN_PAREN) {
+            eat_token(&parser->lexer);
+            
+            Token next_token = peek_token(&parser->lexer);
+            if (next_token.kind == Token_Kind::OPEN_PAREN) {
                 // NOTE(yuval): Function Call
-                Ast* function_decl = find_decl(scope, parser->token.text, AST_DECL_FUNC);
+                Ast* function_decl = find_decl(scope, token.text,
+                                               Ast_Declaration_Kind::FUNC);
                 
                 if (function_decl) {
-                    result = ast_new_expr(AST_EXPR_FUNC_CALL, parser);
+                    result = ast_new_expr(Ast_Expression_Kind::FUNC_CALL, parser);
                     
-                    AST_GET_TOKEN(parser);
+                    eat_token(&parser->lexer);
                     
                     Ast_Function_Call* func_call = &result->expr.func_call;
                     func_call->func = function_decl;
                     
                     Ast* prev_arg = 0;
-                    while (!AST_OPTIONAL_TOKEN(parser, Token_Kind::CLOSE_PAREN)) {
+                    while (!optional_token(&parser->lexer, Token_Kind::CLOSE_PAREN)) {
                         Ast* arg = parse_assignment_expression(parser, scope);
                         
                         if (arg) {
@@ -358,54 +366,59 @@ parse_primary_expression(Parser* parser, Ast* scope) {
                                 prev_arg = arg;
                             }
                             
-                            AST_REQUIRE_TOKEN(parser, Token_Kind::COMMA);
+                            require_token(&parser->lexer, Token_Kind::COMMA);
                         } else {
-                            report_error(&parser->token, "expected ')'");
+                            report_error(parser, "expected ')'");
                         }
                     }
                 } else {
-                    report_error(&parser->token, "\"%S\" is not a function",
-                                 parser->token.text);
+                    report_error(&token, "\"%S\" is not a function", token.text);
                 }
             } else {
                 // NOTE(yuval): Decl Ref
-                Ast* decl = find_decl(scope, parser->token.text);
+                Ast* decl = find_decl(scope, token.text);
                 
                 if (decl) {
-                    result = ast_new_expr(AST_EXPR_DECL_REF, parser);
+                    result = ast_new_expr(Ast_Expression_Kind::DECL_REF, parser);
                     Ast_Decl_Ref* decl_ref = &result->expr.decl_ref;
                     decl_ref->decl = decl;
                 } else {
-                    report_error(&parser->token, "undefined declaration %S",
-                                 parser->token.text);
+                    report_error(&token, "undefined declaration %S", token.text);
                 }
             }
         } break;
         
         case Token_Kind::NUMBER: {
-            result = ast_new_expr(AST_EXPR_CONSTANT, parser);
+            result = ast_new_expr(Ast_Expression_Kind::CONSTANT, parser);
+            
+            eat_token(&parser->lexer);
+            
             Ast_Constant* constant = &result->expr.constant;
-            constant->int_constant = parser->token.value_s32;
-            constant->float_constant = parser->token.value_f32;
+            constant->int_constant = token.value_s32;
+            constant->float_constant = token.value_f32;
         } break;
         
         case Token_Kind::CHAR_CONSTANT: {
-            result = ast_new_expr(AST_EXPR_CONSTANT, parser);
-            Ast_Constant* constant = &result->expr.constant;
+            result = ast_new_expr(Ast_Expression_Kind::CONSTANT, parser);
             
-            if (parser->token.text.count == 1) {
-                constant->char_constant = parser->token.text.data[0];
+            eat_token(&parser->lexer);
+            
+            Ast_Constant* constant = &result->expr.constant;
+            if (token.text.count == 1) {
+                constant->char_constant = token.text.data[0];
             } else {
                 report_error(&parser->token, "char literal can only contain a single character");
             }
         } break;
         
         case Token_Kind::BOOL_CONSTANT: {
-            result = ast_new_expr(AST_EXPR_CONSTANT, parser);
-            Ast_Constant* constant = &result->expr.constant;
+            result = ast_new_expr(Ast_Expression_Kind::CONSTANT, parser);
             
+            eat_token(&parser->lexer);
+            
+            Ast_Constant* constant = &result->expr.constant;
             // TODO(yuval): Temporary! Determine the bool constant value in the lexer!!!!!
-            if (strings_match(parser->token.text, "true")) {
+            if (strings_match(token.text, "true")) {
                 constant->bool_constant = true;
             } else {
                 constant->bool_constant = false;
@@ -413,7 +426,10 @@ parse_primary_expression(Parser* parser, Ast* scope) {
         } break;
         
         case Token_Kind::STRING_LITERAL: {
-            result = ast_new_expr(AST_EXPR_CONSTANT, parser);
+            result = ast_new_expr(Ast_Expression_Kind::CONSTANT, parser);
+            
+            eat_token(&parser->lexer);
+            
             Ast_Constant* constant = &result->expr.constant;
             constant->string_literal = parser->token.text;
         } break;
@@ -433,17 +449,17 @@ parse_postfix_expression(Parser* parser, Ast* scope) {
     b32 parsing = true;
     while (parsing) {
         if (AST_OPTIONAL_TOKEN(parser, Token_Kind::PLUS_PLUS)) {
-            result = ast_new_postfix_expr(AST_EXPR_ARITHMETIC,
+            result = ast_new_postfix_expr(Ast_Expression_Kind::ARITHMETIC,
                                           result, AST_OP_PLUS_PLUS,
                                           parser);
         } else if (AST_OPTIONAL_TOKEN(parser, Token_Kind::MINUS_MINUS)) {
-            result = ast_new_postfix_expr(AST_EXPR_ARITHMETIC,
+            result = ast_new_postfix_expr(Ast_Expression_Kind::ARITHMETIC,
                                           result, AST_OP_MINUS_MINUS,
                                           parser);
         } else if (AST_OPTIONAL_TOKEN(parser, Token_Kind::DOT)) {
             // NOTE(yuval): Dot operator is used for both pointers
             // and regular structs (no arrow operator)
-            Ast* dot_ast = ast_new_expr(AST_EXPR_DOT, parser);
+            Ast* dot_ast = ast_new_expr(Ast_Expression_Kind::DOT, parser);
             dot_ast->lhs = result;
             
             Ast_Dot* dot = &dot_ast->expr.dot;
@@ -452,7 +468,7 @@ parse_postfix_expression(Parser* parser, Ast* scope) {
             
             result = dot_ast;
         } else if (AST_OPTIONAL_TOKEN(parser, Token_Kind::OPEN_BRACKET)) {
-            Ast* subscript_ast = ast_new_expr(AST_EXPR_SUBSCRIPT, parser);
+            Ast* subscript_ast = ast_new_expr(Ast_Expression_Kind::SUBSCRIPT, parser);
             subscript_ast->lhs = result;
             
             Ast_Subscript* subscript = &subscript_ast->expr.subscript;
@@ -476,7 +492,7 @@ parse_unary_expression(Parser* parser, Ast* scope) {
     switch (token.kind) {
         case Token_Kind::MINUS: {
             AST_GET_TOKEN(parser);
-            result = ast_new_unary_expr(AST_EXPR_ARITHMETIC,
+            result = ast_new_unary_expr(Ast_Expression_Kind::ARITHMETIC,
                                         AST_OP_MINUS,
                                         parse_unary_expression(parser, scope),
                                         parser);
@@ -484,7 +500,7 @@ parse_unary_expression(Parser* parser, Ast* scope) {
         
         case Token_Kind::STAR: {
             AST_GET_TOKEN(parser);
-            result = ast_new_unary_expr(AST_EXPR_MEMORY_OPERATION,
+            result = ast_new_unary_expr(Ast_Expression_Kind::MEMORY_OPERATION,
                                         AST_OP_DEREF,
                                         parse_unary_expression(parser, scope),
                                         parser);
@@ -492,7 +508,7 @@ parse_unary_expression(Parser* parser, Ast* scope) {
         
         case Token_Kind::AMP: {
             AST_GET_TOKEN(parser);
-            result = ast_new_unary_expr(AST_EXPR_MEMORY_OPERATION,
+            result = ast_new_unary_expr(Ast_Expression_Kind::MEMORY_OPERATION,
                                         AST_OP_ADDR,
                                         parse_unary_expression(parser, scope),
                                         parser);
@@ -500,7 +516,7 @@ parse_unary_expression(Parser* parser, Ast* scope) {
         
         case Token_Kind::NOT: {
             AST_GET_TOKEN(parser);
-            result = ast_new_unary_expr(AST_EXPR_BOOL_OPERATION,
+            result = ast_new_unary_expr(Ast_Expression_Kind::BOOL_OPERATION,
                                         AST_OP_NOT,
                                         parse_unary_expression(parser, scope),
                                         parser);
@@ -508,7 +524,7 @@ parse_unary_expression(Parser* parser, Ast* scope) {
         
         case Token_Kind::TILDE: {
             AST_GET_TOKEN(parser);
-            result = ast_new_unary_expr(AST_EXPR_BIT_OPERATION,
+            result = ast_new_unary_expr(Ast_Expression_Kind::BIT_OPERATION,
                                         AST_OP_NOT,
                                         parse_unary_expression(parser, scope),
                                         parser);
@@ -517,7 +533,7 @@ parse_unary_expression(Parser* parser, Ast* scope) {
         case Token_Kind::SIZEOF: {
             AST_GET_TOKEN(parser);
             AST_REQUIRE_TOKEN(parser, Token_Kind::OPEN_PAREN);
-            result = ast_new_unary_expr(AST_EXPR_MEMORY_OPERATION,
+            result = ast_new_unary_expr(Ast_Expression_Kind::MEMORY_OPERATION,
                                         AST_OP_SIZEOF,
                                         parse_unary_expression(parser, scope),
                                         parser);
@@ -527,7 +543,7 @@ parse_unary_expression(Parser* parser, Ast* scope) {
         case Token_Kind::ALIGNOF: {
             AST_GET_TOKEN(parser);
             AST_REQUIRE_TOKEN(parser, Token_Kind::OPEN_PAREN);
-            result = ast_new_unary_expr(AST_EXPR_MEMORY_OPERATION,
+            result = ast_new_unary_expr(Ast_Expression_Kind::MEMORY_OPERATION,
                                         AST_OP_ALIGNOF,
                                         parse_unary_expression(parser, scope),
                                         parser);
@@ -536,7 +552,7 @@ parse_unary_expression(Parser* parser, Ast* scope) {
         
         case Token_Kind::PLUS_PLUS: {
             AST_GET_TOKEN(parser);
-            result = ast_new_unary_expr(AST_EXPR_ARITHMETIC,
+            result = ast_new_unary_expr(Ast_Expression_Kind::ARITHMETIC,
                                         AST_OP_PLUS_PLUS,
                                         parse_unary_expression(parser, scope),
                                         parser);
@@ -544,7 +560,7 @@ parse_unary_expression(Parser* parser, Ast* scope) {
         
         case Token_Kind::MINUS_MINUS: {
             AST_GET_TOKEN(parser);
-            result = ast_new_unary_expr(AST_EXPR_ARITHMETIC,
+            result = ast_new_unary_expr(Ast_Expression_Kind::ARITHMETIC,
                                         AST_OP_MINUS_MINUS,
                                         parse_unary_expression(parser, scope),
                                         parser);
@@ -565,17 +581,17 @@ parse_mul_arithmetic_expression(Parser* parser, Ast* scope) {
     b32 parsing = true;
     while (parsing) {
         if (AST_OPTIONAL_TOKEN(parser, Token_Kind::STAR)) {
-            result = ast_new_binop_expr(AST_EXPR_ARITHMETIC,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ARITHMETIC,
                                         result, AST_OP_MUL,
                                         parse_unary_expression(parser, scope),
                                         parser);
         } else if (AST_OPTIONAL_TOKEN(parser, Token_Kind::SLASH)) {
-            result = ast_new_binop_expr(AST_EXPR_ARITHMETIC,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ARITHMETIC,
                                         result, AST_OP_DIV,
                                         parse_unary_expression(parser, scope),
                                         parser);
         } else if (AST_OPTIONAL_TOKEN(parser, Token_Kind::PERCENT)) {
-            result = ast_new_binop_expr(AST_EXPR_ARITHMETIC,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ARITHMETIC,
                                         result, AST_OP_MOD,
                                         parse_unary_expression(parser, scope),
                                         parser);
@@ -594,12 +610,12 @@ parse_add_arithmetic_expression(Parser* parser, Ast* scope) {
     b32 parsing = true;
     while (parsing) {
         if (AST_OPTIONAL_TOKEN(parser, Token_Kind::PLUS)) {
-            result = ast_new_binop_expr(AST_EXPR_ARITHMETIC,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ARITHMETIC,
                                         result, AST_OP_PLUS,
                                         parse_mul_arithmetic_expression(parser, scope),
                                         parser);
         } else if (AST_OPTIONAL_TOKEN(parser, Token_Kind::MINUS)) {
-            result = ast_new_binop_expr(AST_EXPR_ARITHMETIC,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ARITHMETIC,
                                         result, AST_OP_MINUS,
                                         parse_mul_arithmetic_expression(parser, scope),
                                         parser);
@@ -618,12 +634,12 @@ parse_bit_shift_expression(Parser* parser, Ast* scope) {
     b32 parsing = true;
     while (parsing) {
         if (AST_OPTIONAL_TOKEN(parser, Token_Kind::LESS_LESS)) {
-            result = ast_new_binop_expr(AST_EXPR_BIT_OPERATION,
+            result = ast_new_binop_expr(Ast_Expression_Kind::BIT_OPERATION,
                                         result, AST_OP_SHL,
                                         parse_add_arithmetic_expression(parser, scope),
                                         parser);
         } else if (AST_OPTIONAL_TOKEN(parser, Token_Kind::GREATER_GREATER)) {
-            result = ast_new_binop_expr(AST_EXPR_BIT_OPERATION,
+            result = ast_new_binop_expr(Ast_Expression_Kind::BIT_OPERATION,
                                         result, AST_OP_SHR,
                                         parse_add_arithmetic_expression(parser, scope),
                                         parser);
@@ -642,22 +658,22 @@ parse_relational_conditional_expression(Parser* parser, Ast* scope) {
     b32 parsing = true;
     while (parsing) {
         if (AST_OPTIONAL_TOKEN(parser, Token_Kind::LESS)) {
-            result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+            result = ast_new_binop_expr(Ast_Expression_Kind::CONDITIONAL,
                                         result, AST_OP_LESS,
                                         parse_bit_shift_expression(parser, scope),
                                         parser);
         } else if (AST_OPTIONAL_TOKEN(parser, Token_Kind::GREATER)) {
-            result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+            result = ast_new_binop_expr(Ast_Expression_Kind::CONDITIONAL,
                                         result, AST_OP_GREATER,
                                         parse_bit_shift_expression(parser, scope),
                                         parser);
         } else if (AST_OPTIONAL_TOKEN(parser, Token_Kind::LESS_EQUAL)) {
-            result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+            result = ast_new_binop_expr(Ast_Expression_Kind::CONDITIONAL,
                                         result, AST_OP_LESS_EQUAL,
                                         parse_bit_shift_expression(parser, scope),
                                         parser);
         } else if (AST_OPTIONAL_TOKEN(parser, Token_Kind::GREATER_EQUAL)) {
-            result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+            result = ast_new_binop_expr(Ast_Expression_Kind::CONDITIONAL,
                                         result, AST_OP_GREATER_EQUAL,
                                         parse_bit_shift_expression(parser, scope),
                                         parser);
@@ -676,12 +692,12 @@ parse_equality_conditional_expression(Parser* parser, Ast* scope) {
     b32 parsing = true;
     while (parsing) {
         if (AST_OPTIONAL_TOKEN(parser, Token_Kind::EQUAL_EQUAL)) {
-            result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+            result = ast_new_binop_expr(Ast_Expression_Kind::CONDITIONAL,
                                         result, AST_OP_EQUAL_EQUAL,
                                         parse_relational_conditional_expression(parser, scope),
                                         parser);
         } else if (AST_OPTIONAL_TOKEN(parser, Token_Kind::NOT_EQUAL)) {
-            result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+            result = ast_new_binop_expr(Ast_Expression_Kind::CONDITIONAL,
                                         result, AST_OP_NOT_EQUAL,
                                         parse_relational_conditional_expression(parser, scope),
                                         parser);
@@ -698,7 +714,7 @@ parse_bit_and_expression(Parser* parser, Ast* scope) {
     Ast* result = parse_equality_conditional_expression(parser, scope);
     
     while (AST_OPTIONAL_TOKEN(parser, Token_Kind::AMP)) {
-        result = ast_new_binop_expr(AST_EXPR_BIT_OPERATION,
+        result = ast_new_binop_expr(Ast_Expression_Kind::BIT_OPERATION,
                                     result, AST_OP_AND,
                                     parse_equality_conditional_expression(parser, scope),
                                     parser);
@@ -712,7 +728,7 @@ parse_bit_xor_expression(Parser* parser, Ast* scope) {
     Ast* result = parse_bit_and_expression(parser, scope);
     
     while (AST_OPTIONAL_TOKEN(parser, Token_Kind::CARET)) {
-        result = ast_new_binop_expr(AST_EXPR_BIT_OPERATION,
+        result = ast_new_binop_expr(Ast_Expression_Kind::BIT_OPERATION,
                                     result, AST_OP_XOR,
                                     parse_bit_and_expression(parser, scope),
                                     parser);
@@ -726,7 +742,7 @@ parse_bit_or_expression(Parser* parser, Ast* scope) {
     Ast* result = parse_bit_xor_expression(parser, scope);
     
     while (AST_OPTIONAL_TOKEN(parser, Token_Kind::PIPE)) {
-        result = ast_new_binop_expr(AST_EXPR_BIT_OPERATION,
+        result = ast_new_binop_expr(Ast_Expression_Kind::BIT_OPERATION,
                                     result, AST_OP_OR,
                                     parse_bit_xor_expression(parser, scope),
                                     parser);
@@ -740,7 +756,7 @@ parse_and_conditional_expression(Parser* parser, Ast* scope) {
     Ast* result = parse_bit_or_expression(parser, scope);
     
     while (AST_OPTIONAL_TOKEN(parser, Token_Kind::AMP_AMP)) {
-        result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+        result = ast_new_binop_expr(Ast_Expression_Kind::CONDITIONAL,
                                     result, AST_OP_AND_AND,
                                     parse_bit_or_expression(parser, scope),
                                     parser);
@@ -754,7 +770,7 @@ parse_or_conditional_expression(Parser* parser, Ast* scope) {
     Ast* result = parse_and_conditional_expression(parser, scope);
     
     while (AST_OPTIONAL_TOKEN(parser, Token_Kind::PIPE_PIPE)) {
-        result = ast_new_binop_expr(AST_EXPR_CONDITIONAL,
+        result = ast_new_binop_expr(Ast_Expression_Kind::CONDITIONAL,
                                     result, AST_OP_OR_OR,
                                     parse_and_conditional_expression(parser, scope),
                                     parser);
@@ -770,7 +786,7 @@ parse_conditional_expression(Parser* parser, Ast* scope) {
     if (AST_OPTIONAL_TOKEN(parser, Token_Kind::TERNARY)) {
         AST_GET_TOKEN(parser);
         
-        Ast* ternary_ast = ast_new_expr(AST_EXPR_TERNARY, parser);
+        Ast* ternary_ast = ast_new_expr(Ast_Expression_Kind::TERNARY, parser);
         Ast_Expression* expr = &result->expr;
         
         Ast_Ternary* ternary = &expr->ternary;
@@ -796,63 +812,63 @@ parse_assignment_expression(Parser* parser, Ast* scope) {
     
     switch (parser->token.kind) {
         case Token_Kind::EQUAL: {
-            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ASSIGNMENT, result,
                                         AST_OP_EQUAL,
                                         parse_assignment_expression(parser, scope),
                                         parser);
         } break;
         
         case Token_Kind::PLUS_EQUAL: {
-            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ASSIGNMENT, result,
                                         AST_OP_PLUS_EQUAL,
                                         parse_assignment_expression(parser, scope),
                                         parser);
         } break;
         
         case Token_Kind::MINUS_EQUAL: {
-            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ASSIGNMENT, result,
                                         AST_OP_MINUS_EQUAL,
                                         parse_assignment_expression(parser, scope),
                                         parser);
         } break;
         
         case Token_Kind::STAR_EQUAL: {
-            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ASSIGNMENT, result,
                                         AST_OP_MUL_EQUAL,
                                         parse_assignment_expression(parser, scope),
                                         parser);
         } break;
         
         case Token_Kind::SLASH_EQUAL: {
-            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ASSIGNMENT, result,
                                         AST_OP_DIV_EQUAL,
                                         parse_assignment_expression(parser, scope),
                                         parser);
         } break;
         
         case Token_Kind::PERCENT_EQUAL: {
-            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ASSIGNMENT, result,
                                         AST_OP_MOD_EQUAL,
                                         parse_assignment_expression(parser, scope),
                                         parser);
         } break;
         
         case Token_Kind::AMP_EQUAL: {
-            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ASSIGNMENT, result,
                                         AST_OP_AND_EQUAL,
                                         parse_assignment_expression(parser, scope),
                                         parser);
         } break;
         
         case Token_Kind::PIPE_EQUAL: {
-            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ASSIGNMENT, result,
                                         AST_OP_OR_EQUAL,
                                         parse_assignment_expression(parser, scope),
                                         parser);
         } break;
         
         case Token_Kind::CARET_EQUAL: {
-            result = ast_new_binop_expr(AST_EXPR_ASSIGNMENT, result,
+            result = ast_new_binop_expr(Ast_Expression_Kind::ASSIGNMENT, result,
                                         
                                         AST_OP_XOR_EQUAL,
                                         parse_assignment_expression(parser, scope),
@@ -868,7 +884,7 @@ parse_expression(Parser* parser, Ast* scope) {
     Ast* result = parse_assignment_expression(parser, scope);
     
     if (AST_OPTIONAL_TOKEN(parser, Token_Kind::COMMA)) {
-        result = ast_new_binop_expr(AST_EXPR_COMMA,
+        result = ast_new_binop_expr(Ast_Expression_Kind::COMMA,
                                     result, AST_OP_COMMA,
                                     parse_expression(parser, scope),
                                     parser);

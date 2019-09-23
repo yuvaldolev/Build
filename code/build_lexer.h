@@ -149,7 +149,7 @@ struct Token {
     f32 value_f32;
 };
 
-Token NULL_TOKEN = {};
+yd_global const Token NULL_TOKEN = {};
 
 struct Lexer {
     Code_File file;
