@@ -953,6 +953,12 @@ parse_statement(Parser* parser, Ast* parent_scope) {
             
             // NOTE(yuval): Case Body
             case_stmt->body = parse_statement(parser, stmt->my_scope);
+            
+            /* TODO(yuval):
+Instead of always parsing compound statement:
+             1. Parse compound statement only when there is an open brace.
+             2. If there isn't an open brace statement parse until a break statement is found.
+        */
         } break;
         
         case Token_Kind::DEFAULT: {
@@ -1034,12 +1040,12 @@ parse_statement(Parser* parser, Ast* parent_scope) {
         } break;
         
         case Token_Kind::DO: {
-            result = ast_new_stmt(AST_STMT_DO_WHILE, parser);
+            result = ast_new_stmt(Ast_Statement_Kind::DO_WHILE, parser);
             
-            // TODO(yuval): Continue fixing code from here...
+            eat_token(&parser->lexer);
             
             Ast_Statement* stmt = &result->stmt;
-            stmt->my_scope = ast_new(AST_BLOCK, parser);
+            stmt->my_scope = ast_new(Ast_Kind::BLOCK, parser);
             stmt->my_scope->block.parent = parent_scope;
             
             Ast_While* while_stmt = &stmt->while_stmt;
@@ -1048,50 +1054,55 @@ parse_statement(Parser* parser, Ast* parent_scope) {
             while_stmt->body = parse_statement(parser, stmt->my_scope);
             
             // NOTE(yuval): Do While Condition
-            AST_REQUIRE_TOKEN(parser, Token_Kind::WHILE);
+            require_token(&parser->lexer, Token_Kind::WHILE);
             
-            AST_REQUIRE_TOKEN(parser, Token_Kind::OPEN_PAREN);
+            require_token(&parser->lexer, Token_Kind::OPEN_PAREN);
             while_stmt->condition = parse_expression(parser, parent_scope);
-            AST_REQUIRE_TOKEN(parser, Token_Kind::CLOSE_PAREN);
+            require_token(&parser->lexer, Token_Kind::CLOSE_PAREN);
             
-            AST_REQUIRE_TOKEN(parser, Token_Kind::SEMI);
+            require_token(&parser->lexer, Token_Kind::SEMI);
         } break;
         
         case Token_Kind::BREAK: {
-            result = ast_new_stmt(AST_STMT_BREAK, parser);
-            AST_REQUIRE_TOKEN(parser, Token_Kind::SEMI);
+            result = ast_new_stmt(Ast_Statement_Kind::BREAK, parser);
+            eat_token(&parser->lexer);
+            require_token(&parser->lexer, Token_Kind::SEMI);
         } break;
         
         case Token_Kind::CONTINUE: {
-            result = ast_new_stmt(AST_STMT_CONTINUE, parser);
+            result = ast_new_stmt(Ast_Statement_Kind::CONTINUE, parser);
+            eat_token(&parser->lexer);
             AST_REQUIRE_TOKEN(parser, Token_Kind::SEMI);
         } break;
         
         case Token_Kind::RETURN: {
-            result = ast_new_stmt(AST_STMT_RETURN, parser);
+            result = ast_new_stmt(Ast_Statement_Kind::RETURN, parser);
+            
+            eat_token(&parser->lexer);
             
             Ast_Statement* stmt = &result->stmt;
             stmt->my_scope = parent_scope;
             
             Ast_Return* return_stmt = &stmt->return_stmt;
             return_stmt->expr = parse_expression(parser, parent_scope);
-            AST_REQUIRE_TOKEN(parser, Token_Kind::SEMI);
+            require_token(&parser->lexer, Token_Kind::SEMI);
         } break;
         
         case Token_Kind::OPEN_BRACE: {
+            eat_token(&parser->lexer);
             result = parse_compound_statement(parser, parent_scope);
         } break;
         
         default: {
             Ast* type_def = 0;
             
-            if (parser->token.kind == Token_Kind::IDENTIFIER) {
-                type_def = find_type(parent_scope, parser->token.text);
+            if (token.kind == Token_Kind::IDENTIFIER) {
+                type_def = find_type(parent_scope, token.text);
             }
             
             if (type_def) {
                 // NOTE(yuval: Declaration Statement
-                result = ast_new_stmt(AST_STMT_DECL, parser);
+                result = ast_new_stmt(Ast_Statement_Kind::DECL, parser);
                 
                 Ast_Statement* stmt = &result->stmt;
                 stmt->my_scope = parent_scope;
@@ -1100,7 +1111,7 @@ parse_statement(Parser* parser, Ast* parent_scope) {
                 decl_stmt->decl = parse_declaration(parser, parent_scope);
             } else {
                 // NOTE(yuval): Expression Statement
-                result = ast_new_stmt(AST_STMT_EXPR, parser);
+                result = ast_new_stmt(Ast_Statement_Kind::EXPR, parser);
                 
                 Ast_Statement* stmt = &result->stmt;
                 stmt->my_scope = parent_scope;
