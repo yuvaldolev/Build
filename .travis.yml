@@ -5,7 +5,7 @@ matrix:
   include:
     - name: "clang on macOS"
       os: osx
-      osx_image: xcode10.1
+      osx_image: xcode11
       env:
         - CC=clang
         - CXX=clang++
