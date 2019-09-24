@@ -14,15 +14,15 @@ internal String
 get_type_name(Ast* type_def_ast) {
     String type_name = {};
     
-    if (type_def_ast && (type_def_ast->type == AST_TYPE_DEFINITION)) {
+    if (type_def_ast && (type_def_ast->kind == Ast_Kind::TYPE_DEFINITION)) {
         Ast_Type_Definition* type_def = &type_def_ast->type_def;
         
-        switch (type_def->type) {
-            case AST_TYPE_DEF_DEFAULT: {
+        switch (type_def->kind) {
+            case Ast_Type_Definition_Kind::DEFAULT: {
                 type_name = type_def->default_type_name;
             } break;
             
-            case AST_TYPE_DEF_POINTER: {
+            case Ast_Type_Definition_Kind::POINTER: {
                 // TODO(yuval): Handle Pointers
             } break;
             
@@ -44,34 +44,34 @@ cpp_convert_declaration(Ast* decl_ast) {
     Ast_Declaration* decl = &decl_ast->decl;
     Ast_Identifier* ident = decl->my_identifier;
     
-    switch (decl->type) {
-        case AST_DECL_TYPE: {
+    switch (decl->kind) {
+        case Ast_Declaration_Kind::TYPE: {
             Ast* type_def_ast = decl->my_type;
             Ast_Type_Definition* type_def = &type_def_ast->type_def;
             
             Ast** decls = 0;
             umm decl_count = 0;
             
-            switch (type_def->type) {
-                case AST_TYPE_DEF_POINTER: {
+            switch (type_def->kind) {
+                case Ast_Type_Definition_Kind::POINTER: {
                     
                 } break;
                 
-                case AST_TYPE_DEF_STRUCT: {
+                case Ast_Type_Definition_Kind::STRUCT: {
                     printf("struct ");
                     
                     decls = (Ast**)type_def->struct_type_def.members;
                     decl_count = type_def->struct_type_def.member_count;
                 } break;
                 
-                case AST_TYPE_DEF_ENUM: {
+                case Ast_Type_Definition_Kind::ENUM: {
                     printf("enum ");
                     
                     decls = (Ast**)type_def->enum_type_def.decls;
                     decl_count = type_def->enum_type_def.decl_count;
                 } break;
                 
-                case AST_TYPE_DEF_UNION: {
+                case Ast_Type_Definition_Kind::UNION: {
                     printf("union ");
                     
                     decls = (Ast**)type_def->union_type_def.decls;
@@ -96,7 +96,7 @@ cpp_convert_declaration(Ast* decl_ast) {
             printf(";\n\n");
         } break;
         
-        case AST_DECL_FUNC: {
+        case Ast_Declaration_Kind::FUNC: {
             Ast_Function* func = &decl->func;
             
             String return_type_name = get_type_name(func->return_type);
@@ -118,7 +118,7 @@ cpp_convert_declaration(Ast* decl_ast) {
             }
         } break;
         
-        case AST_DECL_VAR: {
+        case Ast_Declaration_Kind::VAR: {
             String type_name = get_type_name(decl->my_type);
             if (!is_null_string(type_name)) {
                 printf("%.*s ", PRINTABLE_STRING(type_name));

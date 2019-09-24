@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 internal void
-print_report(String type, Code_File file, s32 line, s32 column,
+print_report(String kind, Code_File file, s32 line, s32 column,
              const char* format, va_list arg_list) {
     const char* data_at = file.contents.data;
     
@@ -35,7 +35,7 @@ print_report(String type, Code_File file, s32 line, s32 column,
     // NOTE(yuval): Error location data
     fprintf(stderr, "%.*s:%d:%d: %.*s: %s\n",
             PRINTABLE_STRING(file.name),
-            line, column, PRINTABLE_STRING(type), message);
+            line, column, PRINTABLE_STRING(kind), message);
     
     // NOTE(yuval): Error line
     fprintf(stderr, "    %.*s\n    ", line_len, data_at);
@@ -76,6 +76,16 @@ report_error(Token* token, const char* format, ...) {
 }
 
 internal void
+report_error(Parser* parser, const char* format, ...) {
+    va_list arg_list;
+    
+    va_start(arg_list, format);
+    report_error_list(parser->lexer.file, parser->lexer.line_number,
+                      parser->lexer.column_number, format, arg_list);
+    va_end(arg_list);
+}
+
+internal void
 report_error(Ast* ast, const char* format, ...) {
     va_list arg_list;
     
@@ -107,6 +117,16 @@ report_warning(Token* token, const char* format, ...) {
     va_start(arg_list, format);
     report_warning_list(token->file, token->line_number,
                         token->column_number, format, arg_list);
+    va_end(arg_list);
+}
+
+internal void
+report_warning(Parser* parser, const char* format, ...) {
+    va_list arg_list;
+    
+    va_start(arg_list, format);
+    report_warning_list(parser->lexer.file, parser->lexer.line_number,
+                        parser->lexer.column_number, format, arg_list);
     va_end(arg_list);
 }
 

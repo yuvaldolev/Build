@@ -57,7 +57,7 @@ dump_ast_declaration(Ast* decl_ast) {
             Ast** decls = 0;
             umm decl_count = 0;
             
-            switch (type_def->type) {
+            switch (type_def->kind) {
                 case Ast_Type_Definition_Kind::POINTER: {
                 } break;
                 
@@ -110,7 +110,7 @@ dump_ast_declaration(Ast* decl_ast) {
             
             String* type_name;
             
-            switch (type_def->type) {
+            switch (type_def->kind) {
                 case Ast_Type_Definition_Kind::DEFAULT: {
                     type_name = &type_def->default_type_name;
                 } break;
@@ -151,8 +151,8 @@ dump_translation_unit_ast(Ast_Translation_Unit* translation_unit) {
 internal void
 init_default_types(Memory_Arena* arena) {
 #define DEFAULT_TYPE(type_name, name) JOIN2(global_type_def_, type_name) = PUSH_STRUCT(arena, Ast); \
-    JOIN2(global_type_def_, type_name)->type = AST_TYPE_DEFINITION; \
-    JOIN2(global_type_def_, type_name)->type_def.type = Ast_Type_Definition_Kind::DEFAULT; \
+    JOIN2(global_type_def_, type_name)->kind = Ast_Kind::TYPE_DEFINITION; \
+    JOIN2(global_type_def_, type_name)->type_def.kind = Ast_Type_Definition_Kind::DEFAULT; \
     JOIN2(global_type_def_, type_name)->type_def.default_type_name = name;
     
     DEFAULT_TYPES
@@ -175,10 +175,10 @@ get_default_type(String type_name) {
 }
 
 internal Ast*
-ast_new(Ast_Type type, Parser* parser) {
+ast_new(Ast_Kind::Type kind, Parser* parser) {
     Ast* result = PUSH_STRUCT(&parser->arena, Ast);
     
-    result->type = type;
+    result->kind = kind;
     result->my_file = parser->lexer.file;
     
     result->my_line = parser->lexer.line_number;
@@ -188,35 +188,36 @@ ast_new(Ast_Type type, Parser* parser) {
 }
 
 internal Ast*
-ast_new_decl(Ast_Declaration_Type type, Parser* parser) {
-    Ast* result = ast_new(AST_DECLARATION, parser);
-    result->decl.type = type;
+ast_new_decl(Ast_Declaration_Kind::Type kind, Parser* parser) {
+    Ast* result = ast_new(Ast_Kind::DECLARATION, parser);
+    result->decl.kind = kind;
     return result;
 }
 
 internal Ast*
-ast_new_type_def(Ast_Type_Definition_Type type, Parser* parser) {
-    Ast* result = ast_new(AST_TYPE_DEFINITION, parser);
-    result->type_def.type = type;
+ast_new_type_def(Ast_Type_Definition_Kind::Type kind, Parser* parser) {
+    Ast* result = ast_new(Ast_Kind::TYPE_DEFINITION, parser);
+    result->type_def.kind = kind;
     return result;
 }
 
 internal Ast*
-ast_new_stmt(Ast_Statement_Type type, Parser* parser) {
-    Ast* result = ast_new(AST_STATEMENT, parser);
-    result->stmt.type = type;
+ast_new_stmt(Ast_Statement_Kind::Type kind, Parser* parser) {
+    Ast* result = ast_new(Ast_Kind::STATEMENT, parser);
+    result->stmt.kind = kind;
     return result;
 }
 
 internal Ast*
-ast_new_expr(Ast_Expression_Kind::Type type, Parser* parser) {
-    Ast* result = ast_new(AST_EXPRESSION, parser);
-    result->expr.type = type;
+ast_new_expr(Ast_Expression_Kind::Type kind, Parser* parser) {
+    Ast* result = ast_new(Ast_Kind::EXPRESSION, parser);
+    result->expr.kind = kind;
     return result;
 }
 
 internal Ast*
-find_decl(Ast* scope, String name, Ast_Declaration_Type type = Ast_Declaration_Kind::UNDEFINED) {
+find_decl(Ast* scope, String name,
+          Ast_Declaration_Kind::Type kind = Ast_Declaration_Kind::UNDEFINED) {
     // TODO(yuval): Use this for find_type!
     Ast* result = 0;
     Ast* curr_scope = scope;
@@ -228,10 +229,10 @@ find_decl(Ast* scope, String name, Ast_Declaration_Type type = Ast_Declaration_K
             Ast* it = curr_scope->block.decls[decl_index];
             
             if (it) {
-                Ast_Declaration_Type it_type = it->decl.type;
+                Ast_Declaration_Kind::Type it_kind = it->decl.kind;
                 String* it_name = &it->decl.my_identifier->name;
                 
-                if (((type == Ast_Declaration_Kind::UNDEFINED) || (it_type == type)) &&
+                if (((kind == Ast_Declaration_Kind::UNDEFINED) || (it_kind == kind)) &&
                     strings_match(*it_name, name)) {
                     result = it;
                     goto doublebreak;
@@ -393,6 +394,7 @@ parse_primary_expression(Parser* parser, Ast* scope) {
             eat_token(&parser->lexer);
             
             Ast_Constant* constant = &result->expr.constant;
+            constant->kind = Ast_Constant_Kind::NUMBER;
             constant->int_constant = token.value_s32;
             constant->float_constant = token.value_f32;
         } break;
@@ -402,11 +404,12 @@ parse_primary_expression(Parser* parser, Ast* scope) {
             
             eat_token(&parser->lexer);
             
-            Ast_Constant* constant = &result->expr.constant;
             if (token.text.count == 1) {
+                Ast_Constant* constant = &result->expr.constant;
+                constant->kind = Ast_Constant_Kind::CHAR;
                 constant->char_constant = token.text.data[0];
             } else {
-                report_error(&parser->token, "char literal can only contain a single character");
+                report_error(&token, "char literal can only contain a single character");
             }
         } break;
         
@@ -416,6 +419,8 @@ parse_primary_expression(Parser* parser, Ast* scope) {
             eat_token(&parser->lexer);
             
             Ast_Constant* constant = &result->expr.constant;
+            constant->kind = Ast_Constant_Kind::BOOL;
+            
             // TODO(yuval): Temporary! Determine the bool constant value in the lexer!!!!!
             if (strings_match(token.text, "true")) {
                 constant->bool_constant = true;
@@ -430,7 +435,8 @@ parse_primary_expression(Parser* parser, Ast* scope) {
             eat_token(&parser->lexer);
             
             Ast_Constant* constant = &result->expr.constant;
-            constant->string_literal = parser->token.text;
+            constant->kind = Ast_Constant_Kind::STRING_LITERAL;
+            constant->string_literal = token.text;
         } break;
         
         default: {
@@ -449,11 +455,11 @@ parse_postfix_expression(Parser* parser, Ast* scope) {
     while (parsing) {
         if (optional_token(&parser->lexer, Token_Kind::PLUS_PLUS)) {
             result = ast_new_postfix_expr(Ast_Expression_Kind::ARITHMETIC,
-                                          result, AST_OP_PLUS_PLUS,
+                                          result, Ast_Operator::PLUS_PLUS,
                                           parser);
         } else if (optional_token(&parser->lexer, Token_Kind::MINUS_MINUS)) {
             result = ast_new_postfix_expr(Ast_Expression_Kind::ARITHMETIC,
-                                          result, AST_OP_MINUS_MINUS,
+                                          result, Ast_Operator::MINUS_MINUS,
                                           parser);
         } else if (optional_token(&parser->lexer, Token_Kind::DOT)) {
             // NOTE(yuval): Dot operator is used for both pointers
@@ -462,7 +468,7 @@ parse_postfix_expression(Parser* parser, Ast* scope) {
             dot_ast->lhs = result;
             
             Ast_Dot* dot = &dot_ast->expr.dot;
-            Token token = require_token(parser, Token_Kind::IDENTIFIER);
+            Token token = require_token(&parser->lexer, Token_Kind::IDENTIFIER);
             dot->field_name = token.text;
             
             result = dot_ast;
@@ -557,7 +563,7 @@ parse_unary_expression(Parser* parser, Ast* scope) {
         } break;
         
         case Token_Kind::ALIGNOF: {
-            eat_token(&parser);
+            eat_token(&parser->lexer);
             require_token(&parser->lexer, Token_Kind::OPEN_PAREN);
             result = ast_new_unary_expr(Ast_Expression_Kind::MEMORY_OPERATION,
                                         Ast_Operator::ALIGNOF,
@@ -808,7 +814,7 @@ parse_assignment_expression(Parser* parser, Ast* scope) {
     Ast* result = parse_conditional_expression(parser, scope);
     
     Token token = peek_token(&parser->lexer);
-    switch (parser->token.kind) {
+    switch (token.kind) {
         case Token_Kind::EQUAL: {
             eat_token(&parser->lexer);
             result = ast_new_binop_expr(Ast_Expression_Kind::ASSIGNMENT, result,
@@ -1094,7 +1100,7 @@ Instead of always parsing compound statement:
         case Token_Kind::CONTINUE: {
             result = ast_new_stmt(Ast_Statement_Kind::CONTINUE, parser);
             eat_token(&parser->lexer);
-            AST_REQUIRE_TOKEN(parser, Token_Kind::SEMI);
+            require_token(&parser->lexer, Token_Kind::SEMI);
         } break;
         
         case Token_Kind::RETURN: {
@@ -1160,7 +1166,7 @@ parse_compound_statement(Parser* parser, Ast* scope) {
             prev_stmt->rhs = stmt;
             prev_stmt = stmt;
         } else {
-            report_error(&parser->token, "expected '}'");
+            report_error(parser, "expected '}'");
         }
     }
     
@@ -1168,8 +1174,9 @@ parse_compound_statement(Parser* parser, Ast* scope) {
 }
 
 internal Ast*
-parse_type_declaration(Parser* parser, Ast* parent_scope, Ast_Type_Definition::Kind kind) {
-    Ast* result = ast_new_decl(Ast_Declaration::TYPE, parser);
+parse_type_declaration(Parser* parser, Ast* parent_scope,
+                       Ast_Type_Definition_Kind::Type kind) {
+    Ast* result = ast_new_decl(Ast_Declaration_Kind::TYPE, parser);
     
     Token token = require_token(&parser->lexer, Token_Kind::IDENTIFIER);
     
@@ -1178,7 +1185,7 @@ parse_type_declaration(Parser* parser, Ast* parent_scope, Ast_Type_Definition::K
     decl->my_identifier->name = token.text;
     
     if (optional_token(&parser->lexer, Token_Kind::OPEN_BRACE)) {
-        decl->my_scope = ast_new(Ast::BLOCK, parser);
+        decl->my_scope = ast_new(Ast_Kind::BLOCK, parser);
         decl->my_scope->block.parent = parent_scope;
         decl->my_scope->block.owning_decl = result;
         
@@ -1190,7 +1197,7 @@ parse_type_declaration(Parser* parser, Ast* parent_scope, Ast_Type_Definition::K
         Ast** decls = 0;
         umm* decl_count = 0;
         
-        switch (type) {
+        switch (kind) {
             case Ast_Type_Definition_Kind::STRUCT: {
                 decls = (Ast**)&type_def->struct_type_def.members;
                 decl_count = &type_def->struct_type_def.member_count;
@@ -1248,7 +1255,7 @@ parse_declaration(Parser* parser, Ast* scope) {
         } break;
         
         case Token_Kind::IDENTIFIER: {
-            Ast* type = find_type(scope, parser->token.text);
+            Ast* type = find_type(scope, token.text);
             
             if (!type) {
                 report_error(&token, "use of undeclared identifier '%S'",
@@ -1267,7 +1274,7 @@ parse_declaration(Parser* parser, Ast* scope) {
                 // TODO(yuval): Maybe unite this code with the variable declaration code below?
                 Ast_Declaration* decl = &result->decl;
                 decl->my_identifier = identifier;
-                decl->my_scope = ast_new(AST_BLOCK, parser);
+                decl->my_scope = ast_new(Ast_Kind::BLOCK, parser);
                 decl->my_scope->block.parent = scope;
                 
                 Ast_Function* func = &decl->func;
@@ -1278,7 +1285,7 @@ parse_declaration(Parser* parser, Ast* scope) {
                     func->params[func->param_count++] = parse_declaration(parser, scope);
                 } while (optional_token(&parser->lexer, Token_Kind::COMMA));
                 
-                require_token(parser, Token_Kind::CLOSE_PAREN);
+                require_token(&parser->lexer, Token_Kind::CLOSE_PAREN);
                 
                 if (optional_token(&parser->lexer, Token_Kind::OPEN_BRACE)) {
                     // NOTE(yuval): Function Definition
