@@ -87,13 +87,14 @@ cpp_convert_declaration(Ast* decl_ast) {
                 BEGIN_CPP_CONVERTER_BLOCK();
                 for (umm decl_index = 0; decl_index < decl_count; ++decl_index) {
                     cpp_convert_declaration(decls[decl_index]);
+                    printf(";\n");
                 }
                 END_CPP_CONVERTER_BLOCK();
                 
                 printf("}");
             }
             
-            printf(";\n\n");
+            printf(";\n");
         } break;
         
         case Ast_Declaration_Kind::FUNC: {
@@ -109,8 +110,20 @@ cpp_convert_declaration(Ast* decl_ast) {
                 printf("(");
                 for (umm param_index = 0; param_index < func->param_count; ++param_index) {
                     cpp_convert_declaration(func->params[param_index]);
+                    
+                    if (param_index != (func->param_count - 1)) {
+                        printf(", ");
+                    }
                 }
                 printf(")");
+                
+                if (func->is_function_definition) {
+                    printf(" {");
+                    
+                    // TODO(yuval): Convert function body
+                } else {
+                    printf(";");
+                }
                 
                 printf("\n");
             } else {
@@ -122,7 +135,7 @@ cpp_convert_declaration(Ast* decl_ast) {
             String type_name = get_type_name(decl->my_type);
             if (!is_null_string(type_name)) {
                 printf("%.*s ", PRINTABLE_STRING(type_name));
-                printf("%.*s\n", PRINTABLE_STRING(ident->name));
+                printf("%.*s", PRINTABLE_STRING(ident->name));
                 // TODO(yuval): Handle variable initialization
             } else {
                 report_error(decl_ast, "variable declarations should start with a type");
@@ -142,6 +155,13 @@ cpp_convert_translation_unit(Ast_Translation_Unit* translation_unit) {
     for (umm decl_index = 0;
          decl_index < global_scope->decl_count;
          ++decl_index) {
-        cpp_convert_declaration(global_scope->decls[decl_index]);
+        Ast* decl = global_scope->decls[decl_index];
+        cpp_convert_declaration(decl);
+        
+        if (decl->decl.kind == Ast_Declaration_Kind::VAR) {
+            printf(";\n");
+        }
+        
+        printf("\n");
     }
 }

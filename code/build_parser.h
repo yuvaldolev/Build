@@ -117,7 +117,11 @@ struct Ast_Decl_Ref {
 };
 
 struct Ast_Function_Call {
-    Ast* func;
+    union {
+        Ast* func; // Declaration; if the function _is_ defined in the codebase
+        String func_name; // If the function _is not_ defined in the codebase
+    };
+    
     Ast* first_arg;
 };
 

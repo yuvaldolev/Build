@@ -11,3 +11,8 @@
  
  * [ ] Maybe dereference struct pointers when using the dot operator from within the parser instead of
  checking if the node is a pointer in the cpp converter (will spare checking in other converters).
+ 
+ * [ ] Parse pointers!!!!!!!!!!!!!!!!!!!
+ 
+ * [ ] Make sure optional_token and peek_token have the save performance.
+ Right now peek_token is more performent

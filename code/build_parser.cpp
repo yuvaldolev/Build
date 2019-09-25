@@ -254,7 +254,10 @@ find_type(Ast* scope, String type_name) {
     
     if (!result) {
         Ast* type_decl = find_decl(scope, type_name, Ast_Declaration_Kind::TYPE);
-        result = type_decl->decl.my_type;
+        
+        if (type_decl) {
+            result = type_decl->decl.my_type;
+        }
     }
     
     return result;
@@ -344,35 +347,48 @@ parse_primary_expression(Parser* parser, Ast* scope) {
                 Ast* function_decl = find_decl(scope, token.text,
                                                Ast_Declaration_Kind::FUNC);
                 
+                result = ast_new_expr(Ast_Expression_Kind::FUNC_CALL, parser);
+                
+                eat_token(&parser->lexer);
+                
+                Ast_Function_Call* func_call = &result->expr.func_call;
+                
                 if (function_decl) {
-                    result = ast_new_expr(Ast_Expression_Kind::FUNC_CALL, parser);
-                    
-                    eat_token(&parser->lexer);
-                    
-                    Ast_Function_Call* func_call = &result->expr.func_call;
                     func_call->func = function_decl;
-                    
-                    Ast* prev_arg = 0;
-                    while (!optional_token(&parser->lexer, Token_Kind::CLOSE_PAREN)) {
-                        Ast* arg = parse_assignment_expression(parser, scope);
-                        
-                        if (arg) {
-                            if (prev_arg) {
-                                arg->lhs = prev_arg;
-                                prev_arg->rhs = arg;
-                                prev_arg = arg;
-                            } else {
-                                func_call->first_arg = arg;
-                                prev_arg = arg;
-                            }
-                            
-                            require_token(&parser->lexer, Token_Kind::COMMA);
-                        } else {
-                            report_error(parser, "expected ')'");
-                        }
-                    }
                 } else {
-                    report_error(&token, "\"%S\" is not a function", token.text);
+                    // NOTE(yuval): Maybe when and if this turns into a compiler -
+                    // then check if the function exists and if not
+                    // report an error.
+                    // report_error(&token, "\"%S\" is not a function", token.text);
+                    
+                    func_call->func_name = token.text;
+                }
+                
+                Ast* prev_arg = 0;
+                b32 parsing = true;
+                while (parsing) {
+                    Ast* arg = parse_assignment_expression(parser, scope);
+                    
+                    if (arg) {
+                        if (prev_arg) {
+                            arg->lhs = prev_arg;
+                            prev_arg->rhs = arg;
+                            prev_arg = arg;
+                        } else {
+                            func_call->first_arg = arg;
+                            prev_arg = arg;
+                        }
+                        
+                        if (optional_token(&parser->lexer, Token_Kind::CLOSE_PAREN)) {
+                            parsing = false;
+                        } else if (optional_token(&parser->lexer, Token_Kind::COMMA)) {
+                            // NOTE(yuval): Nothing to do here
+                        } else {
+                            report_error(parser, "expected ','");
+                        }
+                    } else {
+                        report_error(parser, "expected ')'");
+                    }
                 }
             } else {
                 // NOTE(yuval): Decl Ref
@@ -1113,6 +1129,7 @@ Instead of always parsing compound statement:
             
             Ast_Return* return_stmt = &stmt->return_stmt;
             return_stmt->expr = parse_expression(parser, parent_scope);
+            
             require_token(&parser->lexer, Token_Kind::SEMI);
         } break;
         
@@ -1146,6 +1163,8 @@ Instead of always parsing compound statement:
                 
                 Ast_Expression_Statement* expr_stmt = &stmt->expr_stmt;
                 expr_stmt->expr = parse_expression(parser, parent_scope);
+                
+                require_token(&parser->lexer, Token_Kind::SEMI);
             }
         }
     }
@@ -1282,7 +1301,7 @@ parse_declaration(Parser* parser, Ast* scope) {
                 
                 // NOTE(yuval): Function Parameters Parsing
                 do {
-                    func->params[func->param_count++] = parse_declaration(parser, scope);
+                    func->params[func->param_count++] = parse_declaration(parser, decl->my_scope);
                 } while (optional_token(&parser->lexer, Token_Kind::COMMA));
                 
                 require_token(&parser->lexer, Token_Kind::CLOSE_PAREN);
