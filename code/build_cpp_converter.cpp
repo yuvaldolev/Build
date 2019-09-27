@@ -114,11 +114,22 @@ cpp_convert_statement(Ast* stmt_ast) {
                 END_CPP_CONVERTER_BLOCK();
                 
                 cpp_converter_indent_line(global_cpp_converter_indentation);
-                printf("}\n");
+                
+                printf("}");
+                
+                Ast* rhs = stmt_at->rhs;
+                if (rhs &&
+                    (rhs->stmt.kind == Ast_Statement_Kind::BREAK)) {
+                    printf(" break;");
+                    
+                    // NOTE(yuval): Eating the rhs statement
+                    stmt_at = stmt_at->rhs;
+                }
+                
+                printf("\n");
             } break;
             
             case Ast_Statement_Kind::DEFAULT: {
-                
             } break;
             
             case Ast_Statement_Kind::FOR: {
@@ -134,7 +145,7 @@ cpp_convert_statement(Ast* stmt_ast) {
             } break;
             
             case Ast_Statement_Kind::BREAK: {
-                printf("break;");
+                printf("break;\n");
             } break;
             
             case Ast_Statement_Kind::CONTINUE: {

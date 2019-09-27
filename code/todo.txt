@@ -21,6 +21,6 @@
  Fix that!
  
  **************************************************************************************************
- * [X] Implement a way to look at AST Nodes in groups (for example: looking at the next ast node) *
+ * [ ] Implement a way to look at AST Nodes in groups (for example: looking at the next ast node) *
  **************************************************************************************************
  
