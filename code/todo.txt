@@ -17,5 +17,10 @@
  * [ ] Make sure optional_token and peek_token have the save performance.
  Right now peek_token is more performent
  
- * [ ] Currently errors reported from require_token cause a lot of other errors to be reported.
+ * [X] Currently errors reported from require_token cause a lot of other errors to be reported.
  Fix that!
+ 
+ **************************************************************************************************
+ * [X] Implement a way to look at AST Nodes in groups (for example: looking at the next ast node) *
+ **************************************************************************************************
+ 

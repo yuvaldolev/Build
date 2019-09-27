@@ -38,10 +38,125 @@ get_type_name(Ast* type_def_ast) {
 }
 
 internal void
+cpp_convert_declaration(Ast* decl_ast);
+
+internal void
+cpp_convert_statement(Ast* stmt_ast) {
+    Ast* stmt_at = stmt_ast;
+    
+    while (stmt_at) {
+        ASSERT(stmt_at->kind == Ast_Kind::STATEMENT);
+        
+        Ast_Statement* stmt = &stmt_at->stmt;
+        ASSERT(stmt);
+        
+        // TODO(yuval): Maybe clean this up so that stmt's kind will not be checked twice
+        if (stmt->kind != Ast_Statement_Kind::DECL) {
+            cpp_converter_indent_line(global_cpp_converter_indentation);
+        }
+        
+        switch (stmt->kind) {
+            case Ast_Statement_Kind::DECL: {
+                cpp_convert_declaration(stmt->decl_stmt.decl);
+                printf(";\n");
+            } break;
+            
+            case Ast_Statement_Kind::EXPR: {
+                
+            } break;
+            
+            case Ast_Statement_Kind::IF: {
+                Ast_If* if_stmt = &stmt->if_stmt;
+                
+                printf("if (");
+                // TODO(yuval): Convert Expressions
+                printf(") {\n");
+                
+                BEGIN_CPP_CONVERTER_BLOCK();
+                cpp_convert_statement(if_stmt->then_stmt);
+                END_CPP_CONVERTER_BLOCK();
+                
+                cpp_converter_indent_line(global_cpp_converter_indentation);
+                printf("}");
+                
+                if (if_stmt->else_stmt) {
+                    printf(" else ");
+                    cpp_convert_statement(if_stmt->else_stmt);
+                } else {
+                    printf("\n");
+                }
+            } break;
+            
+            case Ast_Statement_Kind::SWITCH: {
+                Ast_Switch* switch_stmt = &stmt->switch_stmt;
+                
+                printf("switch (");
+                // TODO(yuval): Convert the condition expression
+                printf(") {\n");
+                
+                BEGIN_CPP_CONVERTER_BLOCK();
+                cpp_convert_statement(switch_stmt->body);
+                END_CPP_CONVERTER_BLOCK();
+                
+                cpp_converter_indent_line(global_cpp_converter_indentation);
+                printf("}\n");
+            } break;
+            
+            case Ast_Statement_Kind::CASE: {
+                Ast_Case* case_stmt = &stmt->case_stmt;
+                
+                printf("case ");
+                // TODO(yuval): Convert case value
+                printf(": {\n");
+                
+                BEGIN_CPP_CONVERTER_BLOCK();
+                cpp_convert_statement(case_stmt->body);
+                END_CPP_CONVERTER_BLOCK();
+                
+                cpp_converter_indent_line(global_cpp_converter_indentation);
+                printf("}\n");
+            } break;
+            
+            case Ast_Statement_Kind::DEFAULT: {
+                
+            } break;
+            
+            case Ast_Statement_Kind::FOR: {
+                
+            } break;
+            
+            case Ast_Statement_Kind::WHILE: {
+                
+            } break;
+            
+            case Ast_Statement_Kind::DO_WHILE: {
+                
+            } break;
+            
+            case Ast_Statement_Kind::BREAK: {
+                printf("break;");
+            } break;
+            
+            case Ast_Statement_Kind::CONTINUE: {
+                
+            } break;
+            
+            case Ast_Statement_Kind::RETURN: {
+                
+            } break;
+        }
+        
+        stmt_at = stmt_at->rhs;
+    }
+}
+
+internal void
 cpp_convert_declaration(Ast* decl_ast) {
     cpp_converter_indent_line(global_cpp_converter_indentation);
     
     Ast_Declaration* decl = &decl_ast->decl;
+    ASSERT(decl);
+    
     Ast_Identifier* ident = decl->my_identifier;
     
     switch (decl->kind) {
@@ -99,6 +214,7 @@ cpp_convert_declaration(Ast* decl_ast) {
         
         case Ast_Declaration_Kind::FUNC: {
             Ast_Function* func = &decl->func;
+            ASSERT(func);
             
             String return_type_name = get_type_name(func->return_type);
             if (!is_null_string(return_type_name)) {
@@ -118,9 +234,13 @@ cpp_convert_declaration(Ast* decl_ast) {
                 printf(")");
                 
                 if (func->is_function_definition) {
-                    printf(" {");
+                    printf(" {\n");
                     
-                    // TODO(yuval): Convert function body
+                    BEGIN_CPP_CONVERTER_BLOCK();
+                    cpp_convert_statement(func->my_body);
+                    END_CPP_CONVERTER_BLOCK();
+                    
+                    printf("}");
                 } else {
                     printf(";");
                 }
@@ -143,7 +263,7 @@ cpp_convert_declaration(Ast* decl_ast) {
         } break;
         
         default: {
-            report_error(decl_ast, "cannot convert declaration with an undefined type to cpp code");
+            report_error(decl_ast, "cannot convert declaration with an undefined kind to cpp code");
         } break;
     }
 }

@@ -984,7 +984,7 @@ parse_statement(Parser* parser, Ast* parent_scope) {
             // NOTE(yuval): Case Expression
             case_stmt->value = parse_expression(parser, parent_scope);
             
-            // TODO(yuval): Check for colon
+            require_token(&parser->lexer, Token_Kind::COLON);
             
             Ast* scope = parent_scope;
             token = peek_token(&parser->lexer);
@@ -1009,6 +1009,7 @@ Instead of always parsing compound statement:
             result = ast_new_stmt(Ast_Statement_Kind::DEFAULT, parser);
             
             eat_token(&parser->lexer);
+            require_token(&parser->lexer, Token_Kind::COLON);
             
             Ast* scope = parent_scope;
             token = peek_token(&parser->lexer);
@@ -1163,9 +1164,9 @@ Instead of always parsing compound statement:
                 
                 Ast_Expression_Statement* expr_stmt = &stmt->expr_stmt;
                 expr_stmt->expr = parse_expression(parser, parent_scope);
-                
-                require_token(&parser->lexer, Token_Kind::SEMI);
             }
+            
+            require_token(&parser->lexer, Token_Kind::SEMI);
         }
     }
     
@@ -1174,15 +1175,23 @@ Instead of always parsing compound statement:
 
 internal Ast*
 parse_compound_statement(Parser* parser, Ast* scope) {
-    Ast* first_stmt = parse_statement(parser, scope);
-    Ast* prev_stmt = first_stmt;
+    Ast* first_stmt = 0;
+    Ast* prev_stmt = 0;
     
     while (!optional_token(&parser->lexer, Token_Kind::CLOSE_BRACE)) {
         Ast* stmt = parse_statement(parser, scope);
         
         if (stmt) {
             stmt->lhs = prev_stmt;
-            prev_stmt->rhs = stmt;
+            
+            if (!first_stmt) {
+                first_stmt = stmt;
+            }
+            
+            if (prev_stmt) {
+                prev_stmt->rhs = stmt;
+            }
+            
             prev_stmt = stmt;
         } else {
             report_error(parser, "expected '}'");

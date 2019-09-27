@@ -338,6 +338,14 @@ link_workspace(Build_Workspace* workspace, Memory_Arena* arena, b32 is_verbose_b
     end_temporary_memory(temp_mem);
 }
 
+inline void
+check_for_errors() {
+    if (global_error_count > 0) {
+        printf("There were errors. Exiting.\n");
+        exit(1);
+    }
+}
+
 internal void
 meta_process_translation_unit(const char* filename, Parser* parser) {
     printf("Processing: %s\n", filename);
@@ -348,12 +356,14 @@ meta_process_translation_unit(const char* filename, Parser* parser) {
                                                                 file_contents.contents_size)};
     
     Ast_Translation_Unit* translation_unit = parse_translation_unit(parser, file);
+    check_for_errors();
     
     // TODO(yuval): Temporary
     printf("\n--------------------------------------\n");
     cpp_convert_translation_unit(translation_unit);
     // TODO(yuval): Temporary
     printf("--------------------------------------\n\n");
+    check_for_errors();
 }
 
 internal PLATFORM_WORK_QUEUE_CALLBACK(do_compilation_work) {

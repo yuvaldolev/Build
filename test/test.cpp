@@ -6,8 +6,30 @@ struct Test {
 Test t;
 
 int add_ints(int a, int b);
-float sub_floats(float a, float b)
+float sub_floats(float a, float b);
 
 int add_ints(int a, int b) {
-    printf("a:%d  b:%d\n", a, b);
+    int c;
+    
+    if (a < 5) {
+    }
+    
+    switch (c) {
+        case 1: {
+            
+        } break;
+        
+        case 2: {
+            
+        } break;
+        
+        case 3:
+        break;
+        
+        case 4: {
+            
+        } break;
+    }
+    
+    //return a + b;
 }

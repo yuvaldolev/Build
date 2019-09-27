@@ -16,7 +16,7 @@ struct Code_File {
 
 #include "build_lexer.h"
 #include "build_parser.h"
-#include "build_errors.h"
+#include "build_diagnostics.h"
 
 struct Compilation_Work
 {

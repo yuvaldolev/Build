@@ -3,9 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+global umm global_error_count = 0;
+
 internal void
-print_report(String kind, Code_File file, s32 line, s32 column,
-             const char* format, va_list arg_list) {
+print_diagnostic(String kind, Code_File file, s32 line, s32 column,
+                 const char* format, va_list arg_list) {
     const char* data_at = file.contents.data;
     
     // NOTE(yuval): Getting to the line that contains the error
@@ -53,7 +55,8 @@ print_report(String kind, Code_File file, s32 line, s32 column,
 internal void
 report_error_list(Code_File file, s32 line, s32 column,
                   const char* format, va_list arg_list) {
-    print_report(BUNDLE_LITERAL("error"), file, line, column, format, arg_list);
+    print_diagnostic(BUNDLE_LITERAL("error"), file, line, column, format, arg_list);
+    ++global_error_count;
 }
 
 internal void
@@ -98,7 +101,7 @@ report_error(Ast* ast, const char* format, ...) {
 internal void
 report_warning_list(Code_File file, s32 line, s32 column,
                     const char* format, va_list arg_list) {
-    print_report(BUNDLE_LITERAL("warning"), file, line, column, format, arg_list);
+    print_diagnostic(BUNDLE_LITERAL("warning"), file, line, column, format, arg_list);
 }
 
 internal void

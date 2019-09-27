@@ -447,18 +447,6 @@ get_token_check_kind(Lexer* lexer, Token_Kind::Type desired_kind, Token* out_tok
 }
 
 internal Token
-require_token(Lexer* lexer, Token_Kind::Type desired_kind) {
-    Token token = get_token(lexer);
-    
-    if (token.kind != desired_kind) {
-        report_error(&token, "unexpected token kind: %S (expected %S)",
-                     get_token_kind_name(token.kind), get_token_kind_name(desired_kind));
-    }
-    
-    return token;
-}
-
-internal Token
 peek_token(Lexer* lexer) {
     Lexer temp = *lexer;
     Token result = get_token(&temp);
@@ -476,6 +464,21 @@ optional_token(Lexer* lexer, Token_Kind::Type desired_kind) {
     }
     
     return result;
+}
+
+internal Token
+require_token(Lexer* lexer, Token_Kind::Type desired_kind) {
+    Token token = peek_token(lexer);
+    
+    // TODO(yuval): This was copied from optional_token - compress these two functions
+    if (token.kind == desired_kind) {
+        eat_token(lexer);
+    } else {
+        report_error(&token, "unexpected token kind: %S (expected %S)",
+                     get_token_kind_name(token.kind), get_token_kind_name(desired_kind));
+    }
+    
+    return token;
 }
 
 internal Lexer
