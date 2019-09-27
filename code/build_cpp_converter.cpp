@@ -114,7 +114,6 @@ cpp_convert_statement(Ast* stmt_ast) {
                 END_CPP_CONVERTER_BLOCK();
                 
                 cpp_converter_indent_line(global_cpp_converter_indentation);
-                
                 printf("}");
                 
                 Ast* rhs = stmt_at->rhs;
@@ -130,10 +129,53 @@ cpp_convert_statement(Ast* stmt_ast) {
             } break;
             
             case Ast_Statement_Kind::DEFAULT: {
+                Ast_Default* default_stmt = &stmt->default_stmt;
+                
+                printf("default: {\n");
+                
+                BEGIN_CPP_CONVERTER_BLOCK();
+                cpp_convert_statement(default_stmt->body);
+                END_CPP_CONVERTER_BLOCK();
+                
+                cpp_converter_indent_line(global_cpp_converter_indentation);
+                printf("}");
+                
+                Ast* rhs = stmt_at->rhs;
+                if (rhs &&
+                    (rhs->stmt.kind == Ast_Statement_Kind::BREAK)) {
+                    printf(" break;");
+                    
+                    // NOTE(yuval): Eating the rhs statement
+                    stmt_at = stmt_at->rhs;
+                }
+                
+                printf("\n");
             } break;
             
             case Ast_Statement_Kind::FOR: {
+                Ast_For* for_stmt = &stmt->for_stmt;
                 
+                printf("for (");
+                
+                // NOTE(yuval): Initialization Statement
+                cpp_convert_statement(for_stmt->init);
+                // TODO(yuval): Check if a semicolon needs to be printed
+                
+                // NOTE(yuval): Condition Expression
+                // TODO(yuval): Convert condition expression
+                printf(";");
+                
+                // NOTE(yuval): Incrementation Expression
+                // TODO(yuval): Convert inc expression
+                
+                printf(") {\n");
+                
+                BEGIN_CPP_CONVERTER_BLOCK();
+                cpp_convert_statement(for_stmt->body);
+                END_CPP_CONVERTER_BLOCK();
+                
+                cpp_converter_indent_line(global_cpp_converter_indentation);
+                printf("}");
             } break;
             
             case Ast_Statement_Kind::WHILE: {
